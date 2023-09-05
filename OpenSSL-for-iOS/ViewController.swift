@@ -46,6 +46,7 @@ class ViewController: UIViewController {
             md5Label.text = FSOpenSSL.md5(from: textField.text)
             sh256Label.text = FSOpenSSL.sha256(from: textField.text)
             sh512Label.text = FSOpenSSL.sha512(from: textField.text)
+            FSOpenSSL.test(textField.text)
         }
         else {
             md5Label.text = nil

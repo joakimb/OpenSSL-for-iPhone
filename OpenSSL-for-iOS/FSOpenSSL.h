@@ -26,5 +26,7 @@
 
 + (NSString *)sha512FromString:(NSString *)string;
 
++ (NSString *)test:(NSString *)string;
+
 + (NSString *)base64FromString:(NSString *)string encodeWithNewlines:(BOOL)encodeWithNewlines;
 @end
