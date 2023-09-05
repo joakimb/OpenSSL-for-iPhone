@@ -15,7 +15,6 @@
 		2A3821171BFB642000328618 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3821011BFB607A00328618 /* ViewController.swift */; };
 		2A8A9A7E1BFA59F7002944B4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2A8A9A7D1BFA59F7002944B4 /* Assets.xcassets */; };
 		2A8A9A851BFA5AFF002944B4 /* ViewController~tv.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2A8A9A841BFA5AFF002944B4 /* ViewController~tv.xib */; };
-		2A8A9A871BFA5B6A002944B4 /* FSOpenSSL.m in Sources */ = {isa = PBXBuildFile; fileRef = D1E97EE2A904D58DAE4231E2 /* FSOpenSSL.m */; };
 		533ED3001528C4840005C6FA /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 533ED2FF1528C4840005C6FA /* UIKit.framework */; };
 		533ED3021528C4840005C6FA /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 533ED3011528C4840005C6FA /* Foundation.framework */; };
 		533ED3041528C4840005C6FA /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 533ED3031528C4840005C6FA /* CoreGraphics.framework */; };
@@ -28,7 +27,6 @@
 		53A29DF9238EB10E0083CBF5 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 53A29DF8238EB10E0083CBF5 /* LaunchScreen.storyboard */; };
 		53CF803628883F1700DF65C5 /* OpenSSL.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 53CF803528883F1700DF65C5 /* OpenSSL.xcframework */; };
 		53CF803728883F1700DF65C5 /* OpenSSL.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 53CF803528883F1700DF65C5 /* OpenSSL.xcframework */; };
-		D1E978031547EE765CD39AD2 /* FSOpenSSL.m in Sources */ = {isa = PBXBuildFile; fileRef = D1E97EE2A904D58DAE4231E2 /* FSOpenSSL.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -67,8 +65,6 @@
 		53572A58183AAFFE00B21832 /* OpenSSL-for-iOS_Tests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "OpenSSL-for-iOS_Tests-Prefix.pch"; sourceTree = "<group>"; };
 		53A29DF8238EB10E0083CBF5 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		53CF803528883F1700DF65C5 /* OpenSSL.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = OpenSSL.xcframework; sourceTree = "<group>"; };
-		D1E979D803ACC127411934DC /* FSOpenSSL.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FSOpenSSL.h; sourceTree = "<group>"; };
-		D1E97EE2A904D58DAE4231E2 /* FSOpenSSL.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FSOpenSSL.m; sourceTree = "<group>"; };
 		FD5896FA1B2F1FAA00F3E5B5 /* build-libssl.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-libssl.sh"; sourceTree = "<group>"; };
 		FD5896FC1B2F1FF900F3E5B5 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -158,8 +154,6 @@
 				2A1DDC8E1BFB1DF600F7722A /* ViewController.xib */,
 				2A8A9A841BFA5AFF002944B4 /* ViewController~tv.xib */,
 				533ED3061528C4840005C6FA /* Supporting Files */,
-				D1E97EE2A904D58DAE4231E2 /* FSOpenSSL.m */,
-				D1E979D803ACC127411934DC /* FSOpenSSL.h */,
 				534FB2AD180975D700B5F868 /* Icons.xcassets */,
 				53A29DF8238EB10E0083CBF5 /* LaunchScreen.storyboard */,
 				150275D82AA713CD00462E61 /* P256.h */,
@@ -359,7 +353,6 @@
 			files = (
 				2A3821161BFB641E00328618 /* AppDelegate.swift in Sources */,
 				2A3821171BFB642000328618 /* ViewController.swift in Sources */,
-				2A8A9A871BFA5B6A002944B4 /* FSOpenSSL.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -370,7 +363,6 @@
 				2A3821001BFB5EEB00328618 /* AppDelegate.swift in Sources */,
 				2A3821021BFB607A00328618 /* ViewController.swift in Sources */,
 				150275DA2AA7141100462E61 /* P256.m in Sources */,
-				D1E978031547EE765CD39AD2 /* FSOpenSSL.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
