@@ -130,7 +130,7 @@
 + (NSString *)test:(NSString *)string {
     
     
-    EC_KEY *ec_key = EC_KEY_new_by_curve_name(NID_secp256k1); // Use the desired elliptic curve
+    EC_KEY *ec_key = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1); // Use the desired elliptic curve
     
     if (!ec_key) {
         printf("Error creating EC_KEY");
