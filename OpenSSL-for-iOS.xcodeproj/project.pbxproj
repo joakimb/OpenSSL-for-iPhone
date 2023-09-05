@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		150275DA2AA7141100462E61 /* P256.m in Sources */ = {isa = PBXBuildFile; fileRef = 150275D92AA7141100462E61 /* P256.m */; };
 		2A1DDC8F1BFB1DF600F7722A /* ViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2A1DDC8E1BFB1DF600F7722A /* ViewController.xib */; };
 		2A3821001BFB5EEB00328618 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3820FF1BFB5EEB00328618 /* AppDelegate.swift */; };
 		2A3821021BFB607A00328618 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3821011BFB607A00328618 /* ViewController.swift */; };
@@ -41,6 +42,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		150275D82AA713CD00462E61 /* P256.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = P256.h; sourceTree = "<group>"; };
+		150275D92AA7141100462E61 /* P256.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = P256.m; sourceTree = "<group>"; };
 		2A1DDC8E1BFB1DF600F7722A /* ViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ViewController.xib; sourceTree = "<group>"; };
 		2A3820FE1BFB5EEA00328618 /* OpenSSL-for-iOS-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "OpenSSL-for-iOS-Bridging-Header.h"; sourceTree = "<group>"; };
 		2A3820FF1BFB5EEB00328618 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -159,6 +162,8 @@
 				D1E979D803ACC127411934DC /* FSOpenSSL.h */,
 				534FB2AD180975D700B5F868 /* Icons.xcassets */,
 				53A29DF8238EB10E0083CBF5 /* LaunchScreen.storyboard */,
+				150275D82AA713CD00462E61 /* P256.h */,
+				150275D92AA7141100462E61 /* P256.m */,
 			);
 			path = "OpenSSL-for-iOS";
 			sourceTree = "<group>";
@@ -364,6 +369,7 @@
 			files = (
 				2A3821001BFB5EEB00328618 /* AppDelegate.swift in Sources */,
 				2A3821021BFB607A00328618 /* ViewController.swift in Sources */,
+				150275DA2AA7141100462E61 /* P256.m in Sources */,
 				D1E978031547EE765CD39AD2 /* FSOpenSSL.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

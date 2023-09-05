@@ -3,4 +3,5 @@
 //
 
 #import "FSOpenSSL.h"
+#import "P256.h"
 #include <openssl/opensslv.h>
