@@ -17,17 +17,26 @@
 
 @implementation P256
 
+// get curve order p
+
+// get rand int < p
+
+// mod p
+
+// modular inverse of int
+
+// get generator
+
+// multiply Point with int < p
+
+// add points
+
 + (NSString *)test:(NSString *)string {
     
-    
-    EC_KEY *ec_key = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1); // Use the desired elliptic curve
-    
-    if (!ec_key) {
-        printf("Error creating EC_KEY");
-    }
-    
-    if (EC_KEY_generate_key(ec_key) != 1) {
-        printf("Error generating EC key");
+    EC_GROUP *curve_group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
+
+    if (curve_group == NULL) {
+        // Handle error
     }
     
     // Generate a random scalar as the private key
@@ -41,12 +50,12 @@
     
     clock_t start_time = clock();
     
-    const numMultiplications = 10000;
+    const numMultiplications = 10000;//*10000;
     
     // Generate the corresponding public key (point multiplication)
-    volatile EC_POINT *public_key = EC_POINT_new(EC_KEY_get0_group(ec_key));
+    volatile EC_POINT *public_key = EC_POINT_new(curve_group);
     for (int i=0; i<numMultiplications; i++) {
-        if (!EC_POINT_mul(EC_KEY_get0_group(ec_key), public_key, private_key, NULL, NULL, NULL)) {
+        if (!EC_POINT_mul(curve_group, public_key, private_key, NULL, NULL, NULL)) {
             printf("Error performing point multiplication");
         }
     }
@@ -60,7 +69,8 @@
     // Cleanup
     BN_free(private_key);
     EC_POINT_free(public_key);
-    EC_KEY_free(ec_key);
+    //EC_KEY_free(ec_key);
+    EC_GROUP_free(curve_group);
     
     return formattedString;
 }
