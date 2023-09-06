@@ -6,16 +6,15 @@
 //  Copyright © 2023 Felix Schulze. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import "P256.h"
-#include <openssl/bn.h>
-#include <time.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <openssl/ec.h>
-#import <openssl/evp.h>
+
 
 @implementation P256
+
+// How to print bignum
+//    char *num= BN_bn2dec(order);
+//    printf("num: %s\n", num);
+//    OPENSSL_free(num);
 
 // ----------- Custom group ---------
 // Define the curve parameters (replace these with your curve's parameters)
@@ -41,11 +40,36 @@
 //EC_GROUP_set_generator(curve_group, generator, order, cofactor);
 //EC_POINT_free(generator);
 
-// ------------- Helper functions
 
-// get curve order p
+EC_GROUP *group;
 
-// get rand int < p
+- (id) init {
+    
+    //P256
+    group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
+    
+    return self;
+}
+
+- (void) dealloc {
+    
+    EC_GROUP_free(group);
+    
+    //[super dealloc]; should not be called, ARC will insert it at build time
+}
+
+- (const BIGNUM *) get0Order {
+    
+    //using get0 means ownership is retained by parent object
+    return EC_GROUP_get0_order(group);
+    
+}
+
++ (void) print: (BIGNUM *) x {
+    char *num= BN_bn2dec(x);
+    printf("num: %s\n", num);
+    OPENSSL_free(num);
+}
 
 // mod p
 
@@ -57,6 +81,8 @@
 
 // add points
 
+//
+
 + (NSString *)test:(NSString *)string {
     
     EC_GROUP *curve_group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
@@ -65,22 +91,16 @@
         // Handle error
     }
     
+    //using get0 means ownership is reteined by parent object
     const BIGNUM *order = EC_GROUP_get0_order(curve_group);
     
     if (order == NULL) {
         // Handle error
     }
     
-    // Convert the BIGNUM to a hexadecimal string
-    char *dec_order = BN_bn2dec(order);
-
-    printf("Itorder %s\n", dec_order);
-    
-    OPENSSL_free(dec_order);
-    
     // Generate a random scalar as the private key
-    BIGNUM *private_key = BN_new();
-    if (!BN_rand(private_key, 256, -1, 0)) {
+    BIGNUM *private_key = BN_new(); //init to zero
+    if (!BN_rand(private_key, 256, -1, 0)) { // store a random value in it
         printf("Error generating random private key");
     }
     

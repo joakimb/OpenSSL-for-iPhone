@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		150275DA2AA7141100462E61 /* P256.m in Sources */ = {isa = PBXBuildFile; fileRef = 150275D92AA7141100462E61 /* P256.m */; };
+		15FF08092AA8AB0100B2B623 /* BigNum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15FF08082AA8AB0100B2B623 /* BigNum.swift */; };
 		2A1DDC8F1BFB1DF600F7722A /* ViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2A1DDC8E1BFB1DF600F7722A /* ViewController.xib */; };
 		2A3821001BFB5EEB00328618 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3820FF1BFB5EEB00328618 /* AppDelegate.swift */; };
 		2A3821021BFB607A00328618 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3821011BFB607A00328618 /* ViewController.swift */; };
@@ -42,6 +43,7 @@
 /* Begin PBXFileReference section */
 		150275D82AA713CD00462E61 /* P256.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = P256.h; sourceTree = "<group>"; };
 		150275D92AA7141100462E61 /* P256.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = P256.m; sourceTree = "<group>"; };
+		15FF08082AA8AB0100B2B623 /* BigNum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BigNum.swift; sourceTree = "<group>"; };
 		2A1DDC8E1BFB1DF600F7722A /* ViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ViewController.xib; sourceTree = "<group>"; };
 		2A3820FE1BFB5EEA00328618 /* OpenSSL-for-iOS-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "OpenSSL-for-iOS-Bridging-Header.h"; sourceTree = "<group>"; };
 		2A3820FF1BFB5EEB00328618 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -158,6 +160,7 @@
 				53A29DF8238EB10E0083CBF5 /* LaunchScreen.storyboard */,
 				150275D82AA713CD00462E61 /* P256.h */,
 				150275D92AA7141100462E61 /* P256.m */,
+				15FF08082AA8AB0100B2B623 /* BigNum.swift */,
 			);
 			path = "OpenSSL-for-iOS";
 			sourceTree = "<group>";
@@ -361,6 +364,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2A3821001BFB5EEB00328618 /* AppDelegate.swift in Sources */,
+				15FF08092AA8AB0100B2B623 /* BigNum.swift in Sources */,
 				2A3821021BFB607A00328618 /* ViewController.swift in Sources */,
 				150275DA2AA7141100462E61 /* P256.m in Sources */,
 			);
