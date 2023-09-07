@@ -10,22 +10,14 @@
 #endif /* ShamirP256_h */
 
 #import <Foundation/Foundation.h>
-#include <openssl/bn.h>
-#include <time.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <openssl/ec.h>
-#import <openssl/evp.h>
+#import "P256.h"
+
 
 @interface ShamirP256: NSObject
-
--(id) init;
 
 // debug helper to print bignums to terminal
 + (void) print: (BIGNUM *) x;
 
 + (NSString *)test:(NSString *) string;
-
--(void) dealloc;
 
 @end

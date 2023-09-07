@@ -1,15 +1,15 @@
 //
 //  P256.h
-
-//  Created by Joakim Brorsson on 2023-09-05.//
+//  OpenSSL-for-iOS
+//
+//  Created by Joakim Brorsson on 2023-09-07.
+//  Copyright © 2023 Felix Schulze. All rights reserved.
+//
 
 #ifndef P256_h
 #define P256_h
 
-
-#endif /* P256_h */
-
-#import <Foundation/Foundation.h>
+#include <stdio.h>
 #include <openssl/bn.h>
 #include <time.h>
 #include <stdio.h>
@@ -17,19 +17,29 @@
 #include <openssl/ec.h>
 #import <openssl/evp.h>
 
-@interface P256: NSObject
+#endif /* P256_h */
 
--(id) init;
--(void) dealloc;
+// get curve group order p
+BIGNUM* get0Order(void);
 
-// debug helper to print bignums to terminal
-+ (void) print: (BIGNUM *) x;
+// get curve group generator
+EC_POINT* get0Gen(void);
 
-// get curve order p (returns NULL on error)
-- (const BIGNUM *) get0Order;
+// get random element in Zp
+BIGNUM* randZp(void);
 
-// get rand int < p
+// helper to print bignum to terminal for debug
+void print(const BIGNUM *x);
 
-+ (NSString *)test:(NSString *)string;
+// multiply Point with int < p
+EC_POINT* multiply(const EC_POINT* p, const BIGNUM *x);
 
-@end
+// mod p, returns x mod the group order p
+//BIGNUM* modp(const BIGNUM* x);
+
+// modular inverse of int
+
+// get generator
+
+
+// add points
