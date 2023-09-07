@@ -7,8 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		150275DA2AA7141100462E61 /* P256.m in Sources */ = {isa = PBXBuildFile; fileRef = 150275D92AA7141100462E61 /* P256.m */; };
-		15FF08092AA8AB0100B2B623 /* BigNum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15FF08082AA8AB0100B2B623 /* BigNum.swift */; };
+		150275DA2AA7141100462E61 /* ShamirP256.m in Sources */ = {isa = PBXBuildFile; fileRef = 150275D92AA7141100462E61 /* ShamirP256.m */; };
+		15FF080B2AA8B08100B2B623 /* BigNum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15FF080A2AA8B08100B2B623 /* BigNum.swift */; };
+		15FF080F2AA9B38000B2B623 /* P256.c in Sources */ = {isa = PBXBuildFile; fileRef = 15FF080E2AA9B38000B2B623 /* P256.c */; };
 		2A1DDC8F1BFB1DF600F7722A /* ViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2A1DDC8E1BFB1DF600F7722A /* ViewController.xib */; };
 		2A3821001BFB5EEB00328618 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3820FF1BFB5EEB00328618 /* AppDelegate.swift */; };
 		2A3821021BFB607A00328618 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A3821011BFB607A00328618 /* ViewController.swift */; };
@@ -41,9 +42,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		150275D82AA713CD00462E61 /* P256.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = P256.h; sourceTree = "<group>"; };
-		150275D92AA7141100462E61 /* P256.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = P256.m; sourceTree = "<group>"; };
-		15FF08082AA8AB0100B2B623 /* BigNum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BigNum.swift; sourceTree = "<group>"; };
+		150275D82AA713CD00462E61 /* ShamirP256.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShamirP256.h; sourceTree = "<group>"; };
+		150275D92AA7141100462E61 /* ShamirP256.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ShamirP256.m; sourceTree = "<group>"; };
+		15FF080A2AA8B08100B2B623 /* BigNum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BigNum.swift; sourceTree = "<group>"; };
+		15FF080D2AA9B38000B2B623 /* P256.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = P256.h; sourceTree = "<group>"; };
+		15FF080E2AA9B38000B2B623 /* P256.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = P256.c; sourceTree = "<group>"; };
 		2A1DDC8E1BFB1DF600F7722A /* ViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ViewController.xib; sourceTree = "<group>"; };
 		2A3820FE1BFB5EEA00328618 /* OpenSSL-for-iOS-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "OpenSSL-for-iOS-Bridging-Header.h"; sourceTree = "<group>"; };
 		2A3820FF1BFB5EEB00328618 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -158,9 +161,11 @@
 				533ED3061528C4840005C6FA /* Supporting Files */,
 				534FB2AD180975D700B5F868 /* Icons.xcassets */,
 				53A29DF8238EB10E0083CBF5 /* LaunchScreen.storyboard */,
-				150275D82AA713CD00462E61 /* P256.h */,
-				150275D92AA7141100462E61 /* P256.m */,
-				15FF08082AA8AB0100B2B623 /* BigNum.swift */,
+				150275D82AA713CD00462E61 /* ShamirP256.h */,
+				150275D92AA7141100462E61 /* ShamirP256.m */,
+				15FF080D2AA9B38000B2B623 /* P256.h */,
+				15FF080E2AA9B38000B2B623 /* P256.c */,
+				15FF080A2AA8B08100B2B623 /* BigNum.swift */,
 			);
 			path = "OpenSSL-for-iOS";
 			sourceTree = "<group>";
@@ -363,10 +368,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				15FF080F2AA9B38000B2B623 /* P256.c in Sources */,
 				2A3821001BFB5EEB00328618 /* AppDelegate.swift in Sources */,
-				15FF08092AA8AB0100B2B623 /* BigNum.swift in Sources */,
+				15FF080B2AA8B08100B2B623 /* BigNum.swift in Sources */,
 				2A3821021BFB607A00328618 /* ViewController.swift in Sources */,
-				150275DA2AA7141100462E61 /* P256.m in Sources */,
+				150275DA2AA7141100462E61 /* ShamirP256.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
