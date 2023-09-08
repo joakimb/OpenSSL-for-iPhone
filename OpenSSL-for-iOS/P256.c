@@ -32,19 +32,17 @@
 
 
 #include "P256.h"
+#include <string.h>
 
+static EC_GROUP *group = NULL;
 
 EC_GROUP* getGroup(void){
-    
-    static int initialized;
-    static EC_GROUP *group; //
-    
-    if (!initialized){
+        
+    if (!group){
         group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
-        initialized = 1;
     }
     
-    if (group == NULL) {
+    if (!group) {
         printf("Error getting group\n");
     }
     
@@ -52,10 +50,10 @@ EC_GROUP* getGroup(void){
     
 }
 
-BIGNUM* get0Order(void) {
+const BIGNUM* get0Order(void) {
     
     //using get0 means ownership is reteined by parent object
-    BIGNUM *order = EC_GROUP_get0_order(getGroup());
+    const BIGNUM *order = EC_GROUP_get0_order(getGroup());
     
     if (order == NULL) {
         printf("Error getting group order\n");
@@ -75,13 +73,25 @@ EC_POINT* get0Gen(void) {
     return gen;
 }
 
-void print(const BIGNUM *x) {
+void printBN(const BIGNUM *x) {
     
     char *num= BN_bn2dec(x);
-    printf("num: %s\n", num);
+    printf("%s\n", num);
     OPENSSL_free(num);
     
 }
+
+//BIGNUM* intToBN(int x){
+//    
+//    BIGNUM *bn = BN_new();
+//    if(!BN_set_word(bn, x)){
+//        printf("Error setting bignum");
+//    }
+//    
+//    return bn;
+//    
+//}
+
 
 BIGNUM* randZp(void){
     
@@ -107,6 +117,3 @@ EC_POINT* multiply(const EC_POINT* point, const BIGNUM *x){
     
 }
 
-//BIGNUM* modp(const BIGNUM* x){
-//    return NULL;
-//}

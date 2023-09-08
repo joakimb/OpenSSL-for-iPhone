@@ -20,7 +20,7 @@
 #endif /* P256_h */
 
 // get curve group order p
-BIGNUM* get0Order(void);
+const BIGNUM* get0Order(void);
 
 // get curve group generator
 EC_POINT* get0Gen(void);
@@ -29,17 +29,9 @@ EC_POINT* get0Gen(void);
 BIGNUM* randZp(void);
 
 // helper to print bignum to terminal for debug
-void print(const BIGNUM *x);
+void printBN(const BIGNUM *x);
 
 // multiply Point with int < p
 EC_POINT* multiply(const EC_POINT* p, const BIGNUM *x);
-
-// mod p, returns x mod the group order p
-//BIGNUM* modp(const BIGNUM* x);
-
-// modular inverse of int
-
-// get generator
-
 
 // add points
