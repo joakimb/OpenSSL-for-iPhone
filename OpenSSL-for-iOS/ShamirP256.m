@@ -30,6 +30,8 @@
     printBN(randnum);
     BN_free(randnum);
 
+    BN_CTX *ctx = BN_CTX_new();
+    
     //test curve multiplication
     const numMultiplications = 10000;//*10000;
     const EC_POINT *gen = get0Gen();
@@ -38,7 +40,22 @@
         multiply(gen, rand);
     }
     BN_free(rand);
-   
+    BIGNUM *five = BN_new(), *six = BN_new(), *eleven = BN_new();
+    BN_dec2bn(&five, "5");
+    BN_dec2bn(&six, "6");
+    BN_dec2bn(&eleven, "11");
+    EC_POINT *pfive = multiply(gen, five);
+    EC_POINT *psix = multiply(gen, six);
+    EC_POINT *peleven = multiply(gen, eleven);
+    EC_POINT *added = EC_POINT_new(getGroup());
+    EC_POINT_add(getGroup(), added, psix, pfive, ctx);
+    
+    if(EC_POINT_cmp(getGroup(), peleven, added, ctx) == 0){
+        printf("mul works as expected\n");
+    } else {
+        printf("mul NOT working as expected\n");
+    }
+    
     
     
     //test modp
@@ -47,7 +64,6 @@
     BN_dec2bn(&a, "3");
     BN_dec2bn(&b, "3");
     BN_dec2bn(&c, "5");
-    BN_CTX *ctx = BN_CTX_new();
     
     BN_mod_add(r, a, b, c, ctx);
     printf("r (expected 1): \t\t:");

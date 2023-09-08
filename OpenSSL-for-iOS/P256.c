@@ -109,7 +109,7 @@ EC_POINT* multiply(const EC_POINT* point, const BIGNUM *x){
     
     EC_POINT *res = EC_POINT_new(getGroup());
     
-    if(!EC_POINT_mul(getGroup(), res, x, point, NULL, NULL)){
+    if(!EC_POINT_mul(getGroup(), res, NULL, point, x, NULL)){
         printf("Error during curve multiplication\n");
     }
     
@@ -117,3 +117,13 @@ EC_POINT* multiply(const EC_POINT* point, const BIGNUM *x){
     
 }
 
+EC_POINT* add(const EC_POINT* a, const EC_POINT* b){
+    
+    EC_POINT *res = EC_POINT_new(getGroup());
+    
+    if (!EC_POINT_add(getGroup(), res, a, b, NULL)){
+        printf("Error during curve addition\n");
+    }
+    
+    return res;
+}

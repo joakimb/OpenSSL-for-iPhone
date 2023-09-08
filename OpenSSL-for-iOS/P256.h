@@ -19,6 +19,9 @@
 
 #endif /* P256_h */
 
+// get curve group
+EC_GROUP* getGroup(void);
+
 // get curve group order p
 const BIGNUM* get0Order(void);
 
@@ -35,3 +38,4 @@ void printBN(const BIGNUM *x);
 EC_POINT* multiply(const EC_POINT* p, const BIGNUM *x);
 
 // add points
+EC_POINT* add(const EC_POINT* a, const EC_POINT* b);
