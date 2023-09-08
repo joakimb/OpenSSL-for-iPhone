@@ -55,9 +55,14 @@
     } else {
         printf("mul NOT working as expected\n");
     }
-    
-    
-    
+    BN_free(five);
+    BN_free(six);
+    BN_free(eleven);
+    EC_POINT_free(pfive);
+    EC_POINT_free(psix);
+    EC_POINT_free(peleven);
+    EC_POINT_free(added);
+
     //test modp
     printf("modadd stuff \n");
     BIGNUM *a = BN_new(), *b = BN_new(), *c = BN_new(), *r = BN_new(), *tmp = BN_new();
@@ -88,8 +93,6 @@
     //test modinv
     //TODO
     
-    //test pointadd
-    //TODO
 
     clock_t end_time = clock();
     double elapsed_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
