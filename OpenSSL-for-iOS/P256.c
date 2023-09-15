@@ -12,7 +12,7 @@
 
 static EC_GROUP *group = NULL;
 
-EC_GROUP* getGroup(void){
+EC_GROUP* get0Group(void){
     
     int toyCurve = 1;
     
@@ -56,7 +56,7 @@ EC_GROUP* getGroup(void){
 const BIGNUM* get0Order(void) {
     
     //using get0 means ownership is reteined by parent object
-    const BIGNUM *order = EC_GROUP_get0_order(getGroup());
+    const BIGNUM *order = EC_GROUP_get0_order(get0Group());
     
     if (order == NULL) {
         printf("Error getting group order\n");
@@ -68,7 +68,7 @@ const BIGNUM* get0Order(void) {
 EC_POINT* get0Gen(void) {
     
     //using get0 means ownership is reteined by parent object
-    const EC_POINT *gen = EC_GROUP_get0_generator(getGroup());
+    const EC_POINT *gen = EC_GROUP_get0_generator(get0Group());
     if (gen == NULL) {
         printf("Error getting group order\n");
     }
@@ -96,7 +96,7 @@ void printBN(const BIGNUM *x) {
 //}
 
 
-BIGNUM* randZp(void){
+BIGNUM* randZp(BN_CTX *ctx){
     
     BIGNUM *r = BN_new(); //init to zero
     
@@ -104,15 +104,17 @@ BIGNUM* randZp(void){
         printf("Error generating random element in Zp\n");
     }
     
+    BN_mod(r, r, get0Order(), ctx);
+    
     return r;
     
 }
 
 EC_POINT* multiply(const EC_POINT* point, const BIGNUM *x){
     
-    EC_POINT *res = EC_POINT_new(getGroup());
+    EC_POINT *res = EC_POINT_new(get0Group());
     
-    if(!EC_POINT_mul(getGroup(), res, NULL, point, x, NULL)){
+    if(!EC_POINT_mul(get0Group(), res, NULL, point, x, NULL)){
 //    if(!EC_POINT_mul(getGroup(), res, x, point, NULL, NULL)){
         printf("Error during curve multiplication\n");
     }
@@ -123,9 +125,9 @@ EC_POINT* multiply(const EC_POINT* point, const BIGNUM *x){
 
 EC_POINT* add(const EC_POINT* a, const EC_POINT* b){
     
-    EC_POINT *res = EC_POINT_new(getGroup());
+    EC_POINT *res = EC_POINT_new(get0Group());
     
-    if (!EC_POINT_add(getGroup(), res, a, b, NULL)){
+    if (!EC_POINT_add(get0Group(), res, a, b, NULL)){
         printf("Error during curve addition\n");
     }
     

@@ -11,6 +11,7 @@
 
 #import <Foundation/Foundation.h>
 #import "P256.h"
+#import "SSS.h"
 
 
 @interface ShamirP256: NSObject

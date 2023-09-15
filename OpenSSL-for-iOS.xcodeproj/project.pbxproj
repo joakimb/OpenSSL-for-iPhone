@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		150275DA2AA7141100462E61 /* ShamirP256.m in Sources */ = {isa = PBXBuildFile; fileRef = 150275D92AA7141100462E61 /* ShamirP256.m */; };
+		152D4AF32AB45B49007ACC8E /* SSS.c in Sources */ = {isa = PBXBuildFile; fileRef = 152D4AF22AB45B49007ACC8E /* SSS.c */; };
 		15FF080B2AA8B08100B2B623 /* BigNum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15FF080A2AA8B08100B2B623 /* BigNum.swift */; };
 		15FF080F2AA9B38000B2B623 /* P256.c in Sources */ = {isa = PBXBuildFile; fileRef = 15FF080E2AA9B38000B2B623 /* P256.c */; };
 		2A1DDC8F1BFB1DF600F7722A /* ViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2A1DDC8E1BFB1DF600F7722A /* ViewController.xib */; };
@@ -44,6 +45,8 @@
 /* Begin PBXFileReference section */
 		150275D82AA713CD00462E61 /* ShamirP256.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShamirP256.h; sourceTree = "<group>"; };
 		150275D92AA7141100462E61 /* ShamirP256.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ShamirP256.m; sourceTree = "<group>"; };
+		152D4AF12AB45B49007ACC8E /* SSS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SSS.h; sourceTree = "<group>"; };
+		152D4AF22AB45B49007ACC8E /* SSS.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = SSS.c; sourceTree = "<group>"; };
 		15FF080A2AA8B08100B2B623 /* BigNum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BigNum.swift; sourceTree = "<group>"; };
 		15FF080D2AA9B38000B2B623 /* P256.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = P256.h; sourceTree = "<group>"; };
 		15FF080E2AA9B38000B2B623 /* P256.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = P256.c; sourceTree = "<group>"; };
@@ -165,6 +168,8 @@
 				150275D92AA7141100462E61 /* ShamirP256.m */,
 				15FF080D2AA9B38000B2B623 /* P256.h */,
 				15FF080E2AA9B38000B2B623 /* P256.c */,
+				152D4AF12AB45B49007ACC8E /* SSS.h */,
+				152D4AF22AB45B49007ACC8E /* SSS.c */,
 				15FF080A2AA8B08100B2B623 /* BigNum.swift */,
 			);
 			path = "OpenSSL-for-iOS";
@@ -371,6 +376,7 @@
 				15FF080F2AA9B38000B2B623 /* P256.c in Sources */,
 				2A3821001BFB5EEB00328618 /* AppDelegate.swift in Sources */,
 				15FF080B2AA8B08100B2B623 /* BigNum.swift in Sources */,
+				152D4AF32AB45B49007ACC8E /* SSS.c in Sources */,
 				2A3821021BFB607A00328618 /* ViewController.swift in Sources */,
 				150275DA2AA7141100462E61 /* ShamirP256.m in Sources */,
 			);

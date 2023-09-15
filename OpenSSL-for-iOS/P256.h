@@ -20,7 +20,7 @@
 #endif /* P256_h */
 
 // get curve group
-EC_GROUP* getGroup(void);
+EC_GROUP* get0Group(void);
 
 // get curve group order p
 const BIGNUM* get0Order(void);
@@ -29,7 +29,7 @@ const BIGNUM* get0Order(void);
 EC_POINT* get0Gen(void);
 
 // get random element in Zp
-BIGNUM* randZp(void);
+BIGNUM* randZp(BN_CTX *ctx);
 
 // helper to print bignum to terminal for debug
 void printBN(const BIGNUM *x);
