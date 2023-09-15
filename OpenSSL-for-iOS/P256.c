@@ -6,30 +6,6 @@
 //  Copyright © 2023 Felix Schulze. All rights reserved.
 //
 
-// ----------- Custom group ---------
-// Define the curve parameters (replace these with your curve's parameters)
-//const BIGNUM *p = ...;  // Prime field
-//const BIGNUM *a = ...;  // Coefficient 'a'
-//const BIGNUM *b = ...;  // Coefficient 'b'
-//const BIGNUM *x = ...;  // x-coordinate of base point
-//const BIGNUM *y = ...;  // y-coordinate of base point
-//const BIGNUM *order = ...;  // Order of the base point
-//const BIGNUM *cofactor = ...;  // Cofactor
-//
-//// Create an EC_GROUP object for the custom curve
-//EC_GROUP *curve_group = EC_GROUP_new_curve_GFp(p, a, b, NULL);
-//
-//if (curve_group == NULL) {
-//    // Handle error
-//    // ...
-//}
-//
-//// Set the generator point, order, and cofactor for the custom curve
-//EC_POINT *generator = EC_POINT_new(curve_group);
-//EC_POINT_set_affine_coordinates_GFp(curve_group, generator, x, y, NULL);
-//EC_GROUP_set_generator(curve_group, generator, order, cofactor);
-//EC_POINT_free(generator);
-
 
 #include "P256.h"
 #include <string.h>
@@ -37,11 +13,38 @@
 static EC_GROUP *group = NULL;
 
 EC_GROUP* getGroup(void){
-        
-    if (!group){
-        group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
-    }
     
+    int toyCurve = 1;
+    
+    if (toyCurve){
+        
+        if (!group){
+            // ----------- Custom group (toy curve EC29 for debugging) ---------
+            BIGNUM *p = BN_new(), *a = BN_new(), *b = BN_new(), *x = BN_new(), *y = BN_new(), *order = BN_new(), *cofactor = BN_new();
+            BN_dec2bn(&p, "29");
+            BN_dec2bn(&a, "4");
+            BN_dec2bn(&b, "20");
+            BN_dec2bn(&x, "1");
+            BN_dec2bn(&y, "5");
+            BN_dec2bn(&order, "37");
+            BN_dec2bn(&cofactor, "1");
+            group = EC_GROUP_new_curve_GFp(p, a, b, NULL);
+            //// Set the generator point, order, and cofactor for the custom curve
+            EC_POINT *generator = EC_POINT_new(group);
+            EC_POINT_set_affine_coordinates_GFp(group, generator, x, y, NULL);
+            EC_GROUP_set_generator(group, generator, order, cofactor);
+            EC_POINT_free(generator);
+
+        }
+        
+    } else {
+        
+        if (!group){
+            group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
+        }
+        
+    }
+   
     if (!group) {
         printf("Error getting group\n");
     }

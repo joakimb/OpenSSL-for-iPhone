@@ -15,6 +15,8 @@
     printBN(x);
 }
 
+
+
 + (NSString *)test:(NSString *) string {
 
     clock_t start_time = clock();
@@ -33,7 +35,7 @@
     BN_CTX *ctx = BN_CTX_new();
     
     //test curve multiplication
-    const numMultiplications = 10000;//*10000;
+    const int numMultiplications = 10000;//*10000;
     const EC_POINT *gen = get0Gen();
     BIGNUM *rand = randZp();
     for (int i=0; i<numMultiplications; i++) {
@@ -89,9 +91,23 @@
 
     
     //testmodexp
+    BIGNUM *resm = BN_new(), *base = BN_new(), *exp = BN_new(), *mod = BN_new();
+    BN_dec2bn(&base, "123");
+    BN_dec2bn(&exp, "456");
+    BN_dec2bn(&mod, "789");
+    
+    BN_CTX *ctx2 = BN_CTX_new();
+    BN_mod_exp(resm, base, exp, mod, ctx2);
+    printf("r (expected 699): \t\t:");
+    printBN(resm);
+    
+    BN_free(resm);
+    BN_free(base);
+    BN_free(exp);
+    BN_free(mod);
+    BN_CTX_free(ctx2);
     
     //test modinv
-    //TODO
     
 
     clock_t end_time = clock();
