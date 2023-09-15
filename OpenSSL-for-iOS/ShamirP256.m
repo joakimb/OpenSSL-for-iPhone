@@ -108,8 +108,21 @@
     BN_CTX_free(ctx2);
     
     //test modinv
+    BIGNUM *resi = BN_new(), *v = BN_new(), *w = BN_new();
     
+    BN_dec2bn(&v, "456");
+    BN_dec2bn(&w, "11");
+   
+    BN_CTX *ctx3 = BN_CTX_new();
+    BN_mod_inverse(resi, v, w, ctx3);//returns NULL if inversese foes not exist
+    printf("r (expected 9): \t\t:");
+    printBN(resi);
 
+    BN_CTX_free(ctx3);
+    BN_free(resi);
+    BN_free(v);
+    BN_free(w);
+    
     clock_t end_time = clock();
     double elapsed_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
     NSString *formattedString = [[NSString alloc] initWithFormat:@"Time: %f seconds\n", elapsed_time];
