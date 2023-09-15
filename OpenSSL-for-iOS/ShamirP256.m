@@ -137,10 +137,14 @@
     const int n = 4;
     EC_POINT *shares[n];
     
+    BN_CTX *ctx4 = BN_CTX_new();
     BIGNUM *seven = BN_new();
     BN_dec2bn(&seven, "7");
     EC_POINT *secret = multiply(get0Gen(), seven);
-    BN_CTX *ctx4 = BN_CTX_new();
+    char *sec = EC_POINT_point2hex(get0Group(), secret, POINT_CONVERSION_UNCOMPRESSED, ctx4);
+    printf("secret: %s\n",sec);
+    OPENSSL_free(secret);
+    
     genShamirShares(shares, secret, t, n);
     
     for(int i = 0; i < n; i++){
@@ -148,6 +152,8 @@
         printf("%s\n",hex_point);
         OPENSSL_free(hex_point);
     }
+    
+    //TODO SUNDAY, test shamir reconstruct (and internal lagrange interpolation)
     
     BN_free(seven);
     BN_CTX_free(ctx4);
