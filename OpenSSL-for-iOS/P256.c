@@ -85,32 +85,45 @@ void printBN(const BIGNUM *x) {
 }
 
 void printPoint(const EC_POINT *p, BN_CTX *ctx){
-    char *hex_point = EC_POINT_point2hex(get0Group(), p, POINT_CONVERSION_UNCOMPRESSED, ctx);
-    printf("%s\n",hex_point);
-    OPENSSL_free(hex_point);
+    
+   //call with NULL to get buffer size needed
+    size_t bufsize = EC_POINT_point2oct(get0Group(), p, POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
+    unsigned char *buf = malloc(bufsize);
+    EC_POINT_point2oct(get0Group(), p, POINT_CONVERSION_UNCOMPRESSED, buf, bufsize, ctx);
+    
+    printf("hex: (");
+    for (size_t i = 1; i <= (bufsize - 1) / 2; i++) {
+        printf("%02X", buf[i]);
+    }
+    printf(", ");
+    for (size_t i = (bufsize - 1) / 2 + 1; i < bufsize; i++) {
+        printf("%02X", buf[i]);
+    }
+    printf("), dec: (");
+        for (size_t i = 1; i <= (bufsize - 1) / 2; i++) {
+        printf("%d", (int)buf[i]);
+    }
+    printf(", ");
+    for (size_t i = (bufsize - 1) / 2 + 1; i < bufsize; i++) {
+        printf("%d", (int)buf[i]);
+    }
+    printf(")\n");
+    
+    free(buf);
 }
-
-//BIGNUM* intToBN(int x){
-//    
-//    BIGNUM *bn = BN_new();
-//    if(!BN_set_word(bn, x)){
-//        printf("Error setting bignum");
-//    }
-//    
-//    return bn;
-//    
-//}
-
 
 BIGNUM* randZp(BN_CTX *ctx){
     
     BIGNUM *r = BN_new(); //init to zero
     
-    if (!BN_rand(r, 256, -1, 0)) { // store a random value in it
-        printf("Error generating random element in Zp\n");
-    }
+//    if (!BN_rand(r, 256, -1, 0)) { // store a random value in it
+//        printf("Error generating random element in Zp\n");
+//    }
+//
+//    BN_mod(r, r, get0Order(), ctx);
     
-    BN_mod(r, r, get0Order(), ctx);
+    //tmp debug
+    BN_set_word(r, 5);
     
     return r;
     

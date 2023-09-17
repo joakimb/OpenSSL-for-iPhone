@@ -69,9 +69,9 @@
     //test modp
     printf("modadd stuff \n");
     BIGNUM *a = BN_new(), *b = BN_new(), *c = BN_new(), *r = BN_new(), *tmp = BN_new();
-//    BN_dec2bn(&a, "3");
-//    BN_dec2bn(&b, "3");
-//    BN_dec2bn(&c, "5");
+    //    BN_dec2bn(&a, "3");
+    //    BN_dec2bn(&b, "3");
+    //    BN_dec2bn(&c, "5");
     BN_set_word(a, 3);
     BN_set_word(b, 3);
     BN_set_word(c, 5);
@@ -133,29 +133,54 @@
     NSLog(formattedString);
     
     //test gen shares
-    const int t = 2;
-    const int n = 4;
+    const int t = 1; // t + 1 needed to reconstruct
+    const int n = 3;
     EC_POINT *shares[n];
     
     BN_CTX *ctx4 = BN_CTX_new();
     BIGNUM *seven = BN_new();
     BN_dec2bn(&seven, "7");
     EC_POINT *secret = multiply(get0Gen(), seven);
-    printf("secret: ");
+    printf("secret: \n");
     printPoint(secret, ctx4);
     
     
     genShamirShares(shares, secret, t, n);
     
-    for(int i = 0; i < n; i++){
+    printf("shares: \n");
+    for (int i = 0; i < n; i++){
         printPoint(shares[i],ctx4);
     }
     
-    //TODO SUNDAY, test shamir reconstruct (and internal lagrange interpolation)
+    //reconstruct with 2nd and thrid share
+    int shareIndexes[t+1];
+    EC_POINT *recShares[t+1];
+    for (int i = 0; i < t+1; i++) {
+        shareIndexes[i] = i + 2;//user indexes 1 to t + 1
+        recShares[i] = shares[i + 1];
+        printf("share %d on loc %d\n",i+2, i+1 );
+    }
+    EC_POINT *reconstructed = gShamirReconstruct(recShares, shareIndexes, t, t + 1);
     
+    printf("reconstructed: ");
+    printPoint(reconstructed, ctx4);
+        
+    //AFTER LUNCH, TEST toPoint in both languages and see if differs. Seems fine
+//    for (int i = 1; i <= 40; i++) {
+//        BIGNUM *bn = BN_new();
+//        BN_set_word(bn, i);
+//        EC_POINT *poi = multiply(get0Gen(), bn);
+//        printf("%d : ",i);
+//        printPoint(poi, ctx4);
+//        BN_free(bn);
+//        EC_POINT_free(poi);
+//
+//    }
+        
     BN_free(seven);
     BN_CTX_free(ctx4);
     EC_POINT_free(secret);
+    EC_POINT_free(reconstructed);
     return @"";
 }
 
