@@ -129,26 +129,3 @@ BIGNUM* randZp(BN_CTX *ctx){
     
 }
 
-EC_POINT* multiply(const EC_POINT* point, const BIGNUM *x){
-    
-    EC_POINT *res = EC_POINT_new(get0Group());
-    
-    if(!EC_POINT_mul(get0Group(), res, NULL, point, x, NULL)){
-//    if(!EC_POINT_mul(getGroup(), res, x, point, NULL, NULL)){
-        printf("Error during curve multiplication\n");
-    }
-    
-    return res;
-    
-}
-
-EC_POINT* add(const EC_POINT* a, const EC_POINT* b){
-    
-    EC_POINT *res = EC_POINT_new(get0Group());
-    
-    if (!EC_POINT_add(get0Group(), res, a, b, NULL)){
-        printf("Error during curve addition\n");
-    }
-    
-    return res;
-}

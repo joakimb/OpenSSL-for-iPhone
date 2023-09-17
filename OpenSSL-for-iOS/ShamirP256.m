@@ -29,7 +29,8 @@
     BN_CTX *ctx4 = BN_CTX_new();
     BIGNUM *seven = BN_new();
     BN_dec2bn(&seven, "7");
-    EC_POINT *secret = multiply(get0Gen(), seven);
+    EC_POINT *secret = EC_POINT_new(get0Group());
+    EC_POINT_mul(get0Group(), secret, NULL, get0Gen(), seven, ctx4);
     printf("secret: \n");
     printPoint(secret, ctx4);
     

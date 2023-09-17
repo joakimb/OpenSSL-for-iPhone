@@ -39,7 +39,8 @@ void genShamirShares(EC_POINT **shares, EC_POINT *secret, const int t, const int
             
         }
         
-        shares[i - 1] = multiply(get0Gen(), peval);
+        shares[i - 1] = EC_POINT_new(get0Group());//multiply(get0Gen(), peval);
+        EC_POINT_mul(get0Group(), shares[i - 1], NULL, get0Gen(), peval, ctx);
         EC_POINT_add(get0Group(), shares[i - 1], shares[i - 1], secret, ctx);
         
     }
@@ -98,25 +99,25 @@ EC_POINT* gShamirReconstruct(EC_POINT *shares[], int shareIndexes[], int t, int 
         return NULL;
     }
     
-    BIGNUM* zero = BN_new();
-    BN_set_word(zero, 0);
-    EC_POINT *sum = multiply(get0Gen(), zero); //verify that this is correct after sleeping
-    BN_free(zero);
     BN_CTX *ctx = BN_CTX_new();
+    BIGNUM* zero = BN_new();
+    EC_POINT *term = EC_POINT_new(get0Group());
+    BN_set_word(zero, 0);
+    EC_POINT *sum = EC_POINT_new(get0Group());
+    EC_POINT_mul(get0Group(), sum, NULL, get0Gen(), zero, ctx);
     
     BIGNUM *lagrangeProd = BN_new();
-    BIGNUM *term = BN_new();
     
     for (int i = 0; i < length; i++) {
         
         lagX(lagrangeProd, shareIndexes, length, i, ctx);
-        EC_POINT *term = multiply(shares[i], lagrangeProd);//consider refactor to make multiply take result as an input pointer, to allow reuse and avoid multiple allocations
+        EC_POINT_mul(get0Group(), term, NULL, shares[i], lagrangeProd, ctx);
         EC_POINT_add(get0Group(), sum, sum, term, ctx);
-        EC_POINT_free(term);
     }
     
+    EC_POINT_free(term);
     BN_free(lagrangeProd);
-    BN_free(term);
+    BN_free(zero);
     BN_CTX_free(ctx);
     
     return sum;

@@ -37,8 +37,3 @@ void printBN(const BIGNUM *x);
 // helper to print point to terminal for debug
 void printPoint(const EC_POINT *p, BN_CTX *ctx);
 
-// multiply Point with int < p
-EC_POINT* multiply(const EC_POINT* p, const BIGNUM *x);
-
-// add points
-EC_POINT* add(const EC_POINT* a, const EC_POINT* b);
