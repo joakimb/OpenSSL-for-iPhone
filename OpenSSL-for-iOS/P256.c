@@ -10,13 +10,14 @@
 #include "P256.h"
 #include <string.h>
 
+const int debug = 0;
+
 static EC_GROUP *group = NULL;
 
 EC_GROUP* get0Group(void){
     
-    int toyCurve = 1;
-    
-    if (toyCurve){
+    if (debug){
+    //use toy curve
         
         if (!group){
             // ----------- Custom group (toy curve EC29 for debugging) ---------
@@ -116,14 +117,17 @@ BIGNUM* randZp(BN_CTX *ctx){
     
     BIGNUM *r = BN_new(); //init to zero
     
-//    if (!BN_rand(r, 256, -1, 0)) { // store a random value in it
-//        printf("Error generating random element in Zp\n");
-//    }
-//
-//    BN_mod(r, r, get0Order(), ctx);
     
-    //tmp debug
-    BN_set_word(r, 5);
+    if (!BN_rand(r, 256, -1, 0)) { // store a random value in it
+        printf("Error generating random element in Zp\n");
+    }
+
+    if (debug){
+        //eliminate randomness, all rands are five
+        BN_set_word(r, 5);
+    } else {
+        BN_mod(r, r, get0Order(), ctx);
+    }
     
     return r;
     
