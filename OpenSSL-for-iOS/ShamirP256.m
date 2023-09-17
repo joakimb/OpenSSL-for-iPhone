@@ -141,16 +141,14 @@
     BIGNUM *seven = BN_new();
     BN_dec2bn(&seven, "7");
     EC_POINT *secret = multiply(get0Gen(), seven);
-    char *sec = EC_POINT_point2hex(get0Group(), secret, POINT_CONVERSION_UNCOMPRESSED, ctx4);
-    printf("secret: %s\n",sec);
-    OPENSSL_free(secret);
+    printf("secret: ");
+    printPoint(secret, ctx4);
+    
     
     genShamirShares(shares, secret, t, n);
     
     for(int i = 0; i < n; i++){
-        char *hex_point = EC_POINT_point2hex(get0Group(), shares[i], POINT_CONVERSION_UNCOMPRESSED, ctx4);
-        printf("%s\n",hex_point);
-        OPENSSL_free(hex_point);
+        printPoint(shares[i],ctx4);
     }
     
     //TODO SUNDAY, test shamir reconstruct (and internal lagrange interpolation)

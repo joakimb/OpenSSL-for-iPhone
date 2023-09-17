@@ -34,6 +34,9 @@ BIGNUM* randZp(BN_CTX *ctx);
 // helper to print bignum to terminal for debug
 void printBN(const BIGNUM *x);
 
+// helper to print point to terminal for debug
+void printPoint(const EC_POINT *p, BN_CTX *ctx);
+
 // multiply Point with int < p
 EC_POINT* multiply(const EC_POINT* p, const BIGNUM *x);
 

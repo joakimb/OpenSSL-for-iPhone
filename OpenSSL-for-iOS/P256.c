@@ -84,6 +84,12 @@ void printBN(const BIGNUM *x) {
     
 }
 
+void printPoint(const EC_POINT *p, BN_CTX *ctx){
+    char *hex_point = EC_POINT_point2hex(get0Group(), p, POINT_CONVERSION_UNCOMPRESSED, ctx);
+    printf("%s\n",hex_point);
+    OPENSSL_free(hex_point);
+}
+
 //BIGNUM* intToBN(int x){
 //    
 //    BIGNUM *bn = BN_new();
