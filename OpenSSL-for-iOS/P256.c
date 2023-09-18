@@ -86,6 +86,8 @@ void printBN(const BIGNUM *x) {
 }
 
 void printPoint(const EC_POINT *p, BN_CTX *ctx){
+   
+    //using uncompressed point format for printing
     
    //call with NULL to get buffer size needed
     size_t bufsize = EC_POINT_point2oct(get0Group(), p, POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);

@@ -22,6 +22,8 @@
     clock_t start_time = clock();
     
     //test gen shares
+//    const int t = 1000; // t + 1 needed to reconstruct
+//    const int n = 2000;
     const int t = 1; // t + 1 needed to reconstruct
     const int n = 3;
     EC_POINT *shares[n];
