@@ -123,3 +123,50 @@ EC_POINT* gShamirReconstruct(EC_POINT *shares[], int shareIndexes[], int t, int 
     return sum;
     
 }
+
+int test_shamir_sharing(void) {
+//    const int t = 1000; // t + 1 needed to reconstruct
+//    const int n = 2000;
+    const int t = 1; // t + 1 needed to reconstruct
+    const int n = 3;
+    EC_POINT *shares[n];
+    
+    BN_CTX *ctx = BN_CTX_new();
+    BIGNUM *seven = BN_new();
+    BN_dec2bn(&seven, "7");
+    EC_POINT *secret = EC_POINT_new(get0Group());
+    EC_POINT_mul(get0Group(), secret, NULL, get0Gen(), seven, ctx);
+    printf("secret:\n");
+    printPoint(secret, ctx);
+    
+    genShamirShares(shares, secret, t, n);
+#if 0
+    printf("shares:\n");
+    for (int i = 0; i < n; i++){
+        printPoint(shares[i],ctx);
+    }
+#endif
+    //reconstruct with 2nd and thrid share
+    int shareIndexes[t+1];
+    EC_POINT *recShares[t+1];
+    for (int i = 0; i < t+1; i++) {
+        shareIndexes[i] = i + 2;//user indexes 1 to t + 1
+        recShares[i] = shares[i + 1];
+        //printf("share %d on loc %d\n",i+2, i+1 );
+    }
+    EC_POINT *reconstructed = gShamirReconstruct(recShares, shareIndexes, t, t + 1);
+
+    int res = EC_POINT_cmp(get0Group(), secret, reconstructed, ctx);
+
+    printf("reconstructed:\n");
+    printPoint(reconstructed, ctx);
+
+    printf("Reconstruction %s\n", res ? "NOT OK" : "OK");
+
+    BN_free(seven);
+    EC_POINT_free(secret);
+    EC_POINT_free(reconstructed);
+    BN_CTX_free(ctx);
+    
+    return res;
+}

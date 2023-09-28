@@ -20,16 +20,31 @@
 #endif /* P256_h */
 
 // get curve group
-EC_GROUP* get0Group(void);
+const EC_GROUP* get0Group(void);
 
 // get curve group order p
 const BIGNUM* get0Order(void);
 
 // get curve group generator
-EC_POINT* get0Gen(void);
+const EC_POINT* get0Gen(void);
+
+// get curve group order
+const BIGNUM* get0OrderFromGroup(const EC_GROUP *group);
+
+    // get curve group generator
+const EC_POINT* get0GeneratorFromGroup(const EC_GROUP *group);
 
 // get random element in Zp
-BIGNUM* randZp(BN_CTX *ctx);
+BIGNUM *randZp(BN_CTX *ctx);
+
+// get random point on curve
+EC_POINT *randPoint(const EC_GROUP *group, BN_CTX *ctx);
+
+// r = bn * point
+void point_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *bn, const EC_POINT *point, BN_CTX *ctx);
+
+// return BN as point on curve (generator^bn)
+EC_POINT* bn2point(const EC_GROUP *group, const BIGNUM *bn, BN_CTX *ctx);
 
 // helper to print bignum to terminal for debug
 void printBN(const BIGNUM *x);

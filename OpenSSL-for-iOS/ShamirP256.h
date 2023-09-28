@@ -12,7 +12,7 @@
 #import <Foundation/Foundation.h>
 #import "P256.h"
 #import "SSS.h"
-
+#import "NIZK.h"
 
 @interface ShamirP256: NSObject
 

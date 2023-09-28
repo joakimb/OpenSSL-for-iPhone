@@ -12,7 +12,10 @@
 #include <stdio.h>
 #include "P256.h"
 
-#endif /* SSS_h */
 //array of size n for resulting shares, the secret, and t and n
 void genShamirShares(EC_POINT **shares, EC_POINT *secret, const int t, const int n);
 EC_POINT* gShamirReconstruct(EC_POINT *shares[], int shareIndexes[], int t, int length);
+
+int test_shamir_sharing(void);
+
+#endif /* SSS_h */

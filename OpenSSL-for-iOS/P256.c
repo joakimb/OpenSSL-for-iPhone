@@ -7,14 +7,15 @@
 //
 
 
-#include "P256.h"
 #include <string.h>
+#include <assert.h>
+#include "P256.h"
 
 const int debug = 0;
 
 static EC_GROUP *group = NULL;
 
-EC_GROUP* get0Group(void){
+const EC_GROUP* get0Group(void){
     
     if (debug){
     //use toy curve
@@ -55,34 +56,42 @@ EC_GROUP* get0Group(void){
 }
 
 const BIGNUM* get0Order(void) {
-    
-    //using get0 means ownership is reteined by parent object
+        //using get0 means ownership is reteined by parent object
     const BIGNUM *order = EC_GROUP_get0_order(get0Group());
-    
     if (order == NULL) {
         printf("Error getting group order\n");
     }
-    
     return order;
 }
 
-EC_POINT* get0Gen(void) {
-    
-    //using get0 means ownership is reteined by parent object
+const EC_POINT* get0Gen(void) {
+        //using get0 means ownership is reteined by parent object
     const EC_POINT *gen = EC_GROUP_get0_generator(get0Group());
     if (gen == NULL) {
         printf("Error getting group order\n");
     }
-    
     return gen;
 }
 
+const BIGNUM* get0OrderFromGroup(const EC_GROUP *group) {
+        //using get0 means ownership is reteined by parent object
+    const BIGNUM *order = EC_GROUP_get0_order(group);
+    assert(order && "getOrderFromGroup: order not retrieved");
+    return order;
+}
+
+const EC_POINT* get0GeneratorFromGroup(const EC_GROUP *group) {
+        //using get0 means ownership is reteined by parent object
+    const EC_POINT *generator = EC_GROUP_get0_generator(group);
+    assert(generator && "get0GeneratorFromGroup: generator not retrieved");
+    return generator;
+}
+
+
 void printBN(const BIGNUM *x) {
-    
     char *num= BN_bn2dec(x);
     printf("%s\n", num);
     OPENSSL_free(num);
-    
 }
 
 void printPoint(const EC_POINT *p, BN_CTX *ctx){
@@ -98,20 +107,20 @@ void printPoint(const EC_POINT *p, BN_CTX *ctx){
     for (size_t i = 1; i <= (bufsize - 1) / 2; i++) {
         printf("%02X", buf[i]);
     }
-    printf(", ");
+    printf(",\n      ");
     for (size_t i = (bufsize - 1) / 2 + 1; i < bufsize; i++) {
         printf("%02X", buf[i]);
     }
-    printf("), dec: (");
+    printf(")\ndec: (");
         for (size_t i = 1; i <= (bufsize - 1) / 2; i++) {
         printf("%d", (int)buf[i]);
     }
-    printf(", ");
+    printf(",\n      ");
     for (size_t i = (bufsize - 1) / 2 + 1; i < bufsize; i++) {
         printf("%d", (int)buf[i]);
     }
     printf(")\n");
-    
+
     free(buf);
 }
 
@@ -135,3 +144,39 @@ BIGNUM* randZp(BN_CTX *ctx){
     
 }
 
+// get random point on curve
+EC_POINT *randPoint(const EC_GROUP *group, BN_CTX *ctx) {
+    BIGNUM *bn = randZp(ctx);
+    EC_POINT *point = EC_POINT_new(group);
+    EC_POINT_bn2point(group, bn, point, ctx);
+    BN_free(bn);
+    return point;
+}
+
+void point_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *bn, const EC_POINT *point, BN_CTX *ctx) {
+    int ret = EC_POINT_mul(group, r, NULL, point, bn, ctx);
+    if (ret != 1) {
+        printf("\n*** point_mul ERROR 1 ***\n");
+    }
+    if (!BN_is_zero(bn) && EC_POINT_is_at_infinity(group, point)) {
+        printf("\n*** point_mul ERROR 2 ***\n");
+    }
+    if (BN_is_zero(bn) && !EC_POINT_is_at_infinity(group, point)) {
+        printf("\n*** point_mul ERROR 3 ***\n");
+    }
+}
+
+EC_POINT* bn2point(const EC_GROUP *group, const BIGNUM *bn, BN_CTX *ctx) {
+    EC_POINT *point = EC_POINT_new(group);
+    int ret = EC_POINT_mul(group, point, bn, NULL, NULL, ctx);
+    if (ret != 1) {
+        printf("\n*** bn2point ERROR 1 ***\n");
+    }
+    if (!BN_is_zero(bn) && EC_POINT_is_at_infinity(group, point)) {
+        printf("\n*** bn2point ERROR 2 ***\n");
+    }
+    if (BN_is_zero(bn) && !EC_POINT_is_at_infinity(group, point)) {
+        printf("\n*** bn2point ERROR 3 ***\n");
+    }
+    return point;
+}

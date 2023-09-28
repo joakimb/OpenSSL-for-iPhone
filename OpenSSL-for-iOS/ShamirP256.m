@@ -19,54 +19,17 @@
 
 + (NSString *)test:(NSString *) string {
     
-    clock_t start_time = clock();
+    clock_t start_time_total = clock();
+//    int ret = test_shamir_sharing();
+//    int ret = nizk_dl_test_suite(1);
+    int ret = nizk_dl_eq_test_suite(1);
+
+    clock_t end_time_total = clock();
+    double elapsed_time_total = (double)(end_time_total - start_time_total) / CLOCKS_PER_SEC;
     
-    //test gen shares
-//    const int t = 1000; // t + 1 needed to reconstruct
-//    const int n = 2000;
-    const int t = 1; // t + 1 needed to reconstruct
-    const int n = 3;
-    EC_POINT *shares[n];
-    
-    BN_CTX *ctx = BN_CTX_new();
-    BIGNUM *seven = BN_new();
-    BN_dec2bn(&seven, "7");
-    EC_POINT *secret = EC_POINT_new(get0Group());
-    EC_POINT_mul(get0Group(), secret, NULL, get0Gen(), seven, ctx);
-    printf("secret: \n");
-    printPoint(secret, ctx);
-    
-    
-    genShamirShares(shares, secret, t, n);
-    
-    printf("shares: \n");
-    for (int i = 0; i < n; i++){
-        printPoint(shares[i],ctx);
-    }
-    
-    //reconstruct with 2nd and thrid share
-    int shareIndexes[t+1];
-    EC_POINT *recShares[t+1];
-    for (int i = 0; i < t+1; i++) {
-        shareIndexes[i] = i + 2;//user indexes 1 to t + 1
-        recShares[i] = shares[i + 1];
-        //printf("share %d on loc %d\n",i+2, i+1 );
-    }
-    EC_POINT *reconstructed = gShamirReconstruct(recShares, shareIndexes, t, t + 1);
-    
-    printf("reconstructed: ");
-    printPoint(reconstructed, ctx);
-    
-    BN_free(seven);
-    BN_CTX_free(ctx);
-    EC_POINT_free(secret);
-    EC_POINT_free(reconstructed);
-    
-    clock_t end_time = clock();
-    double elapsed_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
-    NSString *formattedString = [[NSString alloc] initWithFormat:@"Time: %f seconds\n", elapsed_time];
+    NSString *formattedString = [[NSString alloc] initWithFormat:@"Test suite %s, Time: %f seconds\n", ret ? "NOT OK" : "OK", elapsed_time_total];
     NSLog(formattedString);
-    
+
     return @"";
 }
 
