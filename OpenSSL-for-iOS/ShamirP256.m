@@ -12,7 +12,7 @@
 @implementation ShamirP256
 
 + (void) print: (BIGNUM *) x {
-    printBN(x);
+    print_bn(x);
 }
 
 
@@ -20,6 +20,7 @@
 + (NSString *)test:(NSString *) string {
     
     clock_t start_time_total = clock();
+
 //    int ret = test_shamir_sharing();
 //    int ret = nizk_dl_test_suite(1);
     int ret = nizk_dl_eq_test_suite(1);

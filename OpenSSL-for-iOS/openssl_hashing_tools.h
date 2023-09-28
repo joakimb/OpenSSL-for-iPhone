@@ -6,9 +6,7 @@
 
 #ifndef OPENSSL_HASHING_TOOLS_H
 #define OPENSSL_HASHING_TOOLS_H
-#include <stdio.h>
 #include <openssl/sha.h>
-#include <assert.h>
 #include "P256.h"
 
 void openssl_hash_init(SHA256_CTX *sha_ctx);

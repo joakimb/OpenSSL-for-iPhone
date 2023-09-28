@@ -3,6 +3,8 @@
 //
 //  Created by Paul Stankovski Wagner on 2023-09-27.
 //
+#include <stdio.h>
+#include <assert.h>
 #include "openssl_hashing_tools.h"
 
 void openssl_hash_init(SHA256_CTX *ctx) {

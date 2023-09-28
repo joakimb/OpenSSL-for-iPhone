@@ -1,0 +1,217 @@
+//
+//  nizk_dl_eq.c
+//  OpenSSL-for-iOS
+//
+//  Created by Paul Stankovski Wagner on 2023-09-29.
+//  Copyright © 2023 Felix Schulze. All rights reserved.
+//
+
+#include <stdio.h>
+#include <assert.h>
+#include "nizk_dl_eq.h"
+#include "openssl_hashing_tools.h"
+
+void nizk_dl_eq_proof_free(nizk_dl_eq_proof *pi) {
+    assert(pi && "nizk_dl_eq_proof_free: usage error, no proof passed");
+    assert(pi->Ra && "nizk_dl_eq_proof_free: usage error, Ra is NULL");
+    assert(pi->Rb && "nizk_dl_eq_proof_free: usage error, Rb is NULL");
+    assert(pi->z && "nizk_dl_eq_proof_free: usage error, z is NULL");
+    EC_POINT_free(pi->Ra);
+    pi->Ra = NULL; // superflous safety
+    EC_POINT_free(pi->Rb);
+    pi->Rb = NULL; // superflous safety
+    BN_free(pi->z);
+    pi->z = NULL; // superflous safety
+}
+
+void nizk_dl_eq_prove(const EC_GROUP *group, const BIGNUM *exp, const EC_POINT *a, const EC_POINT *A, const EC_POINT *b, const EC_POINT *B, nizk_dl_eq_proof *pi, BN_CTX *ctx) {
+    const BIGNUM *order = get0_order(group);
+
+    // compute Ra
+    BIGNUM *r = random_bignum(order, ctx); // draw r uniformly at random
+    pi->Ra = EC_POINT_new(group);
+    EC_POINT_mul(group, pi->Ra, NULL, a, r, ctx);
+
+    // compute Rb
+    pi->Rb = EC_POINT_new(group);
+    EC_POINT_mul(group, pi->Rb, NULL, b, r, ctx);
+
+    // compute c
+    BIGNUM *c = openssl_hash_pppppp2bn(group, a, A, b, B, pi->Ra, pi->Rb, ctx);
+
+    // compute z
+    pi->z = BN_new();
+    int ret = BN_mod_mul(pi->z, c, exp, order, ctx);
+    assert(ret == 1 && "nizk_dl_eq_prove: BN_mod_mul computation failed");
+    ret = BN_mod_sub(pi->z, r, pi->z, order, ctx);
+    assert(ret == 1 && "nizk_dl_eq_prove: BN_mod_sub computation failed");
+
+    // cleanup
+    BN_free(c);
+    BN_free(r);
+    /* implicitly return pi = (Ra, Rb, z) */
+}
+
+int nizk_dl_eq_verify(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *A, const EC_POINT *b, const EC_POINT *B, const nizk_dl_eq_proof *pi, BN_CTX *ctx) {
+    // compute c
+    BIGNUM *c = openssl_hash_pppppp2bn(group, a, A, b, B, pi->Ra, pi->Rb, ctx);
+
+    /* check if pi->Ra = [pi->z]a + [c]A */
+    EC_POINT *Ra_prime = EC_POINT_new(group);
+    const EC_POINT *a_points[] = { a, A };
+    const BIGNUM *bns[] = { pi->z, c };
+    EC_POINTs_mul(group, Ra_prime, NULL, 2, a_points, bns, ctx);
+    int ret = EC_POINT_cmp(group, Ra_prime, pi->Ra, ctx);
+    assert(ret != -1 && "nizk_dl_eq_verify: error in EC_POINT_cmp(Ra_prime, Ra)");
+    EC_POINT_free(Ra_prime);
+    if (ret == 1) { // not equal
+        BN_free(c);
+        return 1; // verification failed
+    }
+
+    /* check if pi->Rb = [pi->z]b + [c]B */
+    EC_POINT *Rb_prime = EC_POINT_new(group);
+    const EC_POINT *b_points[] = { b, B };
+    EC_POINTs_mul(group, Rb_prime, NULL, 2, b_points, bns, ctx);
+    ret = EC_POINT_cmp(group, Rb_prime, pi->Rb, ctx);
+    assert(ret != -1 && "nizk_dl_eq_verify: error in EC_POINT_cmp(Rb_prime, Rb)");
+    EC_POINT_free(Rb_prime);
+    if (ret == 1) { // not equal
+        BN_free(c);
+        return 1; // verification failed
+    }
+
+    // cleanup
+    BN_free(c);
+
+    return 0; // verification successful
+}
+
+/*
+ *
+ *  nizk_dl_eq tests
+ *
+ */
+static int nizk_dl_eq_test_1(int print) {
+    const EC_GROUP *group = get0_group();
+    BN_CTX *ctx = BN_CTX_new();
+    BIGNUM *exp = BN_new();
+    BN_dec2bn(&exp, "7");
+    BIGNUM *exp_bad = BN_new();
+    BN_dec2bn(&exp_bad, "6");
+
+    EC_POINT *a = random_point(group, ctx);
+    EC_POINT *A = EC_POINT_new(group);
+    EC_POINT_mul(group, A, NULL, a, exp, ctx);
+
+    EC_POINT *b = random_point(group, ctx);
+    EC_POINT *B = EC_POINT_new(group);
+    EC_POINT_mul(group, B, NULL, b, exp, ctx);
+    
+    // produce correct proof and verify
+    nizk_dl_eq_proof pi;
+    nizk_dl_eq_prove(group, exp, a, A, b, B, &pi, ctx);
+    int ret1 = nizk_dl_eq_verify(group, a, A, b, B, &pi, ctx);
+
+    if (print) {
+        printf("Test 1 part 1 %s: Correct NIZK DL EQ Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+    }
+
+    // negative tests
+    // try to verify incorrect proof (bad B-value)
+    EC_POINT *B_bad = EC_POINT_new(group);
+    EC_POINT_mul(group, B_bad, NULL, b, exp_bad, ctx);
+    int ret2 = nizk_dl_eq_verify(group, a, A, b, B_bad, &pi, ctx);
+    if (print) {
+        if (ret2) {
+            printf("Test 1 part 2 OK: Incorrect NIZK DL EQ Proof not accepted (which is CORRECT)\n");
+        } else {
+            printf("Test 1 part 2 NOT OK: Incorrect NIZK DL EQ Proof IS accepted (which is an ERROR)\n");
+        }
+    }
+
+    // cleanup
+    nizk_dl_eq_proof_free(&pi);
+    EC_POINT_free(a);
+    EC_POINT_free(A);
+    EC_POINT_free(b);
+    EC_POINT_free(B);
+    EC_POINT_free(B_bad);
+    BN_free(exp);
+    BN_free(exp_bad);
+    BN_CTX_free(ctx);
+
+    // return test results
+    return !(ret1 == 0 && ret2 != 0);
+}
+
+static int nizk_dl_eq_test_2(int print) {
+    const EC_GROUP *group = get0_group();
+    BN_CTX *ctx = BN_CTX_new();
+    BIGNUM *exp = BN_new();
+    BN_dec2bn(&exp, "7");
+    BIGNUM *exp_bad = BN_new();
+    BN_dec2bn(&exp_bad, "6");
+
+    EC_POINT *a = random_point(group, ctx);
+    EC_POINT *A = EC_POINT_new(group);
+    EC_POINT_mul(group, A, NULL, a, exp, ctx);
+
+    EC_POINT *b = random_point(group, ctx);
+    EC_POINT *B = EC_POINT_new(group);
+    EC_POINT_mul(group, B, NULL, b, exp, ctx);
+    
+    // produce correct proof and verify
+    nizk_dl_eq_proof pi;
+    nizk_dl_eq_prove(group, exp, a, A, b, B, &pi, ctx);
+    int ret1 = nizk_dl_eq_verify(group, a, A, b, B, &pi, ctx);
+
+    if (print) {
+        printf("Test 1 part 1 %s: Correct NIZK DL EQ Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+    }
+
+    // negative tests
+    // try to verify incorrect proof (bad B-value)
+    EC_POINT *A_bad = EC_POINT_new(group);
+    EC_POINT_mul(group, A_bad, NULL, a, exp_bad, ctx);
+    int ret2 = nizk_dl_eq_verify(group, a, A_bad, b, B, &pi, ctx);
+    if (print) {
+        if (ret2) {
+            printf("Test 1 part 2 OK: Incorrect NIZK DL EQ Proof not accepted (which is CORRECT)\n");
+        } else {
+            printf("Test 1 part 2 NOT OK: Incorrect NIZK DL EQ Proof IS accepted (which is an ERROR)\n");
+        }
+    }
+
+    // cleanup
+    nizk_dl_eq_proof_free(&pi);
+    EC_POINT_free(a);
+    EC_POINT_free(A);
+    EC_POINT_free(A_bad);
+    EC_POINT_free(b);
+    EC_POINT_free(B);
+    BN_free(exp);
+    BN_free(exp_bad);
+    BN_CTX_free(ctx);
+
+    // return test results
+    return !(ret1 == 0 && ret2 != 0);
+}
+
+typedef int (*test_function)(int);
+
+static test_function test_suite[] = {
+    &nizk_dl_eq_test_1,
+    &nizk_dl_eq_test_2
+};
+
+int nizk_dl_eq_test_suite(int print) {
+    int num_tests = sizeof(test_suite)/sizeof(test_function);
+    int ret = 0;
+    for (int i=0; i<num_tests; i++) {
+        if (test_suite[i](print)) {
+            ret = 1;
+        }
+    }
+    return ret;
+}
