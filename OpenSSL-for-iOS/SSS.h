@@ -6,15 +6,13 @@
 //  Copyright © 2023 Felix Schulze. All rights reserved.
 //
 
-#ifndef SSS_h
-#define SSS_h
-#include <stdio.h>
+#ifndef SSS_H
+#define SSS_H
 #include "P256.h"
 
 // array of size n for resulting shares, the secret, and t and n
-void shamir_shares_generate(EC_POINT **shares, EC_POINT *secret, const int t, const int n);
-EC_POINT* shamir_shares_reconstruct(EC_POINT *shares[], int shareIndexes[], int t, int length);
+void shamir_shares_generate(const EC_GROUP *group, EC_POINT *shares[], EC_POINT *secret, const int t, const int n, BN_CTX *ctx);
+EC_POINT *shamir_shares_reconstruct(const EC_GROUP *group, EC_POINT *shares[], int shareIndexes[], int t, int length, BN_CTX *ctx);
+int shamir_shares_test_suite(int print);
 
-int test_shamir_sharing(void);
-
-#endif /* SSS_h */
+#endif /* SSS_H */

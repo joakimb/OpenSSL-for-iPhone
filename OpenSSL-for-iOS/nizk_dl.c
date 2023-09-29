@@ -87,8 +87,9 @@ static int nizk_dl_test_1(int print) {
     EC_POINT *secret = EC_POINT_new(group);
     EC_POINT_mul(group, secret, seven, NULL, NULL, ctx);
     if (print) {
-        printf("secret:\n");
+        printf("secret: ");
         print_point(group, secret, ctx);
+        printf("\n");
     }
     
     // test 1: produce correct proof and verify
@@ -119,8 +120,9 @@ static int nizk_dl_test_2(int print) {
     EC_POINT *secret = EC_POINT_new(group);
     EC_POINT_mul(group, secret, seven, NULL, NULL, ctx);
     if (print) {
-        printf("secret:\n");
+        printf("secret: ");
         print_point(group, secret, ctx);
+        printf("\n");
     }
 
     // produce correct proof and verify
@@ -162,8 +164,9 @@ static int nizk_dl_test_3(int print) {
     EC_POINT *secret = EC_POINT_new(group);
     EC_POINT_mul(group, secret, seven, NULL, NULL, ctx);
     if (print) {
-        printf("secret:\n");
+        printf("secret: ");
         print_point(group, secret, ctx);
+        printf("\n");
     }
 
     // produce correct proof and verify

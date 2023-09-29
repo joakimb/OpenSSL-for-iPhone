@@ -71,32 +71,40 @@ void print_bn(const BIGNUM *x) {
 }
 
 void print_point(const EC_GROUP *group, const EC_POINT *p, BN_CTX *ctx){
-   
-    //using uncompressed point format for printing
-    
-   //call with NULL to get buffer size needed
+
+    // using uncompressed point format for printing
+
+    // call with NULL to get buffer size needed
+    assert(group && "print_point: usage error, no group");
+    assert(p && "print_point: usage error, no point");
+    assert(ctx && "print_point: usage error, no ctx");
     size_t bufsize = EC_POINT_point2oct(group, p, POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
     unsigned char *buf = malloc(bufsize);
+    assert(buf && "print_point: allocation error");
     EC_POINT_point2oct(group, p, POINT_CONVERSION_UNCOMPRESSED, buf, bufsize, ctx);
-    
-    printf("hex: (");
+
+    // print point coordinates in hex
+    printf("(");
     for (size_t i = 0; i <= (bufsize - 1) / 2; i++) {
         printf("%02X", buf[i]);
     }
-    printf(",\n      ");
+    printf(", ");
     for (size_t i = (bufsize - 1) / 2 + 1; i < bufsize; i++) {
         printf("%02X", buf[i]);
     }
-    printf(")\ndec: (");
+    printf(")");
+#if 0
+    // print point coordinates in dec
+    printf("(");
         for (size_t i = 0; i <= (bufsize - 1) / 2; i++) {
         printf("%d", (int)buf[i]);
     }
-    printf(",\n      ");
+    printf(",\n ");
     for (size_t i = (bufsize - 1) / 2 + 1; i < bufsize; i++) {
         printf("%d", (int)buf[i]);
     }
     printf(")\n");
-
+#endif
     free(buf);
 }
 

@@ -12,6 +12,7 @@
 		15BFDB692AC43C8E00249EF2 /* openssl_hashing_tools.c in Sources */ = {isa = PBXBuildFile; fileRef = 15BFDB682AC43C8E00249EF2 /* openssl_hashing_tools.c */; };
 		15BFDB6C2AC63B0900249EF2 /* nizk_dl.c in Sources */ = {isa = PBXBuildFile; fileRef = 15BFDB6B2AC63B0900249EF2 /* nizk_dl.c */; };
 		15BFDB6F2AC63C2A00249EF2 /* nizk_dl_eq.c in Sources */ = {isa = PBXBuildFile; fileRef = 15BFDB6E2AC63C2A00249EF2 /* nizk_dl_eq.c */; };
+		15BFDB722AC7194000249EF2 /* nizk_reshare.c in Sources */ = {isa = PBXBuildFile; fileRef = 15BFDB712AC7194000249EF2 /* nizk_reshare.c */; };
 		15FF080B2AA8B08100B2B623 /* BigNum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15FF080A2AA8B08100B2B623 /* BigNum.swift */; };
 		15FF080F2AA9B38000B2B623 /* P256.c in Sources */ = {isa = PBXBuildFile; fileRef = 15FF080E2AA9B38000B2B623 /* P256.c */; };
 		2A1DDC8F1BFB1DF600F7722A /* ViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2A1DDC8E1BFB1DF600F7722A /* ViewController.xib */; };
@@ -56,6 +57,8 @@
 		15BFDB6B2AC63B0900249EF2 /* nizk_dl.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = nizk_dl.c; sourceTree = "<group>"; };
 		15BFDB6D2AC63C2A00249EF2 /* nizk_dl_eq.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = nizk_dl_eq.h; sourceTree = "<group>"; };
 		15BFDB6E2AC63C2A00249EF2 /* nizk_dl_eq.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = nizk_dl_eq.c; sourceTree = "<group>"; };
+		15BFDB702AC7194000249EF2 /* nizk_reshare.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = nizk_reshare.h; sourceTree = "<group>"; };
+		15BFDB712AC7194000249EF2 /* nizk_reshare.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = nizk_reshare.c; sourceTree = "<group>"; };
 		15FF080A2AA8B08100B2B623 /* BigNum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BigNum.swift; sourceTree = "<group>"; };
 		15FF080D2AA9B38000B2B623 /* P256.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = P256.h; sourceTree = "<group>"; };
 		15FF080E2AA9B38000B2B623 /* P256.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = P256.c; sourceTree = "<group>"; };
@@ -178,11 +181,13 @@
 				15FF080D2AA9B38000B2B623 /* P256.h */,
 				15FF080E2AA9B38000B2B623 /* P256.c */,
 				152D4AF12AB45B49007ACC8E /* SSS.h */,
+				152D4AF22AB45B49007ACC8E /* SSS.c */,
+				15BFDB702AC7194000249EF2 /* nizk_reshare.h */,
+				15BFDB712AC7194000249EF2 /* nizk_reshare.c */,
 				15BFDB6A2AC63B0900249EF2 /* nizk_dl.h */,
 				15BFDB6B2AC63B0900249EF2 /* nizk_dl.c */,
 				15BFDB6D2AC63C2A00249EF2 /* nizk_dl_eq.h */,
 				15BFDB6E2AC63C2A00249EF2 /* nizk_dl_eq.c */,
-				152D4AF22AB45B49007ACC8E /* SSS.c */,
 				15BFDB672AC43C8E00249EF2 /* openssl_hashing_tools.h */,
 				15BFDB682AC43C8E00249EF2 /* openssl_hashing_tools.c */,
 				15FF080A2AA8B08100B2B623 /* BigNum.swift */,
@@ -289,7 +294,8 @@
 		533ED2F21528C4840005C6FA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1340;
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1500;
 				ORGANIZATIONNAME = "Felix Schulze";
 				TargetAttributes = {
 					2A8A9A6E1BFA59F7002944B4 = {
@@ -396,6 +402,7 @@
 				2A3821021BFB607A00328618 /* ViewController.swift in Sources */,
 				15BFDB692AC43C8E00249EF2 /* openssl_hashing_tools.c in Sources */,
 				150275DA2AA7141100462E61 /* ShamirP256.m in Sources */,
+				15BFDB722AC7194000249EF2 /* nizk_reshare.c in Sources */,
 				15BFDB6F2AC63C2A00249EF2 /* nizk_dl_eq.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -518,6 +525,7 @@
 				COPY_PHASE_STRIP = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -570,6 +578,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;

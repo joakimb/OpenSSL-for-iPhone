@@ -21,10 +21,10 @@
     
     clock_t start_time_total = clock();
 
-//    int ret = test_shamir_sharing();
+    int ret = shamir_shares_test_suite(1);
 //    int ret = nizk_dl_test_suite(1);
-    int ret = nizk_dl_eq_test_suite(1);
-
+//    int ret = nizk_dl_eq_test_suite(1);
+    
     clock_t end_time_total = clock();
     double elapsed_time_total = (double)(end_time_total - start_time_total) / CLOCKS_PER_SEC;
     

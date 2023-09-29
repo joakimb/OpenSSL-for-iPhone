@@ -72,3 +72,21 @@ BIGNUM *openssl_hash_pppppp2bn(const EC_GROUP *group, const EC_POINT *p1, const 
     BIGNUM *bn = openssl_hash2bignum(hash);
     return bn;
 }
+
+BIGNUM *openssl_hash_ppppppppp2bn(const EC_GROUP *group, const EC_POINT *p1, const EC_POINT *p2, const EC_POINT *p3, const EC_POINT *p4, const EC_POINT *p5, const EC_POINT *p6, const EC_POINT *p7, const EC_POINT *p8, const EC_POINT *p9, BN_CTX *bn_ctx) {
+    SHA256_CTX sha_ctx;
+    openssl_hash_init(&sha_ctx);
+    openssl_hash_update_point(&sha_ctx, group, p1, bn_ctx);
+    openssl_hash_update_point(&sha_ctx, group, p2, bn_ctx);
+    openssl_hash_update_point(&sha_ctx, group, p3, bn_ctx);
+    openssl_hash_update_point(&sha_ctx, group, p4, bn_ctx);
+    openssl_hash_update_point(&sha_ctx, group, p5, bn_ctx);
+    openssl_hash_update_point(&sha_ctx, group, p6, bn_ctx);
+    openssl_hash_update_point(&sha_ctx, group, p7, bn_ctx);
+    openssl_hash_update_point(&sha_ctx, group, p8, bn_ctx);
+    openssl_hash_update_point(&sha_ctx, group, p9, bn_ctx);
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    openssl_hash_final(hash, &sha_ctx);
+    BIGNUM *bn = openssl_hash2bignum(hash);
+    return bn;
+}

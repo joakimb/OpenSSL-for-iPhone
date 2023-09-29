@@ -5,62 +5,52 @@
 //  Created by Joakim Brorsson on 2023-09-15.
 //  Copyright © 2023 Felix Schulze. All rights reserved.
 //
-
+#include <stdio.h>
 #include "SSS.h"
 
-void shamir_shares_generate(EC_POINT **shares, EC_POINT *secret, const int t, const int n) {
-    const EC_GROUP *group = get0_group();
-    const EC_POINT *generator = get0_generator(group);
+void shamir_shares_generate(const EC_GROUP *group, EC_POINT *shares[], EC_POINT *secret, const int t, const int n, BN_CTX *ctx) {
     const BIGNUM *order = get0_order(group);
 
-    BN_CTX *ctx = BN_CTX_new();
-    //sample coefficients
+    // sample coefficients
     BIGNUM *coeffs[t+1];
     coeffs[0] = BN_new();
     BN_set_word(coeffs[0], 0);
     for (int i = 1; i < t + 1; i++){
         coeffs[i] = random_bignum(order, ctx);
     }
-    
-    BIGNUM *peval = BN_new();//space for evaluating polynomial
-    BIGNUM *pterm = BN_new();//space for storing polynomial terms
-    BIGNUM *base = BN_new();//space for storing polynomial terms
-    BIGNUM *exp = BN_new();//space for storing polynomial terms
-    //make shares for user i, counting starts from 1, not 0
+
+    // make shares
+    BIGNUM *peval = BN_new(); // space for evaluating polynomial
+    BIGNUM *pterm = BN_new(); // space for storing polynomial terms
+    BIGNUM *base = BN_new(); // space for storing polynomial terms
+    BIGNUM *exp = BN_new(); // space for storing polynomial terms
+    // make shares for user i, counting starts from 1, not 0
     for (int i = 1; i <= n; i++){
-        
-        BN_set_word(peval, 0);//reset space for reuse
-        
-        //evaluate polynomial
-        for (int j = 0; j < t + 1; j++) { //coeff * i ** j
-            
+        BN_set_word(peval, 0); // reset space for reuse
+
+        // evaluate polynomial
+        for (int j = 0; j < t + 1; j++) { // coeff * i ** j
             BN_set_word(base, i);
             BN_set_word(exp, j);
-            BN_mod_exp(pterm, base, exp, order, ctx); // i**j
-            BN_mod_mul(pterm, coeffs[j], pterm, order, ctx); //coeff * (i ** j)
-            BN_mod_add(peval, peval, pterm, order, ctx); // add term to po;ly eval
-            
+            BN_mod_exp(pterm, base, exp, order, ctx); // pterm = i^j mod order
+            BN_mod_mul(pterm, coeffs[j], pterm, order, ctx); // pterm *= coeff
+            BN_mod_add(peval, peval, pterm, order, ctx); // peval += pterm mod order
         }
-        
-        shares[i - 1] = EC_POINT_new(group);//multiply(get0Gen(), peval);
-        EC_POINT_mul(group, shares[i - 1], NULL, generator, peval, ctx);
-        EC_POINT_add(group, shares[i - 1], shares[i - 1], secret, ctx);
+        shares[i - 1] = bn2point(group, peval, ctx); // share = generator ^ peval
+        EC_POINT_add(group, shares[i - 1], shares[i - 1], secret, ctx); // share += secret
     }
-    
-    for (int i = 0; i < t; i++){
+
+    // cleanup
+    for (int i = 0; i < t+1; i++){
         BN_free(coeffs[i]);
     }
-    
     BN_free(peval);
     BN_free(pterm);
     BN_free(base);
     BN_free(exp);
-    BN_CTX_free(ctx);
-    
 }
 
-void lagX(BIGNUM *prod, int shareIndexes[], int length, int i, BN_CTX *ctx){
-    const EC_GROUP *group = get0_group();
+static void lagX(const EC_GROUP *group, BIGNUM *prod, int shareIndexes[], int length, int i, BN_CTX *ctx) {
     const BIGNUM *order = get0_order(group);
 
     BIGNUM *numerator = BN_new();
@@ -69,102 +59,105 @@ void lagX(BIGNUM *prod, int shareIndexes[], int length, int i, BN_CTX *ctx){
     BIGNUM *denominator = BN_new();
     BIGNUM *fraction = BN_new();
     BN_set_word(prod, 1);
-    
+
     for (int j = 0; j < length; j++) {
-        if (i == j){
+        if (i == j) {
             continue;
         }
         BN_set_word(a, 0);
         BN_set_word(b, shareIndexes[j]);
-        BN_sub(numerator, a,b);
+        BN_mod_sub(numerator, a, b, order, ctx);
         BN_set_word(a, shareIndexes[i]);
         BN_set_word(b, shareIndexes[j]);
-        BN_sub(denominator, a, b);
+        BN_mod_sub(denominator, a, b, order, ctx);
         BN_mod_inverse(denominator, denominator, order, ctx);
         BN_mod_mul(fraction, numerator, denominator, order, ctx);
         BN_mod_mul(prod, prod, fraction, order, ctx);
     }
-    BN_free(numerator);
-    BN_free(a);
-    BN_free(b);
-    BN_free(denominator);
+
+    // cleanup
     BN_free(fraction);
+    BN_free(denominator);
+    BN_free(b);
+    BN_free(a);
+    BN_free(numerator);
 }
 
-EC_POINT *shamir_shares_reconstruct(EC_POINT *shares[], int shareIndexes[], int t, int length) {
-    const EC_GROUP *group = get0_group();
-    const EC_POINT *generator = get0_generator(group);
-
-    if (length != t+1) {
-        printf("bad number of shares for reconstructiong\n");
+EC_POINT *shamir_shares_reconstruct(const EC_GROUP *group, EC_POINT *shares[], int shareIndexes[], int t, int length, BN_CTX *ctx) {
+    if (length != t+1) { // incorrect number of shares to reconstruct secret
         return NULL;
     }
-    
-    BN_CTX *ctx = BN_CTX_new();
-    BIGNUM* zero = BN_new();
+
+    BIGNUM *zero = BN_new();
+    BN_set_word(zero, 0); // probably superfluous
     EC_POINT *term = EC_POINT_new(group);
-    BN_set_word(zero, 0);
-    EC_POINT *sum = EC_POINT_new(group);
-    EC_POINT_mul(group, sum, NULL, generator, zero, ctx);
-    
+    EC_POINT *sum = bn2point(group, zero, ctx);
+
     BIGNUM *lagrangeProd = BN_new();
-    
-    for (int i = 0; i < length; i++) {
-        
-        lagX(lagrangeProd, shareIndexes, length, i, ctx);
+    for (int i=0; i<length; i++) {
+        lagX(group, lagrangeProd, shareIndexes, length, i, ctx);
         EC_POINT_mul(group, term, NULL, shares[i], lagrangeProd, ctx);
         EC_POINT_add(group, sum, sum, term, ctx);
     }
-    
+
+    // cleanup
     EC_POINT_free(term);
     BN_free(lagrangeProd);
     BN_free(zero);
-    BN_CTX_free(ctx);
-    return sum;
+    return sum; // return secret
 }
 
-int test_shamir_sharing(void) {
+int shamir_shares_test_suite(int print) {
     const EC_GROUP *group = get0_group();
     const EC_POINT *generator = get0_generator(group);
+    BN_CTX *ctx = BN_CTX_new();
 
 //    const int t = 1000; // t + 1 needed to reconstruct
 //    const int n = 2000;
     const int t = 1; // t + 1 needed to reconstruct
     const int n = 3;
     EC_POINT *shares[n];
-    
-    BN_CTX *ctx = BN_CTX_new();
+
     BIGNUM *seven = BN_new();
     BN_dec2bn(&seven, "7");
     EC_POINT *secret = EC_POINT_new(group);
     EC_POINT_mul(group, secret, NULL, generator, seven, ctx);
-    printf("secret:\n");
-    print_point(group, secret, ctx);
-    
-    shamir_shares_generate(shares, secret, t, n);
-#if 0
-    printf("shares:\n");
-    for (int i = 0; i < n; i++){
-        printPoint(group, shares[i], ctx);
+    if (print) {
+        printf("secret: ");
+        print_point(group, secret, ctx);
+        printf("\n");
     }
-#endif
-    //reconstruct with 2nd and thrid share
-    int shareIndexes[t+1];
-    EC_POINT *recShares[t+1];
-    for (int i = 0; i < t+1; i++) {
-        shareIndexes[i] = i + 2;//user indexes 1 to t + 1
+
+    // generate shares
+    shamir_shares_generate(group, shares, secret, t, n, ctx);
+
+    if (print) {
+        printf("shares:\n");
+        for (int i=0; i<n; i++){
+            print_point(group, shares[i], ctx);
+            printf("\n");
+        }
+    }
+
+    // reconstruct with 2nd and 3rd share
+    int shareIndexes[t + 1];
+    EC_POINT *recShares[t + 1];
+    for (int i=0; i<t+1; i++) {
+        shareIndexes[i] = i + 2; // user indices 1 to t + 1
         recShares[i] = shares[i + 1];
-        //printf("share %d on loc %d\n",i+2, i+1 );
     }
-    EC_POINT *reconstructed = shamir_shares_reconstruct(recShares, shareIndexes, t, t + 1);
+    EC_POINT *reconstructed = shamir_shares_reconstruct(group, recShares, shareIndexes, t, t+1, ctx);
 
+    // check reconstruction
     int res = EC_POINT_cmp(group, secret, reconstructed, ctx);
+    if (print) {
+        printf("reconstructed: ");
+        print_point(group, reconstructed, ctx);
+        printf("\nReconstruction %s\n", res ? "NOT OK" : "OK");
+    }
+    fflush(stdout);
 
-    printf("reconstructed:\n");
-    print_point(group, reconstructed, ctx);
-
-    printf("Reconstruction %s\n", res ? "NOT OK" : "OK");
-
+    // cleanup
     BN_free(seven);
     EC_POINT_free(secret);
     EC_POINT_free(reconstructed);

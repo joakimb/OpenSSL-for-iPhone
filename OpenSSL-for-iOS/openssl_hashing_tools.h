@@ -19,5 +19,6 @@ BIGNUM *openssl_hash2bignum(const unsigned char *md);
 
 BIGNUM *openssl_hash_ppp2bn(const EC_GROUP *group, const EC_POINT *p1, const EC_POINT *p2, const EC_POINT *p3, BN_CTX *bn_ctx);
 BIGNUM *openssl_hash_pppppp2bn(const EC_GROUP *group, const EC_POINT *p1, const EC_POINT *p2, const EC_POINT *p3, const EC_POINT *p4, const EC_POINT *p5, const EC_POINT *p6, BN_CTX *bn_ctx);
+BIGNUM *openssl_hash_ppppppppp2bn(const EC_GROUP *group, const EC_POINT *p1, const EC_POINT *p2, const EC_POINT *p3, const EC_POINT *p4, const EC_POINT *p5, const EC_POINT *p6, const EC_POINT *p7, const EC_POINT *p8, const EC_POINT *p9, BN_CTX *bn_ctx);
 
 #endif
