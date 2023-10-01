@@ -21,7 +21,7 @@ typedef struct {
     BIGNUM **v_primes;
 } DH_PVSS_params;
 
-void setup(const int t, const int n, DH_PVSS_params *pp, BN_CTX *ctx);
+DH_PVSS_params *setup(const int t, const int n, BN_CTX *ctx);
 
 int DH_PVSS_test_suite(int print);
 

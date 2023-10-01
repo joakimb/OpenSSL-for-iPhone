@@ -9,7 +9,9 @@
 #include "DH_PVSS.h"
 #include <assert.h>
 
-void DH_PVSS_params_new(const int t, const int n, DH_PVSS_params *pp){
+DH_PVSS_params *DH_PVSS_params_new(const int t, const int n){
+    
+    DH_PVSS_params *pp;
     
     pp->t = t;
     pp->n = n;
@@ -31,9 +33,11 @@ void DH_PVSS_params_new(const int t, const int n, DH_PVSS_params *pp){
     
     //TODO: make a dealloc for this struct
     
+    return pp;
+    
 }
 
-void deriveScrapeCoeffs(BIGNUM **coeffs, int from, int to, int n, BIGNUM **evaluationPoints, BN_CTX *ctx) {
+void deriveScrapeCoeffs(BIGNUM **coeffs, int from, int n, BIGNUM **evaluationPoints, BN_CTX *ctx) {
     
     const BIGNUM *order = get0_order(get0_group());
     BIGNUM *term = BN_new();
@@ -41,8 +45,9 @@ void deriveScrapeCoeffs(BIGNUM **coeffs, int from, int to, int n, BIGNUM **evalu
     for (int i = 1; i <= n; i++) {
         
         BIGNUM *coeff = coeffs[i - 1];
+        BN_set_word(coeff, 1);
         
-        for (int j = from; j <= to; j++) {
+        for (int j = from; j <= n; j++) {
             
             if (i == j) {
                 continue;
@@ -51,21 +56,16 @@ void deriveScrapeCoeffs(BIGNUM **coeffs, int from, int to, int n, BIGNUM **evalu
             BN_mod_sub(term, evaluationPoints[i], evaluationPoints[j], order, ctx);
             BN_mod_inverse(term, term, order, ctx);
             BN_mod_mul(coeff, coeff, term, order, ctx);
-            
         }
-        
     }
-    
     BN_free(term);
-    
 }
 
-void setup(const int t, const int n, DH_PVSS_params *pp, BN_CTX *ctx) {
+DH_PVSS_params *setup(const int t, const int n, BN_CTX *ctx) {
     
     assert( (n - t - 2) > 0 && "n and t relation bad");
     
-    // TODO: maybe return instead of taking as input
-    DH_PVSS_params_new(t, n, pp);
+    DH_PVSS_params *pp = DH_PVSS_params_new(t, n);
     
     //fill alphas and betas
     for (int i = 0; i < n + 1; i++) {
@@ -74,12 +74,10 @@ void setup(const int t, const int n, DH_PVSS_params *pp, BN_CTX *ctx) {
     }
     
     //fill vs and v_primes
-    deriveScrapeCoeffs(pp->vs, 1, n, n, pp->alphas, ctx);
-    deriveScrapeCoeffs(pp->v_primes, 0, n, n, pp->betas, ctx);
+    deriveScrapeCoeffs(pp->vs, 1, n, pp->alphas, ctx);
+    deriveScrapeCoeffs(pp->v_primes, 0, n, pp->betas, ctx);
  
-    
-    
-    
+    return pp;
 }
 
 static int DH_PVSS_test_1(int print) {
@@ -87,12 +85,14 @@ static int DH_PVSS_test_1(int print) {
     
     BN_CTX *ctx = BN_CTX_new();
     
-    int t = 5;
-    int n = 10;
-    DH_PVSS_params pp;
-    setup(t, n, &pp, ctx);
+    int t = 1;
+    int n = 4;
+    DH_PVSS_params *pp = setup(t, n, ctx);
     
     BN_CTX_free(ctx);
+    
+    // TODO: do a sharing, and verify proof
+    
     return 0;// success
 }
 
