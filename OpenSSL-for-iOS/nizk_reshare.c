@@ -163,11 +163,79 @@ int nizk_reshare_test_1(int print) {
     EC_POINT_free(w2gb);
     EC_POINT_free(w1gc);
  
-    return !ret1;
+    return ret1 != 0;
 }
 
 int nizk_reshare_test_2(int print) {
-    return 0; // test passed
+    
+    const EC_GROUP *group = get0_group();
+    BN_CTX *ctx = BN_CTX_new();
+    
+    BIGNUM *w1 = BN_new();
+    BIGNUM *w2 = BN_new();
+    EC_POINT *ga = random_point(group, ctx);
+    EC_POINT *gb = random_point(group, ctx);
+    EC_POINT *gc = random_point(group, ctx);
+    EC_POINT *Y1 = EC_POINT_new(group);
+    EC_POINT *Y2 = EC_POINT_new(group);
+    EC_POINT *Y3 = EC_POINT_new(group);
+    EC_POINT *w2gb = EC_POINT_new(group);
+    EC_POINT *w1gc = EC_POINT_new(group);
+    
+    BN_dec2bn(&w1, "5");
+    BN_dec2bn(&w2, "7");
+    point_mul(group, Y1, w1, ga, ctx);
+    point_mul(group, Y2, w2, ga, ctx);
+    point_mul(group, w2gb, w2, gb, ctx);
+    point_mul(group, w1gc, w1, gc, ctx);
+    point_sub(group, Y3, w2gb, w1gc, ctx);
+    
+    //positive test
+    nizk_reshare_proof pi;
+    nizk_reshare_prove(group, w1, w2, ga, gb, gc, Y1, Y2, Y3, &pi, ctx);
+    int ret1 = nizk_reshare_verify(group, ga, gb, gc, Y1, Y2, Y3, &pi, ctx);
+
+    if (print) {
+        printf("Test 1 part 1 %s: Correct NIZK Reshare Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+    }
+    
+    //negative tests
+    EC_POINT *Bad = random_point(group, ctx);
+    
+    int neg_rets[6];
+    
+    neg_rets[0] = nizk_reshare_verify(group, Bad, gb, gc, Y1, Y2, Y3, &pi, ctx);
+    neg_rets[1] = nizk_reshare_verify(group, ga, Bad, gc, Y1, Y2, Y3, &pi, ctx);
+    neg_rets[2] = nizk_reshare_verify(group, ga, gb, Bad, Y1, Y2, Y3, &pi, ctx);
+    neg_rets[3] = nizk_reshare_verify(group, ga, gb, gc, Bad, Y2, Y3, &pi, ctx);
+    neg_rets[4] = nizk_reshare_verify(group, ga, gb, gc, Y1, Bad, Y3, &pi, ctx);
+    neg_rets[5] = nizk_reshare_verify(group, ga, gb, gc, Y1, Y2, Bad, &pi, ctx);
+    
+    int neg_ret_sum = 0;
+    for (int i = 0; i < 6; i++) {
+        if (print) {
+            if (neg_rets[i]) {
+                neg_ret_sum++;
+                printf("Test 2 part %d OK: Incorrect NIZK Reshare Proof not accepted (which is CORRECT)\n",i);
+            } else {
+                printf("Test 2 part %d NOT OK: Incorrect NIZK Reshare Proof IS accepted (which is an ERROR)\n",i);
+            }
+        }
+    }
+    
+    BN_free(w1);
+    BN_free(w2);
+    EC_POINT_free(ga);
+    EC_POINT_free(gb);
+    EC_POINT_free(gc);
+    EC_POINT_free(Y1);
+    EC_POINT_free(Y2);
+    EC_POINT_free(Y3);
+    EC_POINT_free(w2gb);
+    EC_POINT_free(w1gc);
+    EC_POINT_free(Bad);
+    
+    return ret1 != 0 && neg_ret_sum == 6;
 }
 
 typedef int (*test_function)(int);
