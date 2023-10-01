@@ -216,9 +216,9 @@ int nizk_reshare_test_2(int print) {
         if (print) {
             if (neg_rets[i]) {
                 neg_ret_sum++;
-                printf("Test 2 part %d OK: Incorrect NIZK Reshare Proof not accepted (which is CORRECT)\n",i);
+                printf("Test 2 part %d OK: Incorrect NIZK Reshare Proof not accepted (which is CORRECT)\n",i+1);
             } else {
-                printf("Test 2 part %d NOT OK: Incorrect NIZK Reshare Proof IS accepted (which is an ERROR)\n",i);
+                printf("Test 2 part %d NOT OK: Incorrect NIZK Reshare Proof IS accepted (which is an ERROR)\n",i+1);
             }
         }
     }
