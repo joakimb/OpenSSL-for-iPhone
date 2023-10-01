@@ -30,8 +30,8 @@ void DH_PVSS_params_free(DH_PVSS_params *pp) {
 
 DH_PVSS_params *DH_PVSS_params_new(const int t, const int n){
     
-    DH_PVSS_params *pp;
-    // TODO: fix unallocated pp
+    DH_PVSS_params *pp = malloc(sizeof(DH_PVSS_params));
+    assert(pp && "error during pp allocation");
     
     pp->t = t;
     pp->n = n;
