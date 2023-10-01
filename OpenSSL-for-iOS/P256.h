@@ -37,6 +37,9 @@ EC_POINT *random_point(const EC_GROUP *group, BN_CTX *ctx);
 // r = bn * point
 void point_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *bn, const EC_POINT *point, BN_CTX *ctx);
 
+// r = a - b
+void point_sub(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, EC_POINT *b, BN_CTX *ctx);
+
 // return bignum as point on curve (generator^bignum)
 EC_POINT* bn2point(const EC_GROUP *group, const BIGNUM *bn, BN_CTX *ctx);
 

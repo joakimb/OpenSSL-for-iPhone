@@ -141,6 +141,13 @@ void point_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *bn, const EC_PO
     assert(ret == 1 && "point_mul: EC_POINT_mul failed");
 }
 
+void point_sub(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, EC_POINT *b, BN_CTX *ctx) {
+    int ret = EC_POINT_invert(group, b, ctx);
+    assert(ret == 1 && "point_sub: EC_POINT_invert failed");
+    ret = EC_POINT_add(group, r, a, b, ctx);
+    assert(ret == 1 && "point_sub: EC_POINT_add failed");
+}
+
 // convert bignum to point
 EC_POINT *bn2point(const EC_GROUP *group, const BIGNUM *bn, BN_CTX *ctx) {
     EC_POINT *point = EC_POINT_new(group);
