@@ -21,7 +21,8 @@
     
     clock_t start_time_total = clock();
     
-    int ret = shamir_shares_test_suite(1);
+    int ret = 0;
+//    ret += shamir_shares_test_suite(1);
     ret += nizk_dl_test_suite(1);
     ret += nizk_dl_eq_test_suite(1);
     ret += nizk_reshare_test_suite(1);

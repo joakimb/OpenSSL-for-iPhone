@@ -86,11 +86,6 @@ static int nizk_dl_test_1(int print) {
     BN_dec2bn(&seven, "7");
     EC_POINT *secret = EC_POINT_new(group);
     EC_POINT_mul(group, secret, seven, NULL, NULL, ctx);
-    if (print) {
-        printf("secret: ");
-        print_point(group, secret, ctx);
-        printf("\n");
-    }
     
     // test 1: produce correct proof and verify
     nizk_dl_proof pi;
@@ -119,12 +114,7 @@ static int nizk_dl_test_2(int print) {
     BN_dec2bn(&seven, "7");
     EC_POINT *secret = EC_POINT_new(group);
     EC_POINT_mul(group, secret, seven, NULL, NULL, ctx);
-    if (print) {
-        printf("secret: ");
-        print_point(group, secret, ctx);
-        printf("\n");
-    }
-
+    
     // produce correct proof and verify
     nizk_dl_proof pi;
     nizk_dl_prove(group, seven, &pi, ctx);
@@ -163,11 +153,6 @@ static int nizk_dl_test_3(int print) {
     BN_dec2bn(&seven, "7");
     EC_POINT *secret = EC_POINT_new(group);
     EC_POINT_mul(group, secret, seven, NULL, NULL, ctx);
-    if (print) {
-        printf("secret: ");
-        print_point(group, secret, ctx);
-        printf("\n");
-    }
 
     // produce correct proof and verify
     nizk_dl_proof pi;

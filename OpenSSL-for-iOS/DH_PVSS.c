@@ -9,9 +9,29 @@
 #include "DH_PVSS.h"
 #include <assert.h>
 
+void DH_PVSS_params_free(DH_PVSS_params *pp) {
+    //free bignums
+    for (int i = 0; i < pp->n; i++) {
+        BN_free(pp->alphas[i]);
+        BN_free(pp->betas[i]);
+        BN_free(pp->vs[i]);
+        BN_free(pp->v_primes[i]);
+    }
+    BN_free(pp->alphas[pp->n]);
+    BN_free(pp->betas[pp->n]);
+    BN_free(pp->v_primes[pp->n]);
+    
+    //free arrays
+    free(pp->alphas);
+    free(pp->betas);
+    free(pp->vs);
+    free(pp->v_primes);
+}
+
 DH_PVSS_params *DH_PVSS_params_new(const int t, const int n){
     
     DH_PVSS_params *pp;
+    // TODO: fix unallocated pp
     
     pp->t = t;
     pp->n = n;
@@ -30,9 +50,7 @@ DH_PVSS_params *DH_PVSS_params_new(const int t, const int n){
     pp->alphas[n]   = BN_new();
     pp->betas[n]    = BN_new();
     pp->v_primes[n] = BN_new();
-    
-    //TODO: make a dealloc for this struct
-    
+        
     return pp;
     
 }
@@ -88,7 +106,10 @@ static int DH_PVSS_test_1(int print) {
     int t = 1;
     int n = 4;
     DH_PVSS_params *pp = setup(t, n, ctx);
+    printf("alphas[3]: ");
+    print_bn(pp->alphas[3]);
     
+    DH_PVSS_params_free(pp);
     BN_CTX_free(ctx);
     
     // TODO: do a sharing, and verify proof
