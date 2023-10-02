@@ -21,27 +21,22 @@ typedef struct {
     BIGNUM **betas;
     BIGNUM **vs;
     BIGNUM **v_primes;
-} dh_pvss_params;
+} dh_pvss_ctx;
 
 typedef struct {
     BIGNUM *priv;
     EC_POINT *pub;
-} key_pair;
+} dh_key_pair;
 
-void dh_pvss_params_free(dh_pvss_params *pp);
+void dh_key_pair_free(dh_key_pair *kp);
+void dh_key_gen(dh_key_pair *kp, BN_CTX *ctx);
+void dh_key_pair_prove(dh_key_pair *kp, nizk_dl_proof *pi, BN_CTX *ctx);
+int dh_pub_key_verify(const EC_POINT *pubKey, const nizk_dl_proof *pi, BN_CTX *ctx);
 
-void key_pair_free(key_pair *kp);
-
-dh_pvss_params *setup(const int t, const int n, BN_CTX *ctx);
-
-void key_gen(key_pair *kp, BN_CTX *ctx);
-
-void prove_key_pair(key_pair *kp, nizk_dl_proof *pi, BN_CTX *ctx);
-
-int verify_pub_key(const EC_POINT *pubKey, const nizk_dl_proof *pi, BN_CTX *ctx);
+void dh_pvss_ctx_free(dh_pvss_ctx *pp);
+void dh_pvss_setup(dh_pvss_ctx *pp, const EC_GROUP *group, const int t, const int n, BN_CTX *ctx);
 
 int dh_pvss_test_suite(int print);
 
+
 #endif /* dh_pvss_h */
-
-

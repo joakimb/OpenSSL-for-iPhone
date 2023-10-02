@@ -10,77 +10,63 @@
 #include <assert.h>
 #include "SSS.h"
 
-void dh_pvss_params_free(dh_pvss_params *pp) {
-    //free bignums
-    for (int i = 0; i < pp->n; i++) {
+void dh_pvss_ctx_free(dh_pvss_ctx *pp) {
+    for (int i=0; i<pp->n+1; i++) {
         BN_free(pp->alphas[i]);
         BN_free(pp->betas[i]);
-        BN_free(pp->vs[i]);
         BN_free(pp->v_primes[i]);
     }
-    BN_free(pp->alphas[pp->n]);
-    BN_free(pp->betas[pp->n]);
-    BN_free(pp->v_primes[pp->n]);
-    
-    //free arrays
+    for (int i=0; i<pp->n; i++) {
+        BN_free(pp->vs[i]);
+    }
     free(pp->alphas);
     free(pp->betas);
-    free(pp->vs);
     free(pp->v_primes);
-    
-    //free struct
-    free(pp);
+    free(pp->vs);
 }
 
-void key_pair_free(key_pair *kp) {
+void dh_key_pair_free(dh_key_pair *kp) {
     BN_free(kp->priv);
     EC_POINT_free(kp->pub);
     free(kp);
 }
 
-dh_pvss_params *dh_pvss_params_new(const int t, const int n){
-    
-    dh_pvss_params *pp = malloc(sizeof(dh_pvss_params));
-    assert(pp && "error during pp allocation");
-    
+static void dh_pvss_ctx_init(dh_pvss_ctx *pp, const int t, const int n) {
     pp->t = t;
     pp->n = n;
-    pp->alphas      = malloc(sizeof(BIGNUM *) * (n + 1));
-    pp->betas       = malloc(sizeof(BIGNUM *) * (n + 1));
-    pp->vs          = malloc(sizeof(BIGNUM *) * n);
-    pp->v_primes    = malloc(sizeof(BIGNUM *) * (n + 1));
-    
-    //allocate BIGNUMS
-    for (int i = 0; i < n; i++) {
+
+    // allocate vectors
+    pp->alphas   = malloc(sizeof(BIGNUM *) * (n + 1));
+    pp->betas    = malloc(sizeof(BIGNUM *) * (n + 1));
+    pp->v_primes = malloc(sizeof(BIGNUM *) * (n + 1));
+    pp->vs       = malloc(sizeof(BIGNUM *) * n);
+    assert(pp->alphas && "dh_pvss_ctx_init: allocation error alphas");
+    assert(pp->betas && "dh_pvss_ctx_init: allocation error betas");
+    assert(pp->v_primes && "dh_pvss_ctx_init: allocation error v_primes");
+    assert(pp->vs && "dh_pvss_ctx_init: allocation error vs");
+
+    // allocate vector entries
+    for (int i=0; i<n+1; i++) {
         pp->alphas[i]   = BN_new();
         pp->betas[i]    = BN_new();
-        pp->vs[i]       = BN_new();
         pp->v_primes[i] = BN_new();
     }
-    pp->alphas[n]   = BN_new();
-    pp->betas[n]    = BN_new();
-    pp->v_primes[n] = BN_new();
-        
-    return pp;
-    
+    for (int i=0; i<n; i++) {
+        pp->vs[i] = BN_new();
+    }
 }
 
-void deriveScrapeCoeffs(BIGNUM **coeffs, int from, int n, BIGNUM **evaluationPoints, BN_CTX *ctx) {
-    
-    const BIGNUM *order = get0_order(get0_group());
+static void deriveScrapeCoeffs(const EC_GROUP *group, BIGNUM **coeffs, int from, int n, BIGNUM **evaluationPoints, BN_CTX *ctx) {
+    const BIGNUM *order = get0_order(group);
+
     BIGNUM *term = BN_new();
-    
     for (int i = 1; i <= n; i++) {
-        
         BIGNUM *coeff = coeffs[i - 1];
         BN_set_word(coeff, 1);
-        
         for (int j = from; j <= n; j++) {
-            
             if (i == j) {
                 continue;
             }
-            
             BN_mod_sub(term, evaluationPoints[i], evaluationPoints[j], order, ctx);
             BN_mod_inverse(term, term, order, ctx);
             BN_mod_mul(coeff, coeff, term, order, ctx);
@@ -89,26 +75,23 @@ void deriveScrapeCoeffs(BIGNUM **coeffs, int from, int n, BIGNUM **evaluationPoi
     BN_free(term);
 }
 
-dh_pvss_params *setup(const int t, const int n, BN_CTX *ctx) {
-    
-    assert( (n - t - 2) > 0 && "n and t relation bad");
-    
-    dh_pvss_params *pp = dh_pvss_params_new(t, n);
-    
-    //fill alphas and betas
+void dh_pvss_setup(dh_pvss_ctx *pp, const EC_GROUP *group, const int t, const int n, BN_CTX *ctx) {
+    assert( (n - t - 2) > 0 && "usage error, n and t badly chosen");
+
+    dh_pvss_ctx_init(pp, t, n);
+
+    // fill alphas and betas
     for (int i = 0; i < n + 1; i++) {
         BN_set_word(pp->alphas[i], i);
         BN_set_word(pp->betas[i], i);
     }
-    
+
     //fill vs and v_primes
-    deriveScrapeCoeffs(pp->vs, 1, n, pp->alphas, ctx);
-    deriveScrapeCoeffs(pp->v_primes, 0, n, pp->betas, ctx);
- 
-    return pp;
+    deriveScrapeCoeffs(group, pp->vs, 1, n, pp->alphas, ctx);
+    deriveScrapeCoeffs(group, pp->v_primes, 0, n, pp->betas, ctx);
 }
 
-void key_gen(key_pair *kp, BN_CTX *ctx) {
+void dh_key_gen(dh_key_pair *kp, BN_CTX *ctx) {
     
     const EC_GROUP *group = get0_group();
     const BIGNUM *order = get0_order(group);
@@ -118,12 +101,12 @@ void key_gen(key_pair *kp, BN_CTX *ctx) {
     point_mul(group, kp->pub, kp->priv, generator, ctx);
 }
 
-void prove_key_pair(key_pair *kp, nizk_dl_proof *pi, BN_CTX *ctx) {
+void dh_key_pair_prove(dh_key_pair *kp, nizk_dl_proof *pi, BN_CTX *ctx) {
     const EC_GROUP *group = get0_group();
     nizk_dl_prove(group, kp->priv, pi, ctx);
 }
 
-int verify_pub_key(const EC_POINT *pubKey, const nizk_dl_proof *pi, BN_CTX *ctx) {
+int dh_pub_key_verify(const EC_POINT *pubKey, const nizk_dl_proof *pi, BN_CTX *ctx) {
     
     const EC_GROUP *group = get0_group();
     return nizk_dl_verify(group, pubKey, pi, ctx);
@@ -160,28 +143,25 @@ void gen_scrape_sum_terms(BIGNUM** terms, BIGNUM **eval_points, BIGNUM** code_co
 
 
 
-void pvss_distribute(EC_POINT **enc_shares, dh_pvss_params *pp, BIGNUM *priv_dist, EC_POINT **com_keys, EC_POINT *secret, BN_CTX *ctx) {
-    
-    const EC_GROUP *group = get0_group();
-    const EC_POINT *generator = get0_generator(group);
+static void pvss_distribute(const EC_GROUP *group, EC_POINT **enc_shares, dh_pvss_ctx *pp, BIGNUM *priv_dist, EC_POINT **com_keys, EC_POINT *secret, BN_CTX *ctx) {
+
+//    const EC_POINT *generator = get0_generator(group);
     
     EC_POINT *shares[pp->n];
     shamir_shares_generate(group, shares, secret, pp->t, pp->n, ctx);
     
     //encrypt shares
     for (int i = 0; i < pp->n; i++) {
-        
         enc_shares[i] = EC_POINT_new(group);
         EC_POINT *enc_share = enc_shares[i];
         point_mul(group, enc_share, priv_dist, com_keys[i], ctx);
         point_add(group, enc_share, enc_share, shares[i], ctx);
     }
-    
 }
 
-void prove_pvss_distribute(nizk_reshare_proof *pi, EC_POINT **enc_shares, dh_pvss_params *pp, BIGNUM *priv_dist, EC_POINT **com_keys, BN_CTX *ctx) {
+void prove_pvss_distribute(nizk_reshare_proof *pi, EC_POINT **enc_shares, dh_pvss_ctx *pp, BIGNUM *priv_dist, EC_POINT **com_keys, BN_CTX *ctx) {
     
-    const EC_GROUP *group = get0_group();
+//    const EC_GROUP *group = get0_group();
     
     //hash to poly coeffs
     int degree = pp->n - pp->t - 2;
@@ -205,16 +185,17 @@ void prove_pvss_distribute(nizk_reshare_proof *pi, EC_POINT **enc_shares, dh_pvs
 
 static int dh_pvss_test_1(int print) {
     printf("PLACEHOLDER1\n");
-    
+    const EC_GROUP *group = get0_group();
     BN_CTX *ctx = BN_CTX_new();
     
     int t = 1;
     int n = 4;
-    dh_pvss_params *pp = setup(t, n, ctx);
+    dh_pvss_ctx pp;
+    dh_pvss_setup(&pp, group, t, n, ctx);
     printf("alphas[3]: ");
-    bn_print(pp->alphas[3]);
+    bn_print(pp.alphas[3]);
     
-    dh_pvss_params_free(pp);
+    dh_pvss_ctx_free(&pp);
     BN_CTX_free(ctx);
     
 //    EC_POINT enc_shares[pp->n];
