@@ -163,7 +163,6 @@ void gen_scrape_sum_terms(BIGNUM** terms, BIGNUM **eval_points, BIGNUM** code_co
 void pvss_distribute(EC_POINT **enc_shares, dh_pvss_params *pp, BIGNUM *priv_dist, EC_POINT **com_keys, EC_POINT *secret, BN_CTX *ctx) {
     
     const EC_GROUP *group = get0_group();
-    const EC_POINT *generator = get0_generator(group);
     
     EC_POINT *shares[pp->n];
     shamir_shares_generate(group, shares, secret, pp->t, pp->n, ctx);
@@ -181,12 +180,16 @@ void pvss_distribute(EC_POINT **enc_shares, dh_pvss_params *pp, BIGNUM *priv_dis
 
 void prove_pvss_distribute(nizk_reshare_proof *pi, EC_POINT **enc_shares, dh_pvss_params *pp, BIGNUM *priv_dist, EC_POINT **com_keys, BN_CTX *ctx) {
     
-    const EC_GROUP *group = get0_group();
+//    const EC_GROUP *group = get0_group();
+//    const EC_POINT *generator = get0_generator(group);
     
     //hash to poly coeffs
     int degree = pp->n - pp->t - 2;
     BIGNUM *poly_coeffs[degree + 1];
-    // TODO: populate poly_coeffs
+    // TODO: populate poly_coeffs by:
+//    (1) get seed from openssl_hash_point_lists2bn
+//    (2) get poly coeffs by sending seed to openssl_hash_bignum2polycoeffs
+    
     
     BIGNUM *scrape_terms[pp->n];
     gen_scrape_sum_terms(scrape_terms, pp->alphas, pp->vs, poly_coeffs, pp->n, degree + 1, ctx);
