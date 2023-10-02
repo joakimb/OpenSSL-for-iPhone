@@ -152,8 +152,8 @@ int shamir_shares_test_suite(int print) {
         printf("reconstructed: ");
         point_print(group, reconstructed, ctx);
         printf("\nReconstruction %s\n", res ? "NOT OK" : "OK");
+        fflush(stdout);
     }
-    fflush(stdout);
 
     // cleanup
     for (int i=0; i<n; i++) {
