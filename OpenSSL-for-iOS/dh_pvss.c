@@ -128,6 +128,37 @@ int verify_pub_key(const EC_POINT *pubKey, const nizk_dl_proof *pi, BN_CTX *ctx)
     return nizk_dl_verify(group, pubKey, pi, ctx);
 }
 
+void gen_scrape_sum_terms(BIGNUM** terms, BIGNUM **eval_points, BIGNUM** code_coeffs, BIGNUM** poly_coeffs, int n, int poly_coeffs_len, BN_CTX *ctx) {
+    
+    const BIGNUM *order = get0_order(get0_group());
+    BIGNUM *poly_eval = BN_new();
+    BIGNUM *poly_term = BN_new();
+    BIGNUM *exp       = BN_new();
+    
+    for (int x = 1; x <= n; x++) {
+        
+        BIGNUM* eval_point = eval_points[x];
+        BN_set_word(poly_eval, 0);
+        
+        for (int i = 0; i < poly_coeffs_len; i++) {
+            
+            BN_set_word(exp, i);
+            BN_mod_exp(poly_term, eval_point, exp, order, ctx);
+            BN_mod_mul(poly_term, poly_term, poly_coeffs[i], order, ctx);
+            BN_mod_add(poly_eval, poly_eval, poly_term, order, ctx);
+        }
+        
+        BN_mod_mul(terms[x - 1], code_coeffs[x - 1], poly_eval, order, ctx);
+    }
+    
+    BN_free(poly_eval);
+    BN_free(poly_term);
+    BN_free(exp);
+    
+}
+
+
+
 static int dh_pvss_test_1(int print) {
     printf("PLACEHOLDER1\n");
     
