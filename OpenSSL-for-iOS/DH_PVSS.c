@@ -26,6 +26,9 @@ void DH_PVSS_params_free(DH_PVSS_params *pp) {
     free(pp->betas);
     free(pp->vs);
     free(pp->v_primes);
+    
+    //free struct
+    free(pp);
 }
 
 DH_PVSS_params *DH_PVSS_params_new(const int t, const int n){
