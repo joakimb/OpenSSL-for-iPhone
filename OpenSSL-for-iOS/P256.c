@@ -64,13 +64,13 @@ const EC_POINT* get0_generator(const EC_GROUP *group) {
     return generator;
 }
 
-void print_bn(const BIGNUM *x) {
+void bn_print(const BIGNUM *x) {
     char *num = BN_bn2dec(x);
     printf("%s\n", num);
     OPENSSL_free(num);
 }
 
-void print_point(const EC_GROUP *group, const EC_POINT *p, BN_CTX *ctx){
+void point_print(const EC_GROUP *group, const EC_POINT *p, BN_CTX *ctx){
 
     // using uncompressed point format for printing
 
@@ -109,7 +109,7 @@ void print_point(const EC_GROUP *group, const EC_POINT *p, BN_CTX *ctx){
 }
 
 // random bignum (modulo group order)
-BIGNUM* random_bignum(const BIGNUM *modulus, BN_CTX *ctx) {
+BIGNUM* bn_random(const BIGNUM *modulus, BN_CTX *ctx) {
     BIGNUM *r = BN_new();
     assert(r && "random_bignum: no r generated");
 
@@ -127,10 +127,17 @@ BIGNUM* random_bignum(const BIGNUM *modulus, BN_CTX *ctx) {
     return r;
 }
 
+// check for point equality
+int point_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx) {
+    int ret = EC_POINT_cmp(group, a, b, ctx);
+    assert(ret != -1 && "nizk_dl_eq_verify: error in EC_POINT_cmp(Ra_prime, Ra)");
+    return ret;
+}
+
 // get random point on curve
-EC_POINT *random_point(const EC_GROUP *group, BN_CTX *ctx) {
+EC_POINT *point_random(const EC_GROUP *group, BN_CTX *ctx) {
     const BIGNUM *order = get0_order(group);
-    BIGNUM *bn = random_bignum(order, ctx);
+    BIGNUM *bn = bn_random(order, ctx);
     EC_POINT *point = bn2point(group, bn, ctx);
     BN_free(bn);
     return point;

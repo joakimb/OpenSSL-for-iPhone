@@ -28,13 +28,13 @@ void nizk_dl_eq_prove(const EC_GROUP *group, const BIGNUM *exp, const EC_POINT *
     const BIGNUM *order = get0_order(group);
 
     // compute Ra
-    BIGNUM *r = random_bignum(order, ctx); // draw r uniformly at random
+    BIGNUM *r = bn_random(order, ctx); // draw r uniformly at random
     pi->Ra = EC_POINT_new(group);
-    EC_POINT_mul(group, pi->Ra, NULL, a, r, ctx);
+    point_mul(group, pi->Ra, r, a, ctx);
 
     // compute Rb
     pi->Rb = EC_POINT_new(group);
-    EC_POINT_mul(group, pi->Rb, NULL, b, r, ctx);
+    point_mul(group, pi->Rb, r, b, ctx);
 
     // compute c
     BIGNUM *c = openssl_hash_points2bn(group, ctx, 6, a, A, b, B, pi->Ra, pi->Rb);
@@ -60,9 +60,8 @@ int nizk_dl_eq_verify(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *
     EC_POINT *Ra_prime = EC_POINT_new(group);
     const EC_POINT *a_points[] = { a, A };
     const BIGNUM *bns[] = { pi->z, c };
-    EC_POINTs_mul(group, Ra_prime, NULL, 2, a_points, bns, ctx);
-    int ret = EC_POINT_cmp(group, Ra_prime, pi->Ra, ctx);
-    assert(ret != -1 && "nizk_dl_eq_verify: error in EC_POINT_cmp(Ra_prime, Ra)");
+    EC_POINTs_mul(group, Ra_prime, NULL, 2, a_points, bns, ctx); // no wrapper for EC_POINTs_mul
+    int ret = point_cmp(group, Ra_prime, pi->Ra, ctx);
     EC_POINT_free(Ra_prime);
     if (ret == 1) { // not equal
         BN_free(c);
@@ -72,9 +71,8 @@ int nizk_dl_eq_verify(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *
     /* check if pi->Rb = [pi->z]b + [c]B */
     EC_POINT *Rb_prime = EC_POINT_new(group);
     const EC_POINT *b_points[] = { b, B };
-    EC_POINTs_mul(group, Rb_prime, NULL, 2, b_points, bns, ctx);
-    ret = EC_POINT_cmp(group, Rb_prime, pi->Rb, ctx);
-    assert(ret != -1 && "nizk_dl_eq_verify: error in EC_POINT_cmp(Rb_prime, Rb)");
+    EC_POINTs_mul(group, Rb_prime, NULL, 2, b_points, bns, ctx); // no wrapper for EC_POINTs_mul
+    ret = point_cmp(group, Rb_prime, pi->Rb, ctx);
     EC_POINT_free(Rb_prime);
     if (ret == 1) { // not equal
         BN_free(c);
@@ -100,13 +98,13 @@ static int nizk_dl_eq_test_1(int print) {
     BIGNUM *exp_bad = BN_new();
     BN_dec2bn(&exp_bad, "6");
 
-    EC_POINT *a = random_point(group, ctx);
+    EC_POINT *a = point_random(group, ctx);
     EC_POINT *A = EC_POINT_new(group);
-    EC_POINT_mul(group, A, NULL, a, exp, ctx);
+    point_mul(group, A, exp, a, ctx);
 
-    EC_POINT *b = random_point(group, ctx);
+    EC_POINT *b = point_random(group, ctx);
     EC_POINT *B = EC_POINT_new(group);
-    EC_POINT_mul(group, B, NULL, b, exp, ctx);
+    point_mul(group, B, exp, b, ctx);
     
     // produce correct proof and verify
     nizk_dl_eq_proof pi;
@@ -120,7 +118,7 @@ static int nizk_dl_eq_test_1(int print) {
     // negative tests
     // try to verify incorrect proof (bad B-value)
     EC_POINT *B_bad = EC_POINT_new(group);
-    EC_POINT_mul(group, B_bad, NULL, b, exp_bad, ctx);
+    point_mul(group, B_bad, exp_bad, b, ctx);
     int ret2 = nizk_dl_eq_verify(group, a, A, b, B_bad, &pi, ctx);
     if (print) {
         if (ret2) {
@@ -153,13 +151,13 @@ static int nizk_dl_eq_test_2(int print) {
     BIGNUM *exp_bad = BN_new();
     BN_dec2bn(&exp_bad, "6");
 
-    EC_POINT *a = random_point(group, ctx);
+    EC_POINT *a = point_random(group, ctx);
     EC_POINT *A = EC_POINT_new(group);
-    EC_POINT_mul(group, A, NULL, a, exp, ctx);
+    point_mul(group, A, exp, a, ctx);
 
-    EC_POINT *b = random_point(group, ctx);
+    EC_POINT *b = point_random(group, ctx);
     EC_POINT *B = EC_POINT_new(group);
-    EC_POINT_mul(group, B, NULL, b, exp, ctx);
+    point_mul(group, B, exp, b, ctx);
     
     // produce correct proof and verify
     nizk_dl_eq_proof pi;
@@ -173,7 +171,7 @@ static int nizk_dl_eq_test_2(int print) {
     // negative tests
     // try to verify incorrect proof (bad B-value)
     EC_POINT *A_bad = EC_POINT_new(group);
-    EC_POINT_mul(group, A_bad, NULL, a, exp_bad, ctx);
+    point_mul(group, A_bad, exp_bad, a, ctx);
     int ret2 = nizk_dl_eq_verify(group, a, A_bad, b, B, &pi, ctx);
     if (print) {
         if (ret2) {

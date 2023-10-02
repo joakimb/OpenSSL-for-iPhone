@@ -63,3 +63,19 @@ BIGNUM *openssl_hash_points2bn(const EC_GROUP *group, BN_CTX *bn_ctx, int num_po
     BIGNUM *bn = openssl_hash2bignum(hash);
     return bn;
 }
+
+BIGNUM *openssl_hash_point_lists2bn(const EC_GROUP *group, BN_CTX *bn_ctx, int num_lists, int *list_len, EC_POINT **point_list[]) {
+    SHA256_CTX sha_ctx;
+    openssl_hash_init(&sha_ctx);
+    for (int i=0; i<num_lists; i++) {
+        EC_POINT **pl = point_list[i];
+        for (int j=0; j<list_len[i]; j++) {
+            EC_POINT *point = pl[j];
+            openssl_hash_update_point(&sha_ctx, group, point, bn_ctx);
+        }
+    }
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    openssl_hash_final(hash, &sha_ctx);
+    BIGNUM *bn = openssl_hash2bignum(hash);
+    return bn;
+}

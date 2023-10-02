@@ -29,7 +29,7 @@ void nizk_dl_prove(const EC_GROUP *group, const BIGNUM *x, nizk_dl_proof *pi, BN
     EC_POINT *X = bn2point(group, x, ctx);
 
     // compute u
-    BIGNUM *r = random_bignum(order, ctx);
+    BIGNUM *r = bn_random(order, ctx);
     pi->u = bn2point(group, r, ctx);
 
     // compute c
@@ -59,9 +59,9 @@ int nizk_dl_verify(const EC_GROUP *group, const EC_POINT *X, const nizk_dl_proof
     EC_POINT *Z_prime = EC_POINT_new(group);
 
     BIGNUM *c = openssl_hash_points2bn(group, ctx, 3, generator, X, pi->u);
-    EC_POINT_mul(group, Z_prime, NULL, X, c, ctx);
-    EC_POINT_add(group, Z_prime, Z_prime, pi->u, ctx);
-    
+    point_mul(group, Z_prime, c, X, ctx);
+    point_add(group, Z_prime, Z_prime, pi->u, ctx);
+
     // Z == Z_prime ?
     int ret = EC_POINT_cmp(group, Z, Z_prime, ctx);
 
@@ -84,8 +84,7 @@ static int nizk_dl_test_1(int print) {
     BN_CTX *ctx = BN_CTX_new();
     BIGNUM *seven = BN_new();
     BN_dec2bn(&seven, "7");
-    EC_POINT *secret = EC_POINT_new(group);
-    EC_POINT_mul(group, secret, seven, NULL, NULL, ctx);
+    EC_POINT *secret = bn2point(group, seven, ctx);
     
     // test 1: produce correct proof and verify
     nizk_dl_proof pi;
@@ -112,9 +111,8 @@ static int nizk_dl_test_2(int print) {
     BN_CTX *ctx = BN_CTX_new();
     BIGNUM *seven = BN_new();
     BN_dec2bn(&seven, "7");
-    EC_POINT *secret = EC_POINT_new(group);
-    EC_POINT_mul(group, secret, seven, NULL, NULL, ctx);
-    
+    EC_POINT *secret = bn2point(group, seven, ctx);
+
     // produce correct proof and verify
     nizk_dl_proof pi;
     nizk_dl_prove(group, seven, &pi, ctx);
@@ -126,7 +124,7 @@ static int nizk_dl_test_2(int print) {
     // negative tests
     // try to verify incorrect proof (z-value wrong)
     BN_free(pi.z);
-    pi.z = random_bignum(order, ctx); // omitted to check if new erroneous z-value is actually by chance the correct value
+    pi.z = bn_random(order, ctx); // omitted to check if new erroneous z-value is actually by chance the correct value
     int ret2 = nizk_dl_verify(group, secret, &pi, ctx);
     if (print) {
         if (ret2) {
@@ -151,8 +149,7 @@ static int nizk_dl_test_3(int print) {
     BN_CTX *ctx = BN_CTX_new();
     BIGNUM *seven = BN_new();
     BN_dec2bn(&seven, "7");
-    EC_POINT *secret = EC_POINT_new(group);
-    EC_POINT_mul(group, secret, seven, NULL, NULL, ctx);
+    EC_POINT *secret = bn2point(group, seven, ctx);
 
     // produce correct proof and verify
     nizk_dl_proof pi;
@@ -165,7 +162,7 @@ static int nizk_dl_test_3(int print) {
     // negative tests
     // try to verify incorrect proof (both u- and z-value wrong)
     EC_POINT_free(pi.u);
-    pi.u = random_point(group, ctx);  // omitted to check if modified u-value actually by chance produces a valid proof
+    pi.u = point_random(group, ctx);  // omitted to check if modified u-value actually by chance produces a valid proof
     int ret2 = nizk_dl_verify(group, secret, &pi, ctx);
     if (print) {
         if (ret2) {

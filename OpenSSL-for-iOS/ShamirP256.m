@@ -12,7 +12,7 @@
 @implementation ShamirP256
 
 + (void) print: (BIGNUM *) x {
-    print_bn(x);
+    bn_print(x);
 }
 
 

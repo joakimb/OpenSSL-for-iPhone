@@ -18,5 +18,6 @@ void openssl_hash(const unsigned char*buf, size_t buf_len, unsigned char *hash);
 BIGNUM *openssl_hash2bignum(const unsigned char *md);
 
 BIGNUM *openssl_hash_points2bn(const EC_GROUP *group, BN_CTX *bn_ctx, int num_points,...);
+BIGNUM *openssl_hash_point_lists2bn(const EC_GROUP *group, BN_CTX *bn_ctx, int num_lists, int *list_len, EC_POINT **point_list[]);
 
 #endif

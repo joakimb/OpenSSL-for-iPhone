@@ -113,7 +113,7 @@ void key_gen(key_pair *kp, BN_CTX *ctx) {
     const EC_GROUP *group = get0_group();
     const BIGNUM *order = get0_order(group);
     const EC_POINT *generator = get0_generator(group);
-    kp->priv = random_bignum(order, ctx);
+    kp->priv = bn_random(order, ctx);
     kp->pub = EC_POINT_new(group);
     point_mul(group, kp->pub, kp->priv, generator, ctx);
 }
@@ -212,7 +212,7 @@ static int dh_pvss_test_1(int print) {
     int n = 4;
     dh_pvss_params *pp = setup(t, n, ctx);
     printf("alphas[3]: ");
-    print_bn(pp->alphas[3]);
+    bn_print(pp->alphas[3]);
     
     dh_pvss_params_free(pp);
     BN_CTX_free(ctx);
