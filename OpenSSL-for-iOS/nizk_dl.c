@@ -59,9 +59,9 @@ int nizk_dl_verify(const EC_GROUP *group, const EC_POINT *X, const nizk_dl_proof
     EC_POINT *Z_prime = EC_POINT_new(group);
 
     BIGNUM *c = openssl_hash_points2bn(group, ctx, 3, generator, X, pi->u);
-    EC_POINT_mul(group, Z_prime, NULL, X, c, ctx);
-    EC_POINT_add(group, Z_prime, Z_prime, pi->u, ctx);
-    
+    point_mul(group, Z_prime, c, X, ctx);
+    point_add(group, Z_prime, Z_prime, pi->u, ctx);
+
     // Z == Z_prime ?
     int ret = EC_POINT_cmp(group, Z, Z_prime, ctx);
 
@@ -84,8 +84,7 @@ static int nizk_dl_test_1(int print) {
     BN_CTX *ctx = BN_CTX_new();
     BIGNUM *seven = BN_new();
     BN_dec2bn(&seven, "7");
-    EC_POINT *secret = EC_POINT_new(group);
-    EC_POINT_mul(group, secret, seven, NULL, NULL, ctx);
+    EC_POINT *secret = bn2point(group, seven, ctx);
     
     // test 1: produce correct proof and verify
     nizk_dl_proof pi;
@@ -112,9 +111,8 @@ static int nizk_dl_test_2(int print) {
     BN_CTX *ctx = BN_CTX_new();
     BIGNUM *seven = BN_new();
     BN_dec2bn(&seven, "7");
-    EC_POINT *secret = EC_POINT_new(group);
-    EC_POINT_mul(group, secret, seven, NULL, NULL, ctx);
-    
+    EC_POINT *secret = bn2point(group, seven, ctx);
+
     // produce correct proof and verify
     nizk_dl_proof pi;
     nizk_dl_prove(group, seven, &pi, ctx);
@@ -151,8 +149,7 @@ static int nizk_dl_test_3(int print) {
     BN_CTX *ctx = BN_CTX_new();
     BIGNUM *seven = BN_new();
     BN_dec2bn(&seven, "7");
-    EC_POINT *secret = EC_POINT_new(group);
-    EC_POINT_mul(group, secret, seven, NULL, NULL, ctx);
+    EC_POINT *secret = bn2point(group, seven, ctx);
 
     // produce correct proof and verify
     nizk_dl_proof pi;
