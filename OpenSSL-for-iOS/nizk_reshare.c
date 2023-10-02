@@ -200,16 +200,16 @@ int nizk_reshare_test_2(int print) {
     }
     
     //negative tests
-    EC_POINT *Bad = random_point(group, ctx);
+    EC_POINT *bad = random_point(group, ctx);
     
     int neg_rets[6];
     
-    neg_rets[0] = nizk_reshare_verify(group, Bad, gb, gc, Y1, Y2, Y3, &pi, ctx);
-    neg_rets[1] = nizk_reshare_verify(group, ga, Bad, gc, Y1, Y2, Y3, &pi, ctx);
-    neg_rets[2] = nizk_reshare_verify(group, ga, gb, Bad, Y1, Y2, Y3, &pi, ctx);
-    neg_rets[3] = nizk_reshare_verify(group, ga, gb, gc, Bad, Y2, Y3, &pi, ctx);
-    neg_rets[4] = nizk_reshare_verify(group, ga, gb, gc, Y1, Bad, Y3, &pi, ctx);
-    neg_rets[5] = nizk_reshare_verify(group, ga, gb, gc, Y1, Y2, Bad, &pi, ctx);
+    neg_rets[0] = nizk_reshare_verify(group, bad, gb, gc, Y1, Y2, Y3, &pi, ctx);
+    neg_rets[1] = nizk_reshare_verify(group, ga, bad, gc, Y1, Y2, Y3, &pi, ctx);
+    neg_rets[2] = nizk_reshare_verify(group, ga, gb, bad, Y1, Y2, Y3, &pi, ctx);
+    neg_rets[3] = nizk_reshare_verify(group, ga, gb, gc, bad, Y2, Y3, &pi, ctx);
+    neg_rets[4] = nizk_reshare_verify(group, ga, gb, gc, Y1, bad, Y3, &pi, ctx);
+    neg_rets[5] = nizk_reshare_verify(group, ga, gb, gc, Y1, Y2, bad, &pi, ctx);
     
     int neg_ret_sum = 0;
     for (int i = 0; i < 6; i++) {
@@ -233,7 +233,7 @@ int nizk_reshare_test_2(int print) {
     EC_POINT_free(Y3);
     EC_POINT_free(w2gb);
     EC_POINT_free(w1gc);
-    EC_POINT_free(Bad);
+    EC_POINT_free(bad);
     
     return ret1 != 0 && neg_ret_sum == 6;
 }

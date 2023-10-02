@@ -50,7 +50,7 @@ void shamir_shares_generate(const EC_GROUP *group, EC_POINT *shares[], EC_POINT 
     BN_free(exp);
 }
 
-static void lagX(const EC_GROUP *group, BIGNUM *prod, int shareIndexes[], int length, int i, BN_CTX *ctx) {
+static void lagX(const EC_GROUP *group, BIGNUM *prod, int share_indexes[], int length, int i, BN_CTX *ctx) {
     const BIGNUM *order = get0_order(group);
 
     BIGNUM *numerator = BN_new();
@@ -65,10 +65,10 @@ static void lagX(const EC_GROUP *group, BIGNUM *prod, int shareIndexes[], int le
             continue;
         }
         BN_set_word(a, 0);
-        BN_set_word(b, shareIndexes[j]);
+        BN_set_word(b, share_indexes[j]);
         BN_mod_sub(numerator, a, b, order, ctx);
-        BN_set_word(a, shareIndexes[i]);
-        BN_set_word(b, shareIndexes[j]);
+        BN_set_word(a, share_indexes[i]);
+        BN_set_word(b, share_indexes[j]);
         BN_mod_sub(denominator, a, b, order, ctx);
         BN_mod_inverse(denominator, denominator, order, ctx);
         BN_mod_mul(fraction, numerator, denominator, order, ctx);
@@ -93,16 +93,16 @@ EC_POINT *shamir_shares_reconstruct(const EC_GROUP *group, EC_POINT *shares[], i
     EC_POINT *term = EC_POINT_new(group);
     EC_POINT *sum = bn2point(group, zero, ctx);
 
-    BIGNUM *lagrangeProd = BN_new();
+    BIGNUM *lagrange_prod = BN_new();
     for (int i=0; i<length; i++) {
-        lagX(group, lagrangeProd, shareIndexes, length, i, ctx);
-        EC_POINT_mul(group, term, NULL, shares[i], lagrangeProd, ctx);
+        lagX(group, lagrange_prod, shareIndexes, length, i, ctx);
+        EC_POINT_mul(group, term, NULL, shares[i], lagrange_prod, ctx);
         EC_POINT_add(group, sum, sum, term, ctx);
     }
 
     // cleanup
     EC_POINT_free(term);
-    BN_free(lagrangeProd);
+    BN_free(lagrange_prod);
     BN_free(zero);
     return sum; // return secret
 }
@@ -140,13 +140,13 @@ int shamir_shares_test_suite(int print) {
     }
 
     // reconstruct with 2nd and 3rd share
-    int shareIndexes[t + 1];
+    int share_indexes[t + 1];
     EC_POINT *recShares[t + 1];
     for (int i=0; i<t+1; i++) {
-        shareIndexes[i] = i + 2; // user indices 1 to t + 1
+        share_indexes[i] = i + 2; // user indices 1 to t + 1
         recShares[i] = shares[i + 1];
     }
-    EC_POINT *reconstructed = shamir_shares_reconstruct(group, recShares, shareIndexes, t, t+1, ctx);
+    EC_POINT *reconstructed = shamir_shares_reconstruct(group, recShares, share_indexes, t, t+1, ctx);
 
     // check reconstruction
     int res = EC_POINT_cmp(group, secret, reconstructed, ctx);

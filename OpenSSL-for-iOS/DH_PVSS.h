@@ -33,11 +33,11 @@ void key_pair_free(key_pair *kp);
 
 DH_PVSS_params *setup(const int t, const int n, BN_CTX *ctx);
 
-void keyGen(key_pair *kp, BN_CTX *ctx);
+void key_gen(key_pair *kp, BN_CTX *ctx);
 
-void proveKeyPair(key_pair *kp, nizk_dl_proof *pi, BN_CTX *ctx);
+void prove_key_pair(key_pair *kp, nizk_dl_proof *pi, BN_CTX *ctx);
 
-int verifyPubKey(const EC_POINT *pubKey, const nizk_dl_proof *pi, BN_CTX *ctx);
+int verify_pub_key(const EC_POINT *pubKey, const nizk_dl_proof *pi, BN_CTX *ctx);
 
 int DH_PVSS_test_suite(int print);
 

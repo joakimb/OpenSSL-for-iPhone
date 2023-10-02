@@ -107,7 +107,7 @@ DH_PVSS_params *setup(const int t, const int n, BN_CTX *ctx) {
     return pp;
 }
 
-void keyGen(key_pair *kp, BN_CTX *ctx) {
+void key_gen(key_pair *kp, BN_CTX *ctx) {
     
     const EC_GROUP *group = get0_group();
     const BIGNUM *order = get0_order(group);
@@ -117,12 +117,12 @@ void keyGen(key_pair *kp, BN_CTX *ctx) {
     point_mul(group, kp->pub, kp->priv, generator, ctx);
 }
 
-void proveKeyPair(key_pair *kp, nizk_dl_proof *pi, BN_CTX *ctx) {
+void prove_key_pair(key_pair *kp, nizk_dl_proof *pi, BN_CTX *ctx) {
     const EC_GROUP *group = get0_group();
     nizk_dl_prove(group, kp->priv, pi, ctx);
 }
 
-int verifyPubKey(const EC_POINT *pubKey, const nizk_dl_proof *pi, BN_CTX *ctx) {
+int verify_pub_key(const EC_POINT *pubKey, const nizk_dl_proof *pi, BN_CTX *ctx) {
     
     const EC_GROUP *group = get0_group();
     return nizk_dl_verify(group, pubKey, pi, ctx);
