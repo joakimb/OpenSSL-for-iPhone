@@ -51,7 +51,7 @@
 		150275D82AA713CD00462E61 /* ShamirP256.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShamirP256.h; sourceTree = "<group>"; };
 		150275D92AA7141100462E61 /* ShamirP256.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ShamirP256.m; sourceTree = "<group>"; };
 		1506C7DA2AC98A2D008EA6E3 /* dh_pvss.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dh_pvss.h; sourceTree = "<group>"; };
-		1506C7DB2AC98A2D008EA6E3 /* dh_pvss.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = dh_pvss.c; sourceTree = "<group>"; };
+		1506C7DB2AC98A2D008EA6E3 /* dh_pvss.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = dh_pvss.c; sourceTree = "<group>"; wrapsLines = 1; };
 		152D4AF12AB45B49007ACC8E /* SSS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SSS.h; sourceTree = "<group>"; };
 		152D4AF22AB45B49007ACC8E /* SSS.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = SSS.c; sourceTree = "<group>"; };
 		15BFDB672AC43C8E00249EF2 /* openssl_hashing_tools.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = openssl_hashing_tools.h; sourceTree = "<group>"; };

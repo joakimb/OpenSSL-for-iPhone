@@ -12,7 +12,7 @@ void shamir_shares_generate(const EC_GROUP *group, EC_POINT *shares[], EC_POINT 
     const BIGNUM *order = get0_order(group);
 
     // sample coefficients
-    BIGNUM *coeffs[t+1];
+    BIGNUM *coeffs[t+1]; // coefficient container (on stack)
     coeffs[0] = BN_new();
     BN_set_word(coeffs[0], 0);
     for (int i = 1; i < t + 1; i++){
@@ -25,23 +25,23 @@ void shamir_shares_generate(const EC_GROUP *group, EC_POINT *shares[], EC_POINT 
     BIGNUM *base = BN_new(); // space for storing polynomial terms
     BIGNUM *exp = BN_new(); // space for storing polynomial terms
     // make shares for user i, counting starts from 1, not 0
-    for (int i = 1; i <= n; i++){
+    for (int i=1; i<=n; i++){
         BN_set_word(peval, 0); // reset space for reuse
 
         // evaluate polynomial
-        for (int j = 0; j < t + 1; j++) { // coeff * i ** j
+        for (int j=0; j<t+1; j++) { // coeff * i ** j
             BN_set_word(base, i);
             BN_set_word(exp, j);
             BN_mod_exp(pterm, base, exp, order, ctx); // pterm = i^j mod order
             BN_mod_mul(pterm, coeffs[j], pterm, order, ctx); // pterm *= coeff
             BN_mod_add(peval, peval, pterm, order, ctx); // peval += pterm mod order
         }
-        shares[i - 1] = bn2point(group, peval, ctx); // share = generator ^ peval
+        shares[i-1] = bn2point(group, peval, ctx); // allocate new share = generator ^ peval
         point_add(group, shares[i - 1], shares[i - 1], secret, ctx);
     }
 
     // cleanup
-    for (int i = 0; i < t+1; i++){
+    for (int i=0; i<t+1; i++){
         BN_free(coeffs[i]);
     }
     BN_free(peval);
