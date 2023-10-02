@@ -26,7 +26,7 @@
     ret += nizk_dl_test_suite(1);
     ret += nizk_dl_eq_test_suite(1);
     ret += nizk_reshare_test_suite(1);
-    ret += DH_PVSS_test_suite(1);
+    ret += dh_pvss_test_suite(1);
     
     clock_t end_time_total = clock();
     double elapsed_time_total = (double)(end_time_total - start_time_total) / CLOCKS_PER_SEC;

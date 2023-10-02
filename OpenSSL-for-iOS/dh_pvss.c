@@ -1,15 +1,15 @@
 //
-//  DH_PVSS.c
+//  dh_pvss.c
 //  OpenSSL-for-iOS
 //
 //  Created by Joakim Brorsson on 2023-10-01.
 //  Copyright © 2023 Felix Schulze. All rights reserved.
 //
 
-#include "DH_PVSS.h"
+#include "dh_pvss.h"
 #include <assert.h>
 
-void DH_PVSS_params_free(DH_PVSS_params *pp) {
+void dh_pvss_params_free(dh_pvss_params *pp) {
     //free bignums
     for (int i = 0; i < pp->n; i++) {
         BN_free(pp->alphas[i]);
@@ -37,9 +37,9 @@ void key_pair_free(key_pair *kp) {
     free(kp);
 }
 
-DH_PVSS_params *DH_PVSS_params_new(const int t, const int n){
+dh_pvss_params *dh_pvss_params_new(const int t, const int n){
     
-    DH_PVSS_params *pp = malloc(sizeof(DH_PVSS_params));
+    dh_pvss_params *pp = malloc(sizeof(dh_pvss_params));
     assert(pp && "error during pp allocation");
     
     pp->t = t;
@@ -88,11 +88,11 @@ void deriveScrapeCoeffs(BIGNUM **coeffs, int from, int n, BIGNUM **evaluationPoi
     BN_free(term);
 }
 
-DH_PVSS_params *setup(const int t, const int n, BN_CTX *ctx) {
+dh_pvss_params *setup(const int t, const int n, BN_CTX *ctx) {
     
     assert( (n - t - 2) > 0 && "n and t relation bad");
     
-    DH_PVSS_params *pp = DH_PVSS_params_new(t, n);
+    dh_pvss_params *pp = dh_pvss_params_new(t, n);
     
     //fill alphas and betas
     for (int i = 0; i < n + 1; i++) {
@@ -128,18 +128,18 @@ int verify_pub_key(const EC_POINT *pubKey, const nizk_dl_proof *pi, BN_CTX *ctx)
     return nizk_dl_verify(group, pubKey, pi, ctx);
 }
 
-static int DH_PVSS_test_1(int print) {
+static int dh_pvss_test_1(int print) {
     printf("PLACEHOLDER1\n");
     
     BN_CTX *ctx = BN_CTX_new();
     
     int t = 1;
     int n = 4;
-    DH_PVSS_params *pp = setup(t, n, ctx);
+    dh_pvss_params *pp = setup(t, n, ctx);
     printf("alphas[3]: ");
     print_bn(pp->alphas[3]);
     
-    DH_PVSS_params_free(pp);
+    dh_pvss_params_free(pp);
     BN_CTX_free(ctx);
     
     // TODO: do a sharing, and verify proof
@@ -147,7 +147,7 @@ static int DH_PVSS_test_1(int print) {
     return 0;// success
 }
 
-static int DH_PVSS_test_2(int print) {
+static int dh_pvss_test_2(int print) {
     printf("PLACEHOLDER2\n");
     return 0;// success
 }
@@ -155,15 +155,15 @@ static int DH_PVSS_test_2(int print) {
 typedef int (*test_function)(int);
 
 static test_function test_suite[] = {
-    &DH_PVSS_test_1,
-    &DH_PVSS_test_2
+    &dh_pvss_test_1,
+    &dh_pvss_test_2
 };
 
 // return test results
 //   0 = passed (all individual tests passed)
 //   1 = failed (one or more individual tests failed)
 // setting print to 0 (zero) suppresses stdio printouts, while print 1 is 'verbose'
-int DH_PVSS_test_suite(int print) {
+int dh_pvss_test_suite(int print) {
     int num_tests = sizeof(test_suite)/sizeof(test_function);
     int ret = 0;
     for (int i=0; i<num_tests; i++) {
