@@ -29,7 +29,7 @@ void nizk_dl_prove(const EC_GROUP *group, const BIGNUM *x, nizk_dl_proof *pi, BN
     EC_POINT *X = bn2point(group, x, ctx);
 
     // compute u
-    BIGNUM *r = random_bignum(order, ctx);
+    BIGNUM *r = bn_random(order, ctx);
     pi->u = bn2point(group, r, ctx);
 
     // compute c
@@ -124,7 +124,7 @@ static int nizk_dl_test_2(int print) {
     // negative tests
     // try to verify incorrect proof (z-value wrong)
     BN_free(pi.z);
-    pi.z = random_bignum(order, ctx); // omitted to check if new erroneous z-value is actually by chance the correct value
+    pi.z = bn_random(order, ctx); // omitted to check if new erroneous z-value is actually by chance the correct value
     int ret2 = nizk_dl_verify(group, secret, &pi, ctx);
     if (print) {
         if (ret2) {
@@ -162,7 +162,7 @@ static int nizk_dl_test_3(int print) {
     // negative tests
     // try to verify incorrect proof (both u- and z-value wrong)
     EC_POINT_free(pi.u);
-    pi.u = random_point(group, ctx);  // omitted to check if modified u-value actually by chance produces a valid proof
+    pi.u = point_random(group, ctx);  // omitted to check if modified u-value actually by chance produces a valid proof
     int ret2 = nizk_dl_verify(group, secret, &pi, ctx);
     if (print) {
         if (ret2) {

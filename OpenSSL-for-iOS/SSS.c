@@ -16,7 +16,7 @@ void shamir_shares_generate(const EC_GROUP *group, EC_POINT *shares[], EC_POINT 
     coeffs[0] = BN_new();
     BN_set_word(coeffs[0], 0);
     for (int i = 1; i < t + 1; i++){
-        coeffs[i] = random_bignum(order, ctx);
+        coeffs[i] = bn_random(order, ctx);
     }
 
     // make shares
@@ -124,7 +124,7 @@ int shamir_shares_test_suite(int print) {
     EC_POINT_mul(group, secret, NULL, generator, seven, ctx);
     if (print) {
         printf("secret: ");
-        print_point(group, secret, ctx);
+        point_print(group, secret, ctx);
         printf("\n");
     }
 
@@ -134,7 +134,7 @@ int shamir_shares_test_suite(int print) {
     if (print) {
         printf("shares:\n");
         for (int i=0; i<n; i++){
-            print_point(group, shares[i], ctx);
+            point_print(group, shares[i], ctx);
             printf("\n");
         }
     }
@@ -152,7 +152,7 @@ int shamir_shares_test_suite(int print) {
     int res = EC_POINT_cmp(group, secret, reconstructed, ctx);
     if (print) {
         printf("reconstructed: ");
-        print_point(group, reconstructed, ctx);
+        point_print(group, reconstructed, ctx);
         printf("\nReconstruction %s\n", res ? "NOT OK" : "OK");
     }
     fflush(stdout);
