@@ -4,6 +4,7 @@
 //  Created by Paul Stankovski Wagner on 2023-09-27.
 //
 #include <stdio.h>
+#include <stdarg.h>
 #include <assert.h>
 #include "openssl_hashing_tools.h"
 
@@ -46,45 +47,17 @@ BIGNUM *openssl_hash2bignum(const unsigned char *md) {
     return BN_bin2bn(md, SHA256_DIGEST_LENGTH, NULL); // convert/map hash digest to BIGNUM, note
 }
 
-BIGNUM *openssl_hash_ppp2bn(const EC_GROUP *group, const EC_POINT *p1, const EC_POINT *p2, const EC_POINT *p3, BN_CTX *bn_ctx) {
-    SHA256_CTX sha_ctx;
-    openssl_hash_init(&sha_ctx);
-    openssl_hash_update_point(&sha_ctx, group, p1, bn_ctx);
-    openssl_hash_update_point(&sha_ctx, group, p2, bn_ctx);
-    openssl_hash_update_point(&sha_ctx, group, p3, bn_ctx);
-    unsigned char hash[SHA256_DIGEST_LENGTH];
-    openssl_hash_final(hash, &sha_ctx);
-    BIGNUM *bn = openssl_hash2bignum(hash);
-    return bn;
-}
+BIGNUM *openssl_hash_points2bn(const EC_GROUP *group, BN_CTX *bn_ctx, int num_points,...) {
+    va_list vl;
+    va_start(vl, num_points);
 
-BIGNUM *openssl_hash_pppppp2bn(const EC_GROUP *group, const EC_POINT *p1, const EC_POINT *p2, const EC_POINT *p3, const EC_POINT *p4, const EC_POINT *p5, const EC_POINT *p6, BN_CTX *bn_ctx) {
     SHA256_CTX sha_ctx;
     openssl_hash_init(&sha_ctx);
-    openssl_hash_update_point(&sha_ctx, group, p1, bn_ctx);
-    openssl_hash_update_point(&sha_ctx, group, p2, bn_ctx);
-    openssl_hash_update_point(&sha_ctx, group, p3, bn_ctx);
-    openssl_hash_update_point(&sha_ctx, group, p4, bn_ctx);
-    openssl_hash_update_point(&sha_ctx, group, p5, bn_ctx);
-    openssl_hash_update_point(&sha_ctx, group, p6, bn_ctx);
-    unsigned char hash[SHA256_DIGEST_LENGTH];
-    openssl_hash_final(hash, &sha_ctx);
-    BIGNUM *bn = openssl_hash2bignum(hash);
-    return bn;
-}
-
-BIGNUM *openssl_hash_ppppppppp2bn(const EC_GROUP *group, const EC_POINT *p1, const EC_POINT *p2, const EC_POINT *p3, const EC_POINT *p4, const EC_POINT *p5, const EC_POINT *p6, const EC_POINT *p7, const EC_POINT *p8, const EC_POINT *p9, BN_CTX *bn_ctx) {
-    SHA256_CTX sha_ctx;
-    openssl_hash_init(&sha_ctx);
-    openssl_hash_update_point(&sha_ctx, group, p1, bn_ctx);
-    openssl_hash_update_point(&sha_ctx, group, p2, bn_ctx);
-    openssl_hash_update_point(&sha_ctx, group, p3, bn_ctx);
-    openssl_hash_update_point(&sha_ctx, group, p4, bn_ctx);
-    openssl_hash_update_point(&sha_ctx, group, p5, bn_ctx);
-    openssl_hash_update_point(&sha_ctx, group, p6, bn_ctx);
-    openssl_hash_update_point(&sha_ctx, group, p7, bn_ctx);
-    openssl_hash_update_point(&sha_ctx, group, p8, bn_ctx);
-    openssl_hash_update_point(&sha_ctx, group, p9, bn_ctx);
+    for (int i=0; i<num_points; i++) {
+        const EC_POINT *point = va_arg(vl, const EC_POINT*);
+        openssl_hash_update_point(&sha_ctx, group, point, bn_ctx);
+    }
+    va_end(vl);
     unsigned char hash[SHA256_DIGEST_LENGTH];
     openssl_hash_final(hash, &sha_ctx);
     BIGNUM *bn = openssl_hash2bignum(hash);

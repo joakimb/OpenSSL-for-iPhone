@@ -15,7 +15,10 @@
 #import "nizk_dl.h"
 #import "nizk_dl_eq.h"
 #import "nizk_reshare.h"
+<<<<<<< HEAD
 #import "DH_PVSS.h"
+=======
+>>>>>>> 67c935e (nizk_reshare complete)
 
 @interface ShamirP256: NSObject
 

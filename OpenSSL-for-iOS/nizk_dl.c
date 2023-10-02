@@ -33,7 +33,7 @@ void nizk_dl_prove(const EC_GROUP *group, const BIGNUM *x, nizk_dl_proof *pi, BN
     pi->u = bn2point(group, r, ctx);
 
     // compute c
-    BIGNUM *c = openssl_hash_ppp2bn(group, generator, X, pi->u, ctx);
+    BIGNUM *c = openssl_hash_points2bn(group, ctx, 3, generator, X, pi->u);
 
     // compute z
     pi->z = BN_new();
@@ -58,7 +58,7 @@ int nizk_dl_verify(const EC_GROUP *group, const EC_POINT *X, const nizk_dl_proof
     // compute Z_prime
     EC_POINT *Z_prime = EC_POINT_new(group);
 
-    BIGNUM *c = openssl_hash_ppp2bn(group, generator, X, pi->u, ctx);
+    BIGNUM *c = openssl_hash_points2bn(group, ctx, 3, generator, X, pi->u);
     EC_POINT_mul(group, Z_prime, NULL, X, c, ctx);
     EC_POINT_add(group, Z_prime, Z_prime, pi->u, ctx);
     

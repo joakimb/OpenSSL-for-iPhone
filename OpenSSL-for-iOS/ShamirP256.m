@@ -20,6 +20,7 @@
 + (NSString *)test:(NSString *) string {
     
     clock_t start_time_total = clock();
+<<<<<<< HEAD
     
     int ret = 0;
 //    ret += shamir_shares_test_suite(1);
@@ -27,6 +28,13 @@
     ret += nizk_dl_eq_test_suite(1);
     ret += nizk_reshare_test_suite(1);
     ret += dh_pvss_test_suite(1);
+=======
+
+//    int ret = shamir_shares_test_suite(1);
+//    int ret = nizk_dl_test_suite(1);
+//    int ret = nizk_dl_eq_test_suite(1);
+    int ret = nizk_reshare_test_suite(1);
+>>>>>>> 67c935e (nizk_reshare complete)
     
     clock_t end_time_total = clock();
     double elapsed_time_total = (double)(end_time_total - start_time_total) / CLOCKS_PER_SEC;

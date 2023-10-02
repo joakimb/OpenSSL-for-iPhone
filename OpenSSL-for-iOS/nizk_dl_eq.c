@@ -37,7 +37,7 @@ void nizk_dl_eq_prove(const EC_GROUP *group, const BIGNUM *exp, const EC_POINT *
     EC_POINT_mul(group, pi->Rb, NULL, b, r, ctx);
 
     // compute c
-    BIGNUM *c = openssl_hash_pppppp2bn(group, a, A, b, B, pi->Ra, pi->Rb, ctx);
+    BIGNUM *c = openssl_hash_points2bn(group, ctx, 6, a, A, b, B, pi->Ra, pi->Rb);
 
     // compute z
     pi->z = BN_new();
@@ -54,7 +54,7 @@ void nizk_dl_eq_prove(const EC_GROUP *group, const BIGNUM *exp, const EC_POINT *
 
 int nizk_dl_eq_verify(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *A, const EC_POINT *b, const EC_POINT *B, const nizk_dl_eq_proof *pi, BN_CTX *ctx) {
     // compute c
-    BIGNUM *c = openssl_hash_pppppp2bn(group, a, A, b, B, pi->Ra, pi->Rb, ctx);
+    BIGNUM *c = openssl_hash_points2bn(group, ctx, 6, a, A, b, B, pi->Ra, pi->Rb);
 
     /* check if pi->Ra = [pi->z]a + [c]A */
     EC_POINT *Ra_prime = EC_POINT_new(group);

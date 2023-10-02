@@ -17,8 +17,6 @@ void openssl_hash_final(unsigned char *md, SHA256_CTX *sha_ctx);
 void openssl_hash(const unsigned char*buf, size_t buf_len, unsigned char *hash);
 BIGNUM *openssl_hash2bignum(const unsigned char *md);
 
-BIGNUM *openssl_hash_ppp2bn(const EC_GROUP *group, const EC_POINT *p1, const EC_POINT *p2, const EC_POINT *p3, BN_CTX *bn_ctx);
-BIGNUM *openssl_hash_pppppp2bn(const EC_GROUP *group, const EC_POINT *p1, const EC_POINT *p2, const EC_POINT *p3, const EC_POINT *p4, const EC_POINT *p5, const EC_POINT *p6, BN_CTX *bn_ctx);
-BIGNUM *openssl_hash_ppppppppp2bn(const EC_GROUP *group, const EC_POINT *p1, const EC_POINT *p2, const EC_POINT *p3, const EC_POINT *p4, const EC_POINT *p5, const EC_POINT *p6, const EC_POINT *p7, const EC_POINT *p8, const EC_POINT *p9, BN_CTX *bn_ctx);
+BIGNUM *openssl_hash_points2bn(const EC_GROUP *group, BN_CTX *bn_ctx, int num_points,...);
 
 #endif
