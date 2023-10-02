@@ -162,11 +162,15 @@ static void pvss_distribute(const EC_GROUP *group, EC_POINT **enc_shares, dh_pvs
 void prove_pvss_distribute(nizk_reshare_proof *pi, EC_POINT **enc_shares, dh_pvss_ctx *pp, BIGNUM *priv_dist, EC_POINT **com_keys, BN_CTX *ctx) {
     
 //    const EC_GROUP *group = get0_group();
+//    const EC_POINT *generator = get0_generator(group);
     
     //hash to poly coeffs
     int degree = pp->n - pp->t - 2;
     BIGNUM *poly_coeffs[degree + 1];
-    // TODO: populate poly_coeffs
+    // TODO: populate poly_coeffs by:
+//    (1) get seed from openssl_hash_point_lists2bn
+//    (2) get poly coeffs by sending seed to openssl_hash_bignum2polycoeffs
+    
     
     BIGNUM *scrape_terms[pp->n];
     gen_scrape_sum_terms(scrape_terms, pp->alphas, pp->vs, poly_coeffs, pp->n, degree + 1, ctx);

@@ -79,3 +79,15 @@ BIGNUM *openssl_hash_point_lists2bn(const EC_GROUP *group, BN_CTX *bn_ctx, int n
     BIGNUM *bn = openssl_hash2bignum(hash);
     return bn;
 }
+
+void openssl_hash_bignum2polycoeffs(BIGNUM *poly_coeffs[], const EC_GROUP *group, BN_CTX *bn_ctx, BIGNUM *seed, int degree) {
+    
+    //let the i:th coefficient be defined as the seed hashed i times
+    
+    for (int i = 0; i <= degree; i++) {
+        poly_coeffs[i] = seed;
+        // TODO: make a hash for bignums
+        //seed =
+    }
+    
+}
