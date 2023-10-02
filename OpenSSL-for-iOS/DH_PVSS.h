@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include "P256.h"
+#include "nizk_dl.h"
 
 typedef struct {
     int t;
@@ -24,11 +25,15 @@ typedef struct {
 typedef struct {
     BIGNUM *priv;
     EC_POINT *pub;
-} KEY_PAIR;
+} key_pair;
 
 void DH_PVSS_params_free(DH_PVSS_params *pp);
 
+void key_pair_free(key_pair *kp);
+
 DH_PVSS_params *setup(const int t, const int n, BN_CTX *ctx);
+
+key_pair *keyGen(BN_CTX *ctx);
 
 int DH_PVSS_test_suite(int print);
 

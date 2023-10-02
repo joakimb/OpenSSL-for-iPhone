@@ -31,6 +31,12 @@ void DH_PVSS_params_free(DH_PVSS_params *pp) {
     free(pp);
 }
 
+void key_pair_free(key_pair *kp) {
+    BN_free(kp->priv);
+    EC_POINT_free(kp->pub);
+    free(kp);
+}
+
 DH_PVSS_params *DH_PVSS_params_new(const int t, const int n){
     
     DH_PVSS_params *pp = malloc(sizeof(DH_PVSS_params));
@@ -100,6 +106,27 @@ DH_PVSS_params *setup(const int t, const int n, BN_CTX *ctx) {
  
     return pp;
 }
+
+key_pair *keyGen(BN_CTX *ctx){
+    
+    const EC_GROUP *group = get0_group();
+    const BIGNUM *order = get0_order(group);
+    const EC_POINT *generator = get0_generator(group);
+    key_pair *kp = malloc(sizeof(key_pair));
+    kp->priv = random_bignum(order, ctx);
+    kp->pub = EC_POINT_new(group);
+    point_mul(group, kp->pub, kp->priv, generator, ctx);
+    
+    return kp;
+}
+
+//nizk_dl_proof *proveKeyPair(key_pair *kp) {
+//    
+////    const EC_GROUP *group = get0_group();
+////
+////    nizk_dl_prove(group, kp->priv, <#nizk_dl_proof *pi#>, <#BN_CTX *ctx#>);
+//}
+
 
 static int DH_PVSS_test_1(int print) {
     printf("PLACEHOLDER1\n");
