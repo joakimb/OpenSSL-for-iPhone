@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include "P256.h"
 #include "nizk_dl.h"
+#include "nizk_reshare.h"
 
 typedef struct {
     int t;

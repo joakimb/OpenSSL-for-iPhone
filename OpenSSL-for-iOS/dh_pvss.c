@@ -8,6 +8,7 @@
 
 #include "dh_pvss.h"
 #include <assert.h>
+#include "SSS.h"
 
 void dh_pvss_params_free(dh_pvss_params *pp) {
     //free bignums
@@ -159,6 +160,49 @@ void gen_scrape_sum_terms(BIGNUM** terms, BIGNUM **eval_points, BIGNUM** code_co
 
 
 
+void pvss_distribute(EC_POINT **enc_shares, dh_pvss_params *pp, BIGNUM *priv_dist, EC_POINT **com_keys, EC_POINT *secret, BN_CTX *ctx) {
+    
+    const EC_GROUP *group = get0_group();
+    const EC_POINT *generator = get0_generator(group);
+    
+    EC_POINT *shares[pp->n];
+    shamir_shares_generate(group, shares, secret, pp->t, pp->n, ctx);
+    
+    //encrypt shares
+    for (int i = 0; i < pp->n; i++) {
+        
+        enc_shares[i] = EC_POINT_new(group);
+        EC_POINT *enc_share = enc_shares[i];
+        point_mul(group, enc_share, priv_dist, com_keys[i], ctx);
+        point_add(group, enc_share, enc_share, shares[i], ctx);
+    }
+    
+}
+
+void prove_pvss_distribute(nizk_reshare_proof *pi, EC_POINT **enc_shares, dh_pvss_params *pp, BIGNUM *priv_dist, EC_POINT **com_keys, BN_CTX *ctx) {
+    
+    const EC_GROUP *group = get0_group();
+    
+    //hash to poly coeffs
+    int degree = pp->n - pp->t - 2;
+    BIGNUM *poly_coeffs[degree + 1];
+    // TODO: populate poly_coeffs
+    
+    BIGNUM *scrape_terms[pp->n];
+    gen_scrape_sum_terms(scrape_terms, pp->alphas, pp->vs, poly_coeffs, pp->n, degree + 1, ctx);
+    
+//    EC_POINT *V = bn2point(group, <#const BIGNUM *bn#>, <#BN_CTX *ctx#>);
+//    BIGNUM
+//    EC_POINT *prod = EC_POINT_new(<#const EC_GROUP *group#>)
+//    for (int i = 0; i < pp->n; i++) {
+//
+//    }
+    
+    // TODO: cleanup
+    
+
+}
+
 static int dh_pvss_test_1(int print) {
     printf("PLACEHOLDER1\n");
     
@@ -173,7 +217,12 @@ static int dh_pvss_test_1(int print) {
     dh_pvss_params_free(pp);
     BN_CTX_free(ctx);
     
-    // TODO: do a sharing, and verify proof
+//    EC_POINT enc_shares[pp->n];
+//    enc_shares = malloc(sizeof(EC_POINT *) * pp->n);
+    
+//    distribute_pvss(enc_shares, pp, BIGNUM *priv_dist, EC_POINT **com_keys, EC_POINT *secret, BN_CTX *ctx)
+    
+    // TODO: verify proof
     
     return 0;// success
 }
