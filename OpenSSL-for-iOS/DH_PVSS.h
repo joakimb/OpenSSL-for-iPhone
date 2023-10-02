@@ -33,7 +33,9 @@ void key_pair_free(key_pair *kp);
 
 DH_PVSS_params *setup(const int t, const int n, BN_CTX *ctx);
 
-key_pair *keyGen(BN_CTX *ctx);
+void keyGen(key_pair *kp, BN_CTX *ctx);
+
+void proveKeyPair(key_pair *kp, nizk_dl_proof *pi, BN_CTX *ctx);
 
 int DH_PVSS_test_suite(int print);
 
