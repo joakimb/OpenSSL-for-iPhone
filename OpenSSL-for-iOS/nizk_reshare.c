@@ -78,7 +78,7 @@ int nizk_reshare_verify(const EC_GROUP *group, const EC_POINT *ga, const EC_POIN
     point_add(group, R1cY1, pi->R1, cY1, ctx);
     EC_POINT *z1ga = EC_POINT_new(group);
     point_mul(group, z1ga, pi->z1, ga, ctx);
-    int ret1 = EC_POINT_cmp(group, R1cY1, z1ga, ctx);
+    int ret1 = point_cmp(group, R1cY1, z1ga, ctx);
     
     // check dl for Y2
     EC_POINT *cY2 = EC_POINT_new(group);
@@ -87,7 +87,7 @@ int nizk_reshare_verify(const EC_GROUP *group, const EC_POINT *ga, const EC_POIN
     point_add(group, R2cY2, pi->R2, cY2, ctx);
     EC_POINT *z2ga = EC_POINT_new(group);
     point_mul(group, z2ga, pi->z2, ga, ctx);
-    int ret2 = EC_POINT_cmp(group, R2cY2, z2ga, ctx);
+    int ret2 = point_cmp(group, R2cY2, z2ga, ctx);
 
     // check pedersen commitment for Y3
     EC_POINT *cY3 = EC_POINT_new(group);
@@ -100,7 +100,7 @@ int nizk_reshare_verify(const EC_GROUP *group, const EC_POINT *ga, const EC_POIN
     point_mul(group, z1gc, pi->z1, gc, ctx);
     EC_POINT *z2gb_z1gc = EC_POINT_new(group);
     point_sub(group, z2gb_z1gc, z2gb, z1gc, ctx);
-    int ret3 = EC_POINT_cmp(group, R3cY3, z2gb_z1gc, ctx);
+    int ret3 = point_cmp(group, R3cY3, z2gb_z1gc, ctx);
 
     // cleanup
     EC_POINT_free(z2gb_z1gc);
