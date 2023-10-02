@@ -37,6 +37,8 @@ void keyGen(key_pair *kp, BN_CTX *ctx);
 
 void proveKeyPair(key_pair *kp, nizk_dl_proof *pi, BN_CTX *ctx);
 
+int verifyPubKey(const EC_POINT *pubKey, const nizk_dl_proof *pi, BN_CTX *ctx);
+
 int DH_PVSS_test_suite(int print);
 
 #endif /* DH_PVSS_h */

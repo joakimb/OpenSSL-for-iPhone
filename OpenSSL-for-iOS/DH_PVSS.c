@@ -122,6 +122,11 @@ void proveKeyPair(key_pair *kp, nizk_dl_proof *pi, BN_CTX *ctx) {
     nizk_dl_prove(group, kp->priv, pi, ctx);
 }
 
+int verifyPubKey(const EC_POINT *pubKey, const nizk_dl_proof *pi, BN_CTX *ctx) {
+    
+    const EC_GROUP *group = get0_group();
+    return nizk_dl_verify(group, pubKey, pi, ctx);
+}
 
 static int DH_PVSS_test_1(int print) {
     printf("PLACEHOLDER1\n");
