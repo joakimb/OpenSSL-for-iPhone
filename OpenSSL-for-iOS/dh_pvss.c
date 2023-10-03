@@ -88,10 +88,10 @@ void dh_pvss_setup(dh_pvss_ctx *pp, const EC_GROUP *group, const int t, const in
     // allocate vector entries
     for (int i=0; i<n+1; i++) {
         pp->alphas[i]   = BN_new();
-        assert(pp->alphas[i] && "dh_pvss_ctx_init: allocation error for entry in alphas");
         pp->betas[i]    = BN_new();
-        assert(pp->betas[i] && "dh_pvss_ctx_init: allocation error for entry in betas");
         pp->v_primes[i] = BN_new();
+        assert(pp->alphas[i] && "dh_pvss_ctx_init: allocation error for entry in alphas");
+        assert(pp->betas[i] && "dh_pvss_ctx_init: allocation error for entry in betas");
         assert(pp->v_primes[i] && "dh_pvss_ctx_init: allocation error for entry in v_primes");
     }
     for (int i=0; i<n; i++) {
@@ -156,7 +156,7 @@ void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **encrypted_shares
     }
 
     // degree n-t-2 polynomial = hash(dist_key->pub, com_keys)
-    const int num_poly_coeffs = n - t - 2;
+    const int num_poly_coeffs = n - t - 1;
     BIGNUM *poly_coeffs[num_poly_coeffs]; // polynomial container
     
     openssl_hash_points2poly(group, ctx, num_poly_coeffs, poly_coeffs, dist_key->pub, n, com_keys, (const EC_POINT**)encrypted_shares);
@@ -197,7 +197,7 @@ int dh_pvss_distribute_verify(const EC_GROUP *group, nizk_dl_eq_proof *pi, const
     const int t = pp->t;
 
     // degree n-t-2 polynomial <- hash(dist_key->pub, com_keys)
-    const int num_poly_coeffs = n - t - 2;
+    const int num_poly_coeffs = n - t - 1;
     BIGNUM *poly_coeffs[num_poly_coeffs]; // polynomial container
     openssl_hash_points2poly(group, ctx, num_poly_coeffs, poly_coeffs, pub_dist, n, com_keys, (const EC_POINT**)enc_shares);
 
@@ -234,8 +234,8 @@ static int dh_pvss_test_1(int print) {
     BN_CTX *ctx = BN_CTX_new();
 
     // setup
-    int t = 1;
-    int n = 4;
+    int t = 50;
+    int n = 100;
     dh_pvss_ctx pp;
     dh_pvss_setup(&pp, group, t, n, ctx);
     EC_POINT *secret = point_random(group, ctx);
@@ -259,7 +259,7 @@ static int dh_pvss_test_1(int print) {
     // positive test
     int ret1 = dh_pvss_distribute_verify(group, &pi, (const EC_POINT**)enc_shares, &pp, first_dist_kp.pub, (const EC_POINT**)committee_public_keys, ctx);
     if (print) {
-        printf("Test 4 part 1 %s: Correct dh_pvss_distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+        printf("Test 4 part 1 %s: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
 
     // cleanup
@@ -307,7 +307,7 @@ static int dh_pvss_test_2(int print) {
     // positive test
     int ret1 = dh_pvss_distribute_verify(group, &pi, (const EC_POINT**)enc_shares, &pp, first_dist_kp.pub, (const EC_POINT**)committee_public_keys, ctx);
     if (print) {
-        printf("Test 5 part 1 %s: Correct dh_pvss_distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+        printf("Test 5 part 1 %s: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
     
     //negative test

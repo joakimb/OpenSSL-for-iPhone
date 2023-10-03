@@ -66,7 +66,7 @@ const EC_POINT* get0_generator(const EC_GROUP *group) {
 
 void bn_print(const BIGNUM *x) {
     char *num = BN_bn2dec(x);
-    printf("%s\n", num);
+    printf("%s", num);
     OPENSSL_free(num);
 }
 

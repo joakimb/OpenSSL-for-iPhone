@@ -17,6 +17,7 @@ void openssl_hash_update(SHA256_CTX *ctx, const void *data, size_t len) {
 }
 
 void openssl_hash_update_bignum(SHA256_CTX *sha_ctx, const BIGNUM *bn) {
+    assert(bn && "openssl_hash_update_bignum: expected bignum to be passed");
     int len = BN_num_bytes(bn);
     assert(len > 0 && "openssl_hash_update_bignum: unexpected length");
     size_t buf_size = len + 1;
@@ -48,7 +49,7 @@ void openssl_hash_final(unsigned char *md, SHA256_CTX *ctx) {
     SHA256_Final(md, ctx);
 }
 
-void openssl_hash(const unsigned char*buf, size_t buf_len, unsigned char *md) {
+void openssl_hash(const unsigned char *buf, size_t buf_len, unsigned char *md) {
     SHA256(buf, buf_len, md);
 }
 
@@ -57,8 +58,7 @@ BIGNUM *openssl_hash2bignum(const unsigned char *md) {
 }
 
 BIGNUM *openssl_hash_bn2bn(const BIGNUM *bn) {
-    const BIGNUM *bn_list[1] = {bn};
-    return openssl_hash_bns2bn(1, bn_list);
+    return openssl_hash_bns2bn(1, bn);
 }
 
 BIGNUM *openssl_hash_bns2bn(int num_bns,...) {
@@ -140,25 +140,23 @@ void openssl_hash_points2poly(const EC_GROUP *group, BN_CTX *ctx, int num_coeffs
     BIGNUM *c = p_list_2 ? openssl_hash_point_list2bn(group, ctx, n, p_list_2) : NULL;
     const BIGNUM *bn_list[3];
     int bn_list_len = 0;
-    if (a) {
-        bn_list[bn_list_len++] = a;
-    }
-    if (b) {
-        bn_list[bn_list_len++] = b;
-    }
-    if (c) {
-        bn_list[bn_list_len++] = c;
-    }
+    if (a) { bn_list[bn_list_len++] = a; /*printf("a: "); bn_print(a); printf("\n");*/ }
+    if (b) { bn_list[bn_list_len++] = b; /*printf("b: "); bn_print(b); printf("\n");*/ }
+    if (c) { bn_list[bn_list_len++] = c; /*printf("c: "); bn_print(c); printf("\n");*/ }
     assert(bn_list_len > 0 && "openssl_hash_points2poly: unexpected input");
     
     // hash chain coefficients
     poly_coeff[0] = openssl_hash_bn_list2bn(bn_list_len, bn_list);
+//    printf("poly_coeff[0]: "); bn_print(poly_coeff[0]); printf("\n"); fflush(stdout);
     for (int i=1; i<num_coeffs; i++) {
         poly_coeff[i] = openssl_hash_bn2bn(poly_coeff[i-1]);
+//        printf("poly_coeff[%d]: ", i); bn_print(poly_coeff[i]); printf("\n"); fflush(stdout);
     }
     // reduce coefficients modulo group order
+    // (not needed if group size is at most 2^{digest size in bits})
     for (int i=0; i<num_coeffs; i++) {
         BN_nnmod(poly_coeff[i], poly_coeff[i], order, ctx);
+//        printf("poly_coeff[%d] after modreduction: ", i); bn_print(poly_coeff[i]); printf("\n"); fflush(stdout);
     }
 
     // cleanup
