@@ -116,6 +116,9 @@ static void generate_scrape_sum_terms(const EC_GROUP *group, BIGNUM** terms, BIG
     BIGNUM *poly_eval = BN_new();
     BIGNUM *poly_term = BN_new();
     BIGNUM *exp       = BN_new();
+    assert(poly_eval && "generate_scrape_sum_terms: allocation error for poly_eval");
+    assert(poly_term && "generate_scrape_sum_terms: allocation error for poly_term");
+    assert(exp && "generate_scrape_sum_terms: allocation error for exp");
     for (int x=1; x<=n; x++) {
         BIGNUM *eval_point = eval_points[x];
         BN_set_word(poly_eval, 0);
@@ -126,6 +129,7 @@ static void generate_scrape_sum_terms(const EC_GROUP *group, BIGNUM** terms, BIG
             BN_mod_add(poly_eval, poly_eval, poly_term, order, ctx);
         }
         terms[x - 1] = BN_new();
+        assert(terms[x - 1] && "generate_scrape_sum_terms: allocation error for terms");
         BN_mod_mul(terms[x - 1], code_coeffs[x - 1], poly_eval, order, ctx);
     }
 
@@ -146,6 +150,7 @@ void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **encrypted_shares
     // encrypt shares
     for (int i=0; i<n; i++) {
         EC_POINT *encrypted_share = encrypted_shares[i] = EC_POINT_new(group);
+        assert(encrypted_share && "dh_pvss_distribute_prove: allocation error for encrypted_share");
         point_mul(group, encrypted_share, dist_key->priv, com_keys[i], ctx);
         point_add(group, encrypted_share, encrypted_share, shares[i], ctx);
     }
@@ -163,6 +168,8 @@ void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **encrypted_shares
     // compute U and V
     EC_POINT *U = EC_POINT_new(group);
     EC_POINT *V = EC_POINT_new(group);
+    assert(U && "dh_pvss_distribute_prove: allocation error for U");
+    assert(V && "dh_pvss_distribute_prove: allocation error for V");
     point_weighted_sum(group, U, n, (const BIGNUM**)scrape_terms, com_keys, ctx);
     point_weighted_sum(group, V, n, (const BIGNUM**)scrape_terms, (const EC_POINT**)encrypted_shares, ctx);
 
@@ -201,6 +208,8 @@ int dh_pvss_distribute_verify(const EC_GROUP *group, nizk_dl_eq_proof *pi, const
     // compute U and V
     EC_POINT *U = EC_POINT_new(group);
     EC_POINT *V = EC_POINT_new(group);
+    assert(U && "dh_pvss_distribute_verify: allocation error for U");
+    assert(V && "dh_pvss_distribute_verify: allocation error for V");
     point_weighted_sum(group, U, n, (const BIGNUM**)scrape_terms, com_keys, ctx);
     point_weighted_sum(group, V, n, (const BIGNUM**)scrape_terms, enc_shares, ctx);
 
@@ -234,21 +243,21 @@ static int dh_pvss_test_1(int print) {
     // keygen
     dh_key_pair first_dist_kp;
     dh_key_pair_generate(group, &first_dist_kp, ctx);
-    dh_key_pair committee_key_pairs[pp.n];
-    EC_POINT *committee_public_keys[pp.n];
-    for (int i = 0; i<pp.n; i++) {
+    dh_key_pair committee_key_pairs[n];
+    EC_POINT *committee_public_keys[n];
+    for (int i = 0; i<n; i++) {
         dh_key_pair *com_member_key_pair = &committee_key_pairs[i];
         dh_key_pair_generate(group, com_member_key_pair, ctx);
         committee_public_keys[i] = com_member_key_pair->pub;
     }
     
     // make encrypted shares
-    EC_POINT *enc_shares[pp.n];
+    EC_POINT *enc_shares[n];
     nizk_dl_eq_proof pi;
     dh_pvss_distribute_prove(group, enc_shares, &pp, &first_dist_kp, (const EC_POINT**)committee_public_keys, secret, &pi, ctx);
     
     // positive test
-    int ret1 = dh_pvss_distribute_verify(group, &pi, enc_shares, &pp, first_dist_kp.pub, committee_public_keys, ctx);
+    int ret1 = dh_pvss_distribute_verify(group, &pi, (const EC_POINT**)enc_shares, &pp, first_dist_kp.pub, (const EC_POINT**)committee_public_keys, ctx);
     if (print) {
         printf("Test 4 part 1 %s: Correct dh_pvss_distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
@@ -282,9 +291,9 @@ static int dh_pvss_test_2(int print) {
     // keygen
     dh_key_pair first_dist_kp;
     dh_key_pair_generate(group, &first_dist_kp, ctx);
-    dh_key_pair committee_key_pairs[pp.n];
-    EC_POINT *committee_public_keys[pp.n];
-    for (int i = 0; i<pp.n; i++) {
+    dh_key_pair committee_key_pairs[n];
+    EC_POINT *committee_public_keys[n];
+    for (int i = 0; i<n; i++) {
         dh_key_pair *com_member_key_pair = &committee_key_pairs[i];
         dh_key_pair_generate(group, com_member_key_pair, ctx);
         committee_public_keys[i] = com_member_key_pair->pub;
@@ -293,16 +302,16 @@ static int dh_pvss_test_2(int print) {
     // make encrypted shares
     EC_POINT *enc_shares[pp.n];
     nizk_dl_eq_proof pi;
-    dh_pvss_distribute_prove(group, enc_shares, &pp, &first_dist_kp, committee_public_keys, secret, &pi, ctx);
+    dh_pvss_distribute_prove(group, enc_shares, &pp, &first_dist_kp, (const EC_POINT**)committee_public_keys, secret, &pi, ctx);
     
     // positive test
-    int ret1 = dh_pvss_distribute_verify(group, &pi, enc_shares, &pp, first_dist_kp.pub, committee_public_keys, ctx);
+    int ret1 = dh_pvss_distribute_verify(group, &pi, (const EC_POINT**)enc_shares, &pp, first_dist_kp.pub, (const EC_POINT**)committee_public_keys, ctx);
     if (print) {
         printf("Test 5 part 1 %s: Correct dh_pvss_distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
     
     //negative test
-    int ret2 = dh_pvss_distribute_verify(group, &pi, enc_shares, &pp, committee_public_keys[0], committee_public_keys, ctx);
+    int ret2 = dh_pvss_distribute_verify(group, &pi, (const EC_POINT**)enc_shares, &pp, committee_public_keys[0], (const EC_POINT**)committee_public_keys, ctx);
     if (print) {
         if (ret2) {
             printf("Test 5 part 2 OK: Incorrect NIZK DL Proof not accepted (which is CORRECT)\n");
