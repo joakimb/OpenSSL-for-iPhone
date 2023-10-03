@@ -17,7 +17,7 @@ void openssl_hash_update(SHA256_CTX *ctx, const void *data, size_t len) {
 }
 
 void openssl_hash_update_bignum(SHA256_CTX *sha_ctx, const BIGNUM *bn) {
-    int len = BN_bn2bin(bn, NULL);
+    int len = BN_num_bytes(bn);
     assert(len > 0 && "openssl_hash_update_bignum: unexpected length");
     size_t buf_size = len + 1;
     unsigned char buf[buf_size];
@@ -150,7 +150,7 @@ void openssl_hash_points2poly(const EC_GROUP *group, BN_CTX *ctx, int num_coeffs
         bn_list[bn_list_len++] = c;
     }
     assert(bn_list_len > 0 && "openssl_hash_points2poly: unexpected input");
-
+    
     // hash chain coefficients
     poly_coeff[0] = openssl_hash_bn_list2bn(bn_list_len, bn_list);
     for (int i=1; i<num_coeffs; i++) {
