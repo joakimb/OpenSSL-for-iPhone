@@ -125,6 +125,7 @@ static void generate_scrape_sum_terms(const EC_GROUP *group, BIGNUM** terms, BIG
             BN_mod_mul(poly_term, poly_term, poly_coeff[i], order, ctx);
             BN_mod_add(poly_eval, poly_eval, poly_term, order, ctx);
         }
+        terms[x - 1] = BN_new();
         BN_mod_mul(terms[x - 1], code_coeffs[x - 1], poly_eval, order, ctx);
     }
 
@@ -134,7 +135,7 @@ static void generate_scrape_sum_terms(const EC_GROUP *group, BIGNUM** terms, BIG
     BN_free(exp);
 }
 
-static void dh_pvss_distribute(const EC_GROUP *group, EC_POINT **enc_shares, dh_pvss_ctx *pp, dh_key_pair *dist_key, const EC_POINT *com_keys[], EC_POINT *secret, nizk_dl_eq_proof *pi, BN_CTX *ctx) {
+static void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **enc_shares, dh_pvss_ctx *pp, dh_key_pair *dist_key, const EC_POINT *com_keys[], EC_POINT *secret, nizk_dl_eq_proof *pi, BN_CTX *ctx) {
     const int n = pp->n;
     const int t = pp->t;
 
@@ -156,9 +157,6 @@ static void dh_pvss_distribute(const EC_GROUP *group, EC_POINT **enc_shares, dh_
 
     // generate scrape sum terms
     BIGNUM *scrape_terms[n];
-    for (int i=0; i<n; i++) {
-        scrape_terms[i] = BN_new();
-    }
     generate_scrape_sum_terms(group, scrape_terms, pp->alphas, pp->vs, poly_coeff, n, num_poly_coeffs, ctx);
 
     // compute U and V
@@ -185,31 +183,40 @@ static void dh_pvss_distribute(const EC_GROUP *group, EC_POINT **enc_shares, dh_
     // implicitly return (pi, enc_shares)
 }
 
-static void dh_pvss_distribute_prove(const EC_GROUP *group, nizk_reshare_proof *pi, EC_POINT **enc_shares, dh_pvss_ctx *pp, BIGNUM *priv_dist, EC_POINT **com_keys, BN_CTX *ctx) {
+static int dh_pvss_distribute_verify(const EC_GROUP *group, nizk_reshare_proof *pi, const EC_POINT **enc_shares, dh_pvss_ctx *pp, const EC_POINT *pub_dist, const EC_POINT **com_keys, BN_CTX *ctx) {
+    const EC_POINT *generator = get0_generator(group);
+    const int n = pp->n;
+    const int t = pp->t;
 
-//    const EC_POINT *generator = get0_generator(group);
+    // hash to poly coeffs
+    int num_coeffs = n - t - 1;
+    BIGNUM *poly_coeff[num_coeffs];
+    openssl_hash_points2poly(group, ctx, num_coeffs, poly_coeff, pub_dist, n, com_keys, enc_shares);
     
-    //hash to poly coeffs
-    int degree = pp->n - pp->t - 2;
-    BIGNUM *poly_coeffs[degree + 1];
-    // TODO: populate poly_coeffs by:
-//    (1) get seed from openssl_hash_point_lists2bn
-//    (2) get poly coeffs by sending seed to openssl_hash_bignum2polycoeffs
+    // generate scrape sum terms
+    BIGNUM *scrape_terms[n];
+    generate_scrape_sum_terms(group, scrape_terms, pp->alphas, pp->vs, poly_coeff, n, num_coeffs, ctx);
     
-    
-    BIGNUM *scrape_terms[pp->n];
-    generate_scrape_sum_terms(group, scrape_terms, pp->alphas, pp->vs, poly_coeffs, pp->n, degree + 1, ctx);
-    
-//    EC_POINT *V = bn2point(group, <#const BIGNUM *bn#>, <#BN_CTX *ctx#>);
-//    BIGNUM
-//    EC_POINT *prod = EC_POINT_new(<#const EC_GROUP *group#>)
-//    for (int i = 0; i < pp->n; i++) {
-//
-//    }
-    
-    // TODO: cleanup
-    
+    // compute U and V
+    EC_POINT *U = EC_POINT_new(group);
+    EC_POINT *V = EC_POINT_new(group);
+    EC_POINTs_mul(group, U, NULL, n, com_keys, scrape_terms, ctx);
+    EC_POINTs_mul(group, V, NULL, n, enc_shares, scrape_terms, ctx);
 
+    // verify dl eq proof
+    int ret = nizk_dl_eq_verify(group, generator, pub_dist, U, V, pi, ctx);
+
+    // cleanup
+    EC_POINT_free(U);
+    EC_POINT_free(V);
+    for (int i=0; i<n; i++) {
+        BN_free(scrape_terms[i]);
+    }
+    for (int i=0; i<n-t-1; i++) {
+        BN_free(poly_coeff[i]);
+    }
+
+    return ret;
 }
 
 static int dh_pvss_test_1(int print) {
