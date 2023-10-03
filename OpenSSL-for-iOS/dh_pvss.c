@@ -327,8 +327,8 @@ static int dh_pvss_test_2(int print) {
     BN_CTX *ctx = BN_CTX_new();
 
     // setup
-    int t = 1;
-    int n = 4;
+    const int t = 50;
+    const int n = 100;
     dh_pvss_ctx pp;
     dh_pvss_setup(&pp, group, t, n, ctx);
     EC_POINT *secret = point_random(group, ctx);
@@ -379,11 +379,92 @@ static int dh_pvss_test_2(int print) {
     return 0;// success
 }
 
+static int dh_pvss_test_3(int print) {
+    const EC_GROUP *group = get0_group();
+    BN_CTX *ctx = BN_CTX_new();
+
+    // setup
+    const int t = 50;
+    const int n = 100;
+    dh_pvss_ctx pp;
+    dh_pvss_setup(&pp, group, t, n, ctx);
+    EC_POINT *secret = point_random(group, ctx);
+
+    // keygen
+    dh_key_pair first_dist_kp;
+    dh_key_pair_generate(group, &first_dist_kp, ctx);
+    dh_key_pair committee_key_pairs[n];
+    EC_POINT *committee_public_keys[n];
+    for (int i=0; i<n; i++) {
+        dh_key_pair *com_member_key_pair = &committee_key_pairs[i];
+        dh_key_pair_generate(group, com_member_key_pair, ctx);
+        committee_public_keys[i] = com_member_key_pair->pub;
+    }
+
+    // make encrypted shares with proof
+    EC_POINT *encrypted_shares[n];
+    nizk_dl_eq_proof distribution_pi;
+    dh_pvss_distribute_prove(group, encrypted_shares, &pp, &first_dist_kp, (const EC_POINT**)committee_public_keys, secret, &distribution_pi, ctx);
+
+    // verify encrypted shares
+    int ret1 = dh_pvss_distribute_verify(group, &distribution_pi, (const EC_POINT**)encrypted_shares, &pp, first_dist_kp.pub, (const EC_POINT**)committee_public_keys, ctx);
+    if (print) {
+        printf("Test 3 part 1 %s: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+    }
+
+    // decrypting the encrypted shares and verifiying
+    EC_POINT *decrypted_shares[n];
+    int num_failed_decryptions = 0;
+    int num_failed_verifications = 0;
+    for (int i=0; i<n; i++) {
+        nizk_dl_eq_proof committee_member_pi;
+        decrypted_shares[i] = dh_pvss_decrypt_share_prove(group, first_dist_kp.pub, &committee_key_pairs[i], encrypted_shares[i], &committee_member_pi, ctx);
+        if (decrypted_shares[i] == NULL) {
+            num_failed_decryptions++;
+            if (print) {
+                printf("failed to decrypt an encrypted share\n");
+            }
+            continue; // decryption failed, so skip verification test
+        }
+        int ret2 = dh_pvss_decrypt_share_verify(group, first_dist_kp.pub, committee_public_keys[i], encrypted_shares[i], decrypted_shares[i], &committee_member_pi, ctx);
+        if (ret2) {
+            num_failed_verifications++;
+            if (print) {
+                printf("failed to verify a decrypted share\n");
+            }
+        }
+        
+        // cleanup
+        nizk_dl_eq_proof_free(&committee_member_pi);
+    }
+     if (print) {
+        if (num_failed_decryptions == 0 && num_failed_verifications == 0) {
+            printf("Test 3 part 2 OK: all encrypted shares could be decrypted and verified\n");
+        } else {
+            printf("Test 3 part 2 NOT OK: failed to decrypt %d shares, and failed to verify %d shares\n", num_failed_decryptions, num_failed_verifications);
+        }
+    }
+
+    // cleanup
+    BN_CTX_free(ctx);
+    dh_pvss_ctx_free(&pp);
+    EC_POINT_free(secret);
+    dh_key_pair_free(&first_dist_kp);
+    for (int i=0; i<n; i++){
+        dh_key_pair_free(&committee_key_pairs[i]);
+        EC_POINT_free(encrypted_shares[i]);
+    }
+    nizk_dl_eq_proof_free(&distribution_pi);
+    
+    return !(ret1 == 0 && num_failed_decryptions == 0 && num_failed_verifications == 0);
+}
+
 typedef int (*test_function)(int);
 
 static test_function test_suite[] = {
     &dh_pvss_test_1,
-    &dh_pvss_test_2
+    &dh_pvss_test_2,
+    &dh_pvss_test_3
 };
 
 // return test results
