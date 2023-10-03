@@ -235,7 +235,6 @@ static int dh_pvss_test_1(int print) {
     BN_CTX *ctx = BN_CTX_new();
 
     // setup
-    
     int t = 1;
     int n = 4;
     dh_pvss_ctx pp;
@@ -264,15 +263,21 @@ static int dh_pvss_test_1(int print) {
     }
 
     // cleanup
-    // TODO: make sure everything is cleaned up
-    dh_pvss_ctx_free(&pp);
     BN_CTX_free(ctx);
-
-    return 0;// success
+    dh_pvss_ctx_free(&pp);
+    EC_POINT_free(secret);
+    dh_key_pair_free(&first_dist_kp);
+    for (int i = 0; i<n; i++){
+        dh_key_pair_free(&committee_key_pairs[i]);
+        EC_POINT_free(enc_shares[i]);
+    }
+    nizk_dl_eq_proof_free(&pi);
+    
+    // return test results
+    return ret1 != 0;
 }
 
 static int dh_pvss_test_2(int print) {
-    printf("PLACEHOLDER2\n");
     return 0;// success
 }
 
