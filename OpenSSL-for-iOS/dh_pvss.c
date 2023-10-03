@@ -135,7 +135,7 @@ static void generate_scrape_sum_terms(const EC_GROUP *group, BIGNUM** terms, BIG
     BN_free(exp);
 }
 
-static void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **enc_shares, dh_pvss_ctx *pp, dh_key_pair *dist_key, const EC_POINT *com_keys[], EC_POINT *secret, nizk_dl_eq_proof *pi, BN_CTX *ctx) {
+void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **enc_shares, dh_pvss_ctx *pp, dh_key_pair *dist_key, const EC_POINT *com_keys[], EC_POINT *secret, nizk_dl_eq_proof *pi, BN_CTX *ctx) {
     const int n = pp->n;
     const int t = pp->t;
 
@@ -153,6 +153,7 @@ static void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **enc_share
     // degree n-t-2 polynomial = hash(dist_key->pub, com_keys)
     const int num_poly_coeffs = n - t - 2;
     BIGNUM *poly_coeffs[num_poly_coeffs]; // polynomial container
+    
     openssl_hash_points2poly(group, ctx, num_poly_coeffs, poly_coeffs, dist_key->pub, n, com_keys, (const EC_POINT**)enc_shares);
 
     // generate scrape sum terms
@@ -162,6 +163,11 @@ static void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **enc_share
     // compute U and V
     EC_POINT *U = EC_POINT_new(group);
     EC_POINT *V = EC_POINT_new(group);
+    EC_POINT_set_to_infinity(group, U); //set to zero
+    EC_POINT_set_to_infinity(group, V); //set to zero
+
+    // TODO: EC_POINTs_mul is deprecated, make a for loop with addition instead
+
     EC_POINTs_mul(group, U, NULL, n, com_keys, scrape_terms, ctx);
     EC_POINTs_mul(group, V, NULL, n, enc_shares, scrape_terms, ctx);
 
@@ -176,7 +182,7 @@ static void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **enc_share
         BN_free(scrape_terms[i]);
         EC_POINT_free(shares[i]);
     }
-    for (int i=0; i<n-t-1; i++) {
+    for (int i=0; i<n-t-2; i++) {
         BN_free(poly_coeffs[i]);
     }
     
@@ -200,6 +206,7 @@ static int dh_pvss_distribute_verify(const EC_GROUP *group, nizk_reshare_proof *
     // compute U and V
     EC_POINT *U = EC_POINT_new(group);
     EC_POINT *V = EC_POINT_new(group);
+    // TODO: EC_POINTs_mul is deprecated, make a for loop with addition instead
     EC_POINTs_mul(group, U, NULL, n, com_keys, scrape_terms, ctx);
     EC_POINTs_mul(group, V, NULL, n, enc_shares, scrape_terms, ctx);
 
@@ -220,22 +227,37 @@ static int dh_pvss_distribute_verify(const EC_GROUP *group, nizk_reshare_proof *
 }
 
 static int dh_pvss_test_1(int print) {
-    printf("PLACEHOLDER1\n");
     const EC_GROUP *group = get0_group();
     BN_CTX *ctx = BN_CTX_new();
 
+    // setup
+    
     int t = 1;
     int n = 4;
     dh_pvss_ctx pp;
     dh_pvss_setup(&pp, group, t, n, ctx);
-    printf("alphas[3]: ");
-    bn_print(pp.alphas[3]);
+    EC_POINT *secret = point_random(group, ctx);
     
-
-//    EC_POINT enc_shares[pp->n];
+    // keygen
+    dh_key_pair first_dist_kp;
+    dh_key_pair_generate(group, &first_dist_kp, ctx);
+    dh_key_pair committee_key_pairs[pp.n];
+    EC_POINT *committee_public_keys[pp.n];
+    for (int i = 0; i<pp.n; i++) {
+        dh_key_pair *com_member_key_pair = &committee_key_pairs[i];
+        dh_key_pair_generate(group, com_member_key_pair, ctx);
+        committee_public_keys[i] = com_member_key_pair->pub;
+    }
+    
+    // make encrypted shares
+    EC_POINT *enc_shares[pp.n];
+    nizk_dl_eq_proof pi;
+    dh_pvss_distribute_prove(group, enc_shares, &pp, &first_dist_kp, committee_public_keys, secret, &pi, ctx);
+    
+    
+    
 //    enc_shares = malloc(sizeof(EC_POINT *) * pp->n);
     
-//    distribute_pvss(enc_shares, pp, BIGNUM *priv_dist, EC_POINT **com_keys, EC_POINT *secret, BN_CTX *ctx)
     
     // TODO: verify proof
 

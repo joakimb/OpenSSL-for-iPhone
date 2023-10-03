@@ -36,6 +36,7 @@ int dh_pub_key_verify(const EC_GROUP *group, const EC_POINT *pub_key, const nizk
 
 void dh_pvss_ctx_free(dh_pvss_ctx *pp);
 void dh_pvss_setup(dh_pvss_ctx *pp, const EC_GROUP *group, const int t, const int n, BN_CTX *ctx);
+void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **enc_shares, dh_pvss_ctx *pp, dh_key_pair *dist_key, const EC_POINT *com_keys[], EC_POINT *secret, nizk_dl_eq_proof *pi, BN_CTX *ctx);
 int dh_pvss_test_suite(int print);
 
 
