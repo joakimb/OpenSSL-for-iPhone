@@ -9,6 +9,7 @@
 #include "dh_pvss.h"
 #include <assert.h>
 #include "SSS.h"
+#include "openssl_hashing_tools.h"
 
 /* dh key pair utilities */
 
@@ -109,19 +110,19 @@ void dh_pvss_setup(dh_pvss_ctx *pp, const EC_GROUP *group, const int t, const in
     derive_scrape_coeffs(group, pp->v_primes, 0, n, pp->betas, ctx);
 }
 
-static void generate_scrape_sum_terms(const EC_GROUP *group, BIGNUM** terms, BIGNUM **eval_points, BIGNUM** code_coeffs, BIGNUM **poly_coeffs, int n, int poly_coeffs_len, BN_CTX *ctx) {
+static void generate_scrape_sum_terms(const EC_GROUP *group, BIGNUM** terms, BIGNUM **eval_points, BIGNUM** code_coeffs, BIGNUM **poly_coeff, int n, int num_poly_coeffs, BN_CTX *ctx) {
     const BIGNUM *order = get0_order(group);
 
     BIGNUM *poly_eval = BN_new();
     BIGNUM *poly_term = BN_new();
     BIGNUM *exp       = BN_new();
     for (int x=1; x<=n; x++) {
-        BIGNUM* eval_point = eval_points[x];
+        BIGNUM *eval_point = eval_points[x];
         BN_set_word(poly_eval, 0);
-        for (int i=0; i<poly_coeffs_len; i++) {
+        for (int i=0; i<num_poly_coeffs; i++) {
             BN_set_word(exp, i);
             BN_mod_exp(poly_term, eval_point, exp, order, ctx);
-            BN_mod_mul(poly_term, poly_term, poly_coeffs[i], order, ctx);
+            BN_mod_mul(poly_term, poly_term, poly_coeff[i], order, ctx);
             BN_mod_add(poly_eval, poly_eval, poly_term, order, ctx);
         }
         BN_mod_mul(terms[x - 1], code_coeffs[x - 1], poly_eval, order, ctx);
@@ -133,23 +134,55 @@ static void generate_scrape_sum_terms(const EC_GROUP *group, BIGNUM** terms, BIG
     BN_free(exp);
 }
 
-static void dh_pvss_distribute(const EC_GROUP *group, EC_POINT **enc_shares, dh_pvss_ctx *pp, BIGNUM *priv_dist, EC_POINT **com_keys, EC_POINT *secret, BN_CTX *ctx) {
+static void dh_pvss_distribute(const EC_GROUP *group, EC_POINT **enc_shares, dh_pvss_ctx *pp, dh_key_pair *dist_key, const EC_POINT *com_keys[], EC_POINT *secret, nizk_dl_eq_proof *pi, BN_CTX *ctx) {
+    const int n = pp->n;
+    const int t = pp->t;
 
     // create shares
-    EC_POINT *shares[pp->n]; // runtime sized container allocation (on stack) for holding shares
-    shamir_shares_generate(group, shares, secret, pp->t, pp->n, ctx); // shares allocated here
+    EC_POINT *shares[n]; // share container
+    shamir_shares_generate(group, shares, secret, t, n, ctx); // shares allocated here
 
     // encrypt shares
-    for (int i=0; i<pp->n; i++) {
+    for (int i=0; i<n; i++) {
         EC_POINT *enc_share = enc_shares[i] = EC_POINT_new(group);
-        point_mul(group, enc_share, priv_dist, com_keys[i], ctx);
+        point_mul(group, enc_share, dist_key->priv, com_keys[i], ctx);
         point_add(group, enc_share, enc_share, shares[i], ctx);
     }
 
+    // degree n-t-2 polynomial = hash(dist_key->pub, com_keys)
+    const int num_poly_coeffs = n - t - 1;
+    BIGNUM *poly_coeff[num_poly_coeffs]; // polynomial container
+    openssl_hash_points2poly(group, ctx, num_poly_coeffs, poly_coeff, dist_key->pub, n, com_keys, (const EC_POINT**)enc_shares);
+
+    // generate scrape sum terms
+    BIGNUM *scrape_terms[n];
+    for (int i=0; i<n; i++) {
+        scrape_terms[i] = BN_new();
+    }
+    generate_scrape_sum_terms(group, scrape_terms, pp->alphas, pp->vs, poly_coeff, n, num_poly_coeffs, ctx);
+
+    // compute U and V
+    EC_POINT *U = EC_POINT_new(group);
+    EC_POINT *V = EC_POINT_new(group);
+    EC_POINTs_mul(group, U, NULL, n, com_keys, scrape_terms, ctx);
+    EC_POINTs_mul(group, V, NULL, n, enc_shares, scrape_terms, ctx);
+
+    // generate dl eq proof
+    const EC_POINT *generator = get0_generator(group);
+    nizk_dl_eq_prove(group, dist_key->priv, generator, dist_key->pub, U, V, pi, ctx);
+
     // cleanup
-    for (int i=0; i<pp->n; i++) {
+    EC_POINT_free(U);
+    EC_POINT_free(V);
+    for (int i=0; i<n; i++) {
+        BN_free(scrape_terms[i]);
         EC_POINT_free(shares[i]);
     }
+    for (int i=0; i<n-t-1; i++) {
+        BN_free(poly_coeff[i]);
+    }
+    
+    // implicitly return (pi, enc_shares)
 }
 
 static void dh_pvss_distribute_prove(const EC_GROUP *group, nizk_reshare_proof *pi, EC_POINT **enc_shares, dh_pvss_ctx *pp, BIGNUM *priv_dist, EC_POINT **com_keys, BN_CTX *ctx) {

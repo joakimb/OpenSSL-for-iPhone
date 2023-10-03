@@ -16,23 +16,32 @@ void openssl_hash_update(SHA256_CTX *ctx, const void *data, size_t len) {
     SHA256_Update(ctx, data, len);
 }
 
-void openssl_hash_update_bignum(SHA256_CTX *sha_ctx, const BIGNUM *bn, BN_CTX *bn_ctx) {
-    assert(0 && "openssl_hash_update_bignum not implemented yet");
+void openssl_hash_update_bignum(SHA256_CTX *sha_ctx, const BIGNUM *bn) {
+    int len = BN_bn2bin(bn, NULL);
+    assert(len > 0 && "openssl_hash_update_bignum: unexpected length");
+    size_t buf_size = len + 1;
+    unsigned char buf[buf_size];
+    const unsigned char sentinel = 0xac;
+    buf[len] = sentinel;
+    BN_bn2bin(bn, buf);
+    if (buf[len] != sentinel) {
+        assert(0 && "openssl_hash_update_bignum: sentinel overwritten");
+    }
+    SHA256_Update(sha_ctx, buf, len); // excluding sentinel
 }
 
 void openssl_hash_update_point(SHA256_CTX *sha_ctx, const EC_GROUP *group, const EC_POINT *point, BN_CTX *bn_ctx) {
-    size_t len = EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL); // note, switch to compressed to minimize hashing time
+    size_t len = EC_POINT_point2oct(group, point, POINT_CONVERSION_COMPRESSED, NULL, 0, NULL);
+    assert(len > 0 && "openssl_hash_update_point: unexpected length");
     size_t buf_size = len + 1;
-    unsigned char *buf = malloc(buf_size);
-    assert(buf && "ec_points_hash: allocation error");
+    unsigned char buf[buf_size];
     const unsigned char sentinel = 0xac;
     buf[len] = sentinel;
-    EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED, buf, len, bn_ctx); // note, switch to compressed to minimize hashing time
+    EC_POINT_point2oct(group, point, POINT_CONVERSION_COMPRESSED, buf, len, bn_ctx);
     if (buf[len] != sentinel) {
         assert(0 && "ec_points_hash: sentinel overwritten");
     }
     SHA256_Update(sha_ctx, buf, len); // excluding sentinel
-    free(buf); // note, switch to static allocation
 }
 
 void openssl_hash_final(unsigned char *md, SHA256_CTX *ctx) {
@@ -44,7 +53,45 @@ void openssl_hash(const unsigned char*buf, size_t buf_len, unsigned char *md) {
 }
 
 BIGNUM *openssl_hash2bignum(const unsigned char *md) {
-    return BN_bin2bn(md, SHA256_DIGEST_LENGTH, NULL); // convert/map hash digest to BIGNUM, note
+    return BN_bin2bn(md, SHA256_DIGEST_LENGTH, NULL); // convert/map hash digest to BIGNUM
+}
+
+BIGNUM *openssl_hash_bn2bn(const BIGNUM *bn) {
+    const BIGNUM *bn_list[1] = {bn};
+    return openssl_hash_bns2bn(1, bn_list);
+}
+
+BIGNUM *openssl_hash_bns2bn(int num_bns,...) {
+    va_list vl;
+    va_start(vl, num_bns);
+
+    SHA256_CTX sha_ctx;
+    openssl_hash_init(&sha_ctx);
+    for (int i=0; i<num_bns; i++) {
+        const BIGNUM *bn = va_arg(vl, const BIGNUM*);
+        openssl_hash_update_bignum(&sha_ctx, bn);
+    }
+    va_end(vl);
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    openssl_hash_final(hash, &sha_ctx);
+    BIGNUM *bn = openssl_hash2bignum(hash);
+    return bn;
+}
+
+BIGNUM *openssl_hash_bn_list2bn(int num_bns, const BIGNUM *bn_list[]) {
+    SHA256_CTX sha_ctx;
+    openssl_hash_init(&sha_ctx);
+    for (int i=0; i<num_bns; i++) {
+        openssl_hash_update_bignum(&sha_ctx, bn_list[i]);
+    }
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    openssl_hash_final(hash, &sha_ctx);
+    BIGNUM *bn = openssl_hash2bignum(hash);
+    return bn;
+}
+
+BIGNUM *openssl_hash_point2bn(const EC_GROUP *group, BN_CTX *bn_ctx, const EC_POINT *point) {
+    return openssl_hash_points2bn(group, bn_ctx, 1, point);
 }
 
 BIGNUM *openssl_hash_points2bn(const EC_GROUP *group, BN_CTX *bn_ctx, int num_points,...) {
@@ -64,13 +111,17 @@ BIGNUM *openssl_hash_points2bn(const EC_GROUP *group, BN_CTX *bn_ctx, int num_po
     return bn;
 }
 
-BIGNUM *openssl_hash_point_lists2bn(const EC_GROUP *group, BN_CTX *bn_ctx, int num_lists, int *list_len, EC_POINT **point_list[]) {
+BIGNUM *openssl_hash_point_list2bn(const EC_GROUP *group, BN_CTX *bn_ctx, int list_len, const EC_POINT *point_list[]) {
+    return openssl_hash_point_lists2bn(group, bn_ctx, 1, &list_len, &point_list);
+}
+
+BIGNUM *openssl_hash_point_lists2bn(const EC_GROUP *group, BN_CTX *bn_ctx, int num_lists, int *list_len, const EC_POINT **point_list[]) {
     SHA256_CTX sha_ctx;
     openssl_hash_init(&sha_ctx);
     for (int i=0; i<num_lists; i++) {
-        EC_POINT **pl = point_list[i];
+        const EC_POINT **pl = point_list[i];
         for (int j=0; j<list_len[i]; j++) {
-            EC_POINT *point = pl[j];
+            const EC_POINT *point = pl[j];
             openssl_hash_update_point(&sha_ctx, group, point, bn_ctx);
         }
     }
@@ -80,14 +131,37 @@ BIGNUM *openssl_hash_point_lists2bn(const EC_GROUP *group, BN_CTX *bn_ctx, int n
     return bn;
 }
 
-void openssl_hash_bignum2polycoeffs(BIGNUM *poly_coeffs[], const EC_GROUP *group, BN_CTX *bn_ctx, BIGNUM *seed, int degree) {
-    
-    //let the i:th coefficient be defined as the seed hashed i times
-    
-    for (int i = 0; i <= degree; i++) {
-        poly_coeffs[i] = seed;
-        // TODO: make a hash for bignums
-        //seed =
+void openssl_hash_points2poly(const EC_GROUP *group, BN_CTX *ctx, int num_coeffs, BIGNUM *poly_coeff[], const EC_POINT *p, int n, const EC_POINT *p_list_1[], const EC_POINT *p_list_2[]) {
+    assert(p || p_list_1 || p_list_2 && "openssl_hash_points2poly: usage error, no points passed as input");
+    const BIGNUM *order = get0_order(group);
+
+    BIGNUM *a = p ? openssl_hash_point2bn(group, ctx, p) : NULL;
+    BIGNUM *b = p_list_1 ? openssl_hash_point_list2bn(group, ctx, n, p_list_1) : NULL;
+    BIGNUM *c = p_list_2 ? openssl_hash_point_list2bn(group, ctx, n, p_list_2) : NULL;
+    const BIGNUM *bn_list[3];
+    int bn_list_len = 0;
+    if (a) {
+        bn_list[bn_list_len++] = a;
     }
-    
+    if (b) {
+        bn_list[bn_list_len++] = b;
+    }
+    if (c) {
+        bn_list[bn_list_len++] = c;
+    }
+    assert(bn_list_len > 0 && "openssl_hash_points2poly: unexpected input");
+
+    // hash chain coefficients
+    poly_coeff[0] = openssl_hash_bn_list2bn(bn_list_len, bn_list);
+    for (int i=1; i<num_coeffs; i++) {
+        poly_coeff[i] = openssl_hash_bn2bn(poly_coeff[i-1]);
+    }
+    // reduce coefficients modulo group order
+    for (int i=0; i<num_coeffs; i++) {
+        BN_nnmod(poly_coeff[i], poly_coeff[i], order, ctx);
+    }
+
+    // cleanup
+    BN_free(b);
+    BN_free(a);
 }
