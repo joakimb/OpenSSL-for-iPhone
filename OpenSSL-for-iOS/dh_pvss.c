@@ -151,13 +151,13 @@ static void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **enc_share
     }
 
     // degree n-t-2 polynomial = hash(dist_key->pub, com_keys)
-    const int num_poly_coeffs = n - t - 1;
-    BIGNUM *poly_coeff[num_poly_coeffs]; // polynomial container
-    openssl_hash_points2poly(group, ctx, num_poly_coeffs, poly_coeff, dist_key->pub, n, com_keys, (const EC_POINT**)enc_shares);
+    const int num_poly_coeffs = n - t - 2;
+    BIGNUM *poly_coeffs[num_poly_coeffs]; // polynomial container
+    openssl_hash_points2poly(group, ctx, num_poly_coeffs, poly_coeffs, dist_key->pub, n, com_keys, (const EC_POINT**)enc_shares);
 
     // generate scrape sum terms
     BIGNUM *scrape_terms[n];
-    generate_scrape_sum_terms(group, scrape_terms, pp->alphas, pp->vs, poly_coeff, n, num_poly_coeffs, ctx);
+    generate_scrape_sum_terms(group, scrape_terms, pp->alphas, pp->vs, poly_coeffs, n, num_poly_coeffs, ctx);
 
     // compute U and V
     EC_POINT *U = EC_POINT_new(group);
@@ -177,7 +177,7 @@ static void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **enc_share
         EC_POINT_free(shares[i]);
     }
     for (int i=0; i<n-t-1; i++) {
-        BN_free(poly_coeff[i]);
+        BN_free(poly_coeffs[i]);
     }
     
     // implicitly return (pi, enc_shares)
