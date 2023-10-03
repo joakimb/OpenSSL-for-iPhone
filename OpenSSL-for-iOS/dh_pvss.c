@@ -259,7 +259,7 @@ static int dh_pvss_test_1(int print) {
     // positive test
     int ret1 = dh_pvss_distribute_verify(group, &pi, (const EC_POINT**)enc_shares, &pp, first_dist_kp.pub, (const EC_POINT**)committee_public_keys, ctx);
     if (print) {
-        printf("Test 4 part 1 %s: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+        printf("Test 1 %s: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
 
     // cleanup
@@ -307,16 +307,16 @@ static int dh_pvss_test_2(int print) {
     // positive test
     int ret1 = dh_pvss_distribute_verify(group, &pi, (const EC_POINT**)enc_shares, &pp, first_dist_kp.pub, (const EC_POINT**)committee_public_keys, ctx);
     if (print) {
-        printf("Test 5 part 1 %s: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+        printf("Test 2 part 1 %s: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
     
     //negative test
     int ret2 = dh_pvss_distribute_verify(group, &pi, (const EC_POINT**)enc_shares, &pp, committee_public_keys[0], (const EC_POINT**)committee_public_keys, ctx);
     if (print) {
         if (ret2) {
-            printf("Test 5 part 2 OK: Incorrect NIZK DL Proof not accepted (which is CORRECT)\n");
+            printf("Test 2 part 2 OK: Incorrect NIZK DL Proof not accepted (which is CORRECT)\n");
         } else {
-            printf("Test 5 part 2 NOT OK: Incorrect NIZK DL Proof IS accepted (which is an ERROR)\n");
+            printf("Test 2 part 2 NOT OK: Incorrect NIZK DL Proof IS accepted (which is an ERROR)\n");
         }
     }
     
@@ -346,12 +346,18 @@ static test_function test_suite[] = {
 //   1 = failed (one or more individual tests failed)
 // setting print to 0 (zero) suppresses stdio printouts, while print 1 is 'verbose'
 int dh_pvss_test_suite(int print) {
+    if (print) {
+        printf("DH PVSS test suite\n");
+    }
     int num_tests = sizeof(test_suite)/sizeof(test_function);
     int ret = 0;
     for (int i=0; i<num_tests; i++) {
         if (test_suite[i](print)) {
             ret = 1;
         }
+    }
+    if (print) {
+        fflush(stdout);
     }
     return ret;
 }

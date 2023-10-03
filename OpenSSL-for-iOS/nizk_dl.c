@@ -195,12 +195,18 @@ static test_function test_suite[] = {
 //   1 = failed (one or more individual tests failed)
 // setting print to 0 (zero) suppresses stdio printouts, while print 1 is 'verbose'
 int nizk_dl_test_suite(int print) {
+    if (print) {
+        printf("NIZK DL test suite\n");
+    }
     int num_tests = sizeof(test_suite)/sizeof(test_function);
     int ret = 0;
     for (int i=0; i<num_tests; i++) {
         if (test_suite[i](print)) {
             ret = 1;
         }
+    }
+    if (print) {
+        fflush(stdout);
     }
     return ret;
 }
