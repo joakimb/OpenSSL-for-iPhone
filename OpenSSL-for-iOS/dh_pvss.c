@@ -163,13 +163,8 @@ void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **enc_shares, dh_p
     // compute U and V
     EC_POINT *U = EC_POINT_new(group);
     EC_POINT *V = EC_POINT_new(group);
-//    EC_POINT_set_to_infinity(group, U); //set to zero
-//    EC_POINT_set_to_infinity(group, V); //set to zero
-
-    // TODO: EC_POINTs_mul is deprecated, make a for loop with addition instead
-
-    EC_POINTs_mul(group, U, NULL, n, com_keys, scrape_terms, ctx);
-    EC_POINTs_mul(group, V, NULL, n, enc_shares, scrape_terms, ctx);
+    point_weighted_sum(group, U, n, scrape_terms, com_keys, ctx);
+    point_weighted_sum(group, V, n, scrape_terms, enc_shares, ctx);
 
     // generate dl eq proof
     const EC_POINT *generator = get0_generator(group);
@@ -194,10 +189,9 @@ int dh_pvss_distribute_verify(const EC_GROUP *group, nizk_reshare_proof *pi, con
     const int n = pp->n;
     const int t = pp->t;
 
-    // degree n-t-2 polynomial = hash(dist_key->pub, com_keys)
+    // degree n-t-2 polynomial <- hash(dist_key->pub, com_keys)
     const int num_poly_coeffs = n - t - 2;
     BIGNUM *poly_coeffs[num_poly_coeffs]; // polynomial container
-    
     openssl_hash_points2poly(group, ctx, num_poly_coeffs, poly_coeffs, pub_dist, n, com_keys, (const EC_POINT**)enc_shares);
 
     // generate scrape sum terms
@@ -207,13 +201,9 @@ int dh_pvss_distribute_verify(const EC_GROUP *group, nizk_reshare_proof *pi, con
     // compute U and V
     EC_POINT *U = EC_POINT_new(group);
     EC_POINT *V = EC_POINT_new(group);
-//    EC_POINT_set_to_infinity(group, U); //set to zero
-//    EC_POINT_set_to_infinity(group, V); //set to zero
+    point_weighted_sum(group, U, n, scrape_terms, com_keys, ctx);
+    point_weighted_sum(group, V, n, scrape_terms, enc_shares, ctx);
 
-    // TODO: EC_POINTs_mul is deprecated, make a for loop with addition instead
-
-    EC_POINTs_mul(group, U, NULL, n, com_keys, scrape_terms, ctx);
-    EC_POINTs_mul(group, V, NULL, n, enc_shares, scrape_terms, ctx);
     // verify dl eq proof
     int ret = nizk_dl_eq_verify(group, generator, pub_dist, U, V, pi, ctx);
 

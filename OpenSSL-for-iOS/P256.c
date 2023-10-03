@@ -148,6 +148,21 @@ void point_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *bn, const EC_PO
     assert(ret == 1 && "point_mul: EC_POINT_mul failed");
 }
 
+// r = sum_{0..n-1}(w_i * p[i])
+void point_weighted_sum(const EC_GROUP *group, EC_POINT *r, int num_terms, const BIGNUM **w, const EC_POINT **p, BN_CTX *ctx) {
+    assert(num_terms > 0 && "point_weighted_sum: usage error, unexpected parameter");
+    point_mul(group, r, w[0], p[0], ctx);
+    EC_POINT *t = EC_POINT_new(group); // temp
+    assert(t && "point_weighted_sum: usage error, unexpected parameter");
+    for (int i=1; i<num_terms; i++) {
+        point_mul(group, t, w[i], p[i], ctx);
+        point_add(group, r, r, t, ctx);
+    }
+
+    // cleanup
+    EC_POINT_free(t);
+}
+
 void point_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx) {
     int ret = EC_POINT_add(group, r, a, b, ctx);
     assert(ret == 1 && "point_add: EC_POINT_add failed");
