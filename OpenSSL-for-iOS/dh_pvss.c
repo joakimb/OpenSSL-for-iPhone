@@ -135,7 +135,7 @@ static void generate_scrape_sum_terms(const EC_GROUP *group, BIGNUM** terms, BIG
     BN_free(exp);
 }
 
-void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **enc_shares, dh_pvss_ctx *pp, dh_key_pair *dist_key, const EC_POINT *com_keys[], EC_POINT *secret, nizk_dl_eq_proof *pi, BN_CTX *ctx) {
+void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **encrypted_shares, dh_pvss_ctx *pp, dh_key_pair *dist_key, const EC_POINT *com_keys[], EC_POINT *secret, nizk_dl_eq_proof *pi, BN_CTX *ctx) {
     const int n = pp->n;
     const int t = pp->t;
 
@@ -145,16 +145,16 @@ void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **enc_shares, dh_p
 
     // encrypt shares
     for (int i=0; i<n; i++) {
-        EC_POINT *enc_share = enc_shares[i] = EC_POINT_new(group);
-        point_mul(group, enc_share, dist_key->priv, com_keys[i], ctx);
-        point_add(group, enc_share, enc_share, shares[i], ctx);
+        EC_POINT *encrypted_share = encrypted_shares[i] = EC_POINT_new(group);
+        point_mul(group, encrypted_share, dist_key->priv, com_keys[i], ctx);
+        point_add(group, encrypted_share, encrypted_share, shares[i], ctx);
     }
 
     // degree n-t-2 polynomial = hash(dist_key->pub, com_keys)
     const int num_poly_coeffs = n - t - 2;
     BIGNUM *poly_coeffs[num_poly_coeffs]; // polynomial container
     
-    openssl_hash_points2poly(group, ctx, num_poly_coeffs, poly_coeffs, dist_key->pub, n, com_keys, (const EC_POINT**)enc_shares);
+    openssl_hash_points2poly(group, ctx, num_poly_coeffs, poly_coeffs, dist_key->pub, n, com_keys, (const EC_POINT**)encrypted_shares);
 
     // generate scrape sum terms
     BIGNUM *scrape_terms[n];
@@ -163,8 +163,8 @@ void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **enc_shares, dh_p
     // compute U and V
     EC_POINT *U = EC_POINT_new(group);
     EC_POINT *V = EC_POINT_new(group);
-    point_weighted_sum(group, U, n, scrape_terms, com_keys, ctx);
-    point_weighted_sum(group, V, n, scrape_terms, enc_shares, ctx);
+    point_weighted_sum(group, U, n, (const BIGNUM**)scrape_terms, com_keys, ctx);
+    point_weighted_sum(group, V, n, (const BIGNUM**)scrape_terms, (const EC_POINT**)encrypted_shares, ctx);
 
     // generate dl eq proof
     const EC_POINT *generator = get0_generator(group);
@@ -177,14 +177,14 @@ void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **enc_shares, dh_p
         BN_free(scrape_terms[i]);
         EC_POINT_free(shares[i]);
     }
-    for (int i=0; i<n-t-2; i++) {
+    for (int i=0; i<num_poly_coeffs; i++) {
         BN_free(poly_coeffs[i]);
     }
     
     // implicitly return (pi, enc_shares)
 }
 
-int dh_pvss_distribute_verify(const EC_GROUP *group, nizk_reshare_proof *pi, const EC_POINT **enc_shares, dh_pvss_ctx *pp, const EC_POINT *pub_dist, const EC_POINT **com_keys, BN_CTX *ctx) {
+int dh_pvss_distribute_verify(const EC_GROUP *group, nizk_dl_eq_proof *pi, const EC_POINT **enc_shares, dh_pvss_ctx *pp, const EC_POINT *pub_dist, const EC_POINT **com_keys, BN_CTX *ctx) {
     const EC_POINT *generator = get0_generator(group);
     const int n = pp->n;
     const int t = pp->t;
@@ -201,8 +201,8 @@ int dh_pvss_distribute_verify(const EC_GROUP *group, nizk_reshare_proof *pi, con
     // compute U and V
     EC_POINT *U = EC_POINT_new(group);
     EC_POINT *V = EC_POINT_new(group);
-    point_weighted_sum(group, U, n, scrape_terms, com_keys, ctx);
-    point_weighted_sum(group, V, n, scrape_terms, enc_shares, ctx);
+    point_weighted_sum(group, U, n, (const BIGNUM**)scrape_terms, com_keys, ctx);
+    point_weighted_sum(group, V, n, (const BIGNUM**)scrape_terms, enc_shares, ctx);
 
     // verify dl eq proof
     int ret = nizk_dl_eq_verify(group, generator, pub_dist, U, V, pi, ctx);
@@ -213,7 +213,7 @@ int dh_pvss_distribute_verify(const EC_GROUP *group, nizk_reshare_proof *pi, con
     for (int i=0; i<n; i++) {
         BN_free(scrape_terms[i]);
     }
-    for (int i=0; i<n-t-2; i++) {
+    for (int i=0; i<num_poly_coeffs; i++) {
         BN_free(poly_coeffs[i]);
     }
 
@@ -245,7 +245,7 @@ static int dh_pvss_test_1(int print) {
     // make encrypted shares
     EC_POINT *enc_shares[pp.n];
     nizk_dl_eq_proof pi;
-    dh_pvss_distribute_prove(group, enc_shares, &pp, &first_dist_kp, committee_public_keys, secret, &pi, ctx);
+    dh_pvss_distribute_prove(group, enc_shares, &pp, &first_dist_kp, (const EC_POINT**)committee_public_keys, secret, &pi, ctx);
     
     // positive test
     int ret1 = dh_pvss_distribute_verify(group, &pi, enc_shares, &pp, first_dist_kp.pub, committee_public_keys, ctx);
