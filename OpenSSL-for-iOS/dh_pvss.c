@@ -257,6 +257,7 @@ static int dh_pvss_test_1(int print) {
     nizk_dl_eq_proof pi;
     dh_pvss_distribute_prove(group, enc_shares, &pp, &first_dist_kp, committee_public_keys, secret, &pi, ctx);
     
+    // positive test
     int ret1 = dh_pvss_distribute_verify(group, &pi, enc_shares, &pp, first_dist_kp.pub, committee_public_keys, ctx);
     if (print) {
         printf("Test 4 part 1 %s: Correct dh_pvss_distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
@@ -278,6 +279,59 @@ static int dh_pvss_test_1(int print) {
 }
 
 static int dh_pvss_test_2(int print) {
+    const EC_GROUP *group = get0_group();
+    BN_CTX *ctx = BN_CTX_new();
+
+    // setup
+    int t = 1;
+    int n = 4;
+    dh_pvss_ctx pp;
+    dh_pvss_setup(&pp, group, t, n, ctx);
+    EC_POINT *secret = point_random(group, ctx);
+    
+    // keygen
+    dh_key_pair first_dist_kp;
+    dh_key_pair_generate(group, &first_dist_kp, ctx);
+    dh_key_pair committee_key_pairs[pp.n];
+    EC_POINT *committee_public_keys[pp.n];
+    for (int i = 0; i<pp.n; i++) {
+        dh_key_pair *com_member_key_pair = &committee_key_pairs[i];
+        dh_key_pair_generate(group, com_member_key_pair, ctx);
+        committee_public_keys[i] = com_member_key_pair->pub;
+    }
+    
+    // make encrypted shares
+    EC_POINT *enc_shares[pp.n];
+    nizk_dl_eq_proof pi;
+    dh_pvss_distribute_prove(group, enc_shares, &pp, &first_dist_kp, committee_public_keys, secret, &pi, ctx);
+    
+    // positive test
+    int ret1 = dh_pvss_distribute_verify(group, &pi, enc_shares, &pp, first_dist_kp.pub, committee_public_keys, ctx);
+    if (print) {
+        printf("Test 5 part 1 %s: Correct dh_pvss_distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+    }
+    
+    //negative test
+    int ret2 = dh_pvss_distribute_verify(group, &pi, enc_shares, &pp, committee_public_keys[0], committee_public_keys, ctx);
+    if (print) {
+        if (ret2) {
+            printf("Test 5 part 2 OK: Incorrect NIZK DL Proof not accepted (which is CORRECT)\n");
+        } else {
+            printf("Test 5 part 2 NOT OK: Incorrect NIZK DL Proof IS accepted (which is an ERROR)\n");
+        }
+    }
+    
+    // cleanup
+    BN_CTX_free(ctx);
+    dh_pvss_ctx_free(&pp);
+    EC_POINT_free(secret);
+    dh_key_pair_free(&first_dist_kp);
+    for (int i = 0; i<n; i++){
+        dh_key_pair_free(&committee_key_pairs[i]);
+        EC_POINT_free(enc_shares[i]);
+    }
+    nizk_dl_eq_proof_free(&pi);
+    
     return 0;// success
 }
 
