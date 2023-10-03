@@ -58,7 +58,7 @@ void point_weighted_sum(const EC_GROUP *group, EC_POINT *r, int num_terms, const
 void point_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx);
 
 // r = a - b
-void point_sub(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, EC_POINT *b, BN_CTX *ctx);
+void point_sub(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx);
 
 // helper to print point to terminal
 void point_print(const EC_GROUP *group, const EC_POINT *p, BN_CTX *ctx);

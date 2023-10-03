@@ -229,6 +229,51 @@ int dh_pvss_distribute_verify(const EC_GROUP *group, nizk_dl_eq_proof *pi, const
     return ret;
 }
 
+static EC_POINT *dh_pvss_decrypt_share_prove(const EC_GROUP *group, const EC_POINT *dist_key_pub, dh_key_pair *C, const EC_POINT *encrypted_share, nizk_dl_eq_proof *pi, BN_CTX *ctx) {
+    const EC_POINT *generator = get0_generator(group);
+
+    // compute shared key
+    EC_POINT *shared_key = EC_POINT_new(group);
+    assert(shared_key && "dh_pvss_decrypt_share: allocation error for shared_key");
+    point_mul(group, shared_key, C->priv, dist_key_pub, ctx);
+
+    // decrypt share
+    EC_POINT *decrypted_share = EC_POINT_new(group);
+    assert(decrypted_share && "dh_pvss_decrypt_share: allocation error for decrypted_share");
+    point_sub(group, decrypted_share, encrypted_share, shared_key, ctx);
+
+    // compute difference
+    EC_POINT *diff = EC_POINT_new(group);
+    assert(diff && "dh_pvss_decrypt_share: allocation error for diff");
+    point_sub(group, diff, encrypted_share, decrypted_share, ctx);
+
+    // prove correct decryption
+    nizk_dl_eq_prove(group, C->priv, generator, C->pub, dist_key_pub, diff, pi, ctx);
+    
+    // cleanup
+    EC_POINT_free(diff);
+    EC_POINT_free(shared_key);
+
+    return decrypted_share; // return decrypted share and (implicitly) proof
+}
+
+static int dh_pvss_decrypt_share_verify(const EC_GROUP *group, const EC_POINT *dist_key_pub, const EC_POINT *C_pub, const EC_POINT *encrypted_share, const EC_POINT *decrypted_share, nizk_dl_eq_proof *pi, BN_CTX *ctx) {
+    const EC_POINT *generator = get0_generator(group);
+
+    // compute difference
+    EC_POINT *diff = EC_POINT_new(group);
+    assert(diff && "dh_pvss_decrypt_share: allocation error for diff");
+    point_sub(group, diff, encrypted_share, decrypted_share, ctx);
+
+    // prove correct decryption
+    int ret = nizk_dl_eq_verify(group, generator, C_pub, dist_key_pub, diff, pi, ctx);
+    
+    // cleanup
+    EC_POINT_free(diff);
+
+    return ret; // return proof verification result
+}
+
 static int dh_pvss_test_1(int print) {
     const EC_GROUP *group = get0_group();
     BN_CTX *ctx = BN_CTX_new();
