@@ -165,7 +165,7 @@ void dh_pvss_distribute_prove(dh_pvss_ctx *pp, EC_POINT **encrypted_shares, dh_k
     const int num_poly_coeffs = n - t - 1;
     BIGNUM *poly_coeffs[num_poly_coeffs]; // polynomial container
     
-    openssl_hash_points2poly(group, ctx, num_poly_coeffs, poly_coeffs, dist_key->pub, n, com_keys, (const EC_POINT**)encrypted_shares);
+    openssl_hash_points2poly_2(group, ctx, num_poly_coeffs, poly_coeffs, dist_key->pub, n, com_keys, (const EC_POINT**)encrypted_shares);
 
     // generate scrape sum terms
     BIGNUM *scrape_terms[n];
@@ -207,7 +207,7 @@ int dh_pvss_distribute_verify(dh_pvss_ctx *pp, nizk_dl_eq_proof *pi, const EC_PO
     // degree n-t-2 polynomial <- hash(dist_key->pub, com_keys)
     const int num_poly_coeffs = n - t - 1;
     BIGNUM *poly_coeffs[num_poly_coeffs]; // polynomial container
-    openssl_hash_points2poly(group, ctx, num_poly_coeffs, poly_coeffs, pub_dist, n, com_keys, (const EC_POINT**)enc_shares);
+    openssl_hash_points2poly_2(group, ctx, num_poly_coeffs, poly_coeffs, pub_dist, n, com_keys, (const EC_POINT**)enc_shares);
 
     // generate scrape sum terms
     BIGNUM *scrape_terms[n];
@@ -292,149 +292,79 @@ EC_POINT *dh_pvss_committee_dist_key_calc(const EC_GROUP *group, const EC_POINT 
     return shamir_shares_reconstruct(group, keys, key_indices, t, length, ctx);
 }
 
-void dh_pvss_reshare_prove(const EC_GROUP *group, int party_index, const dh_key_pair *party_committee_kp, const dh_key_pair *party_distribution_kp, const EC_POINT *previous_distribution_key, const EC_POINT *current_encrypted_shares[], const EC_POINT *next_committee_keys[], nizk_reshare_proof *pi, BN_CTX *ctx) {
-
-    // implicitly return (pi, encrypted_shares)
-}
-
-//const EC_GROUP *group, EC_POINT **encrypted_shares, dh_pvss_ctx *pp, dh_key_pair *dist_key, const EC_POINT *com_keys[], EC_POINT *secret, nizk_dl_eq_proof *pi, BN_CTX *ctx
-
-#if 0
-//i:th party cur epoch reshares i:th encryted shares to the next epoch committee, using its own distkeys, pub params for next epoch and public Dist key pubD from previous epoch
-func resharePVSS(
-    partyIndex: Int, comPrivKey: BInt, comPubKey: Point, partyPrivD: BInt, partyPubD: Point, curEncShares: Array<Point>, prevPubD: Point, nextComKeys: Array<Point>, nextPP: PVSSPubParams ) throws -> (Array<Point>, ReshareProof) {
-        
-        // decrypt encrypted share (a)
-        
-        let decSharedKey = try domain.multiplyPoint(prevPubD,comPrivKey)
-        let decShare = try domain.subtractPoints(curEncShares[partyIndex], decSharedKey)
-        
-        //create shares of it fot next epoch committe (b)
-        
-        let reShares = try gShamirShare(indexes: nextPP.alphas, S: decShare, t: nextPP.t, n: nextPP.n)
-        
-        //encrypt the shares for next epoch committee keys (c)
-        
-        var encReshares = Array<Point>()
-        
-        for i in 0...(nextPP.n - 1){
-            
-            let encSharedKey = try domain.multiplyPoint(nextComKeys[i], partyPrivD)
-            let encReshare = try domain.addPoints(encSharedKey, reShares[i])
-            encReshares.append(encReshare)
-            
-        }
-        
-        //hash to poly coeffs (d)
-        var data = toBytes(prevPubD)
-        
-        for i in 0...(curEncShares.count - 1) {
-            
-            data = data + toBytes(curEncShares[i])
-            
-        }
-        
-        let coeffs = hashToPolyCoeffs(data: data, degree: nextPP.n - nextPP.t - 1)
-        
-        //derive U, V, W (e)
-        
-        let encShareDiffs = try encReshares.map {
-            
-            try domain.subtractPoints($0, curEncShares[partyIndex])
-            
-        }
-        
-        let scrapeTerms = try genScrapeSumTerms(n: nextPP.n, evalPoints: nextPP.betas, codeCoeffs: nextPP.vprimes, polyCoeffs: coeffs)
-        
-        let Uprime = try zip(encShareDiffs, scrapeTerms)
-            .map{try domain.multiplyPoint($0, $1)}
-            .reduce(zeroPoint){ try domain.addPoints($0,$1)}
-        let Vprime = try zip(nextComKeys, scrapeTerms)
-            .map{try domain.multiplyPoint($0, $1)}
-            .reduce(zeroPoint){ try domain.addPoints($0,$1)}
-        let Wsum = scrapeTerms.reduce(BInt.ZERO){$0 + $1}
-        let Wprime = try domain.multiplyPoint(prevPubD, Wsum)
-        
-        //prove correctness (f)
-        
-        let pi = try NIZKReshareProve(w1: comPrivKey, w2: partyPrivD, ga: domain.g, gb: Vprime, gc: Wprime, Y1: comPubKey, Y2: partyPubD, Y3: Uprime)
-        
-        return (encReshares, pi)
-        
-    }
-#endif
-
-int dh_pvss_reshare_verify(const EC_GROUP *group, int party_index, const dh_key_pair *party_committee_kp, const dh_key_pair *party_dist_kp, const EC_POINT *previous_dist_key, const EC_POINT *current_encrypted_shares[], const EC_POINT *encrypted_reshares[], const EC_POINT *next_committee_keys[], nizk_reshare_proof *pi, BN_CTX *ctx) {
-    return 1; // not verified
-}
-
-#if 0
-func verifyReshare (partyIndex: Int, curEncShares: Array<Point>, encReshares: Array<Point>, nextComKeys: Array<Point>, nextPP: PVSSPubParams, prevPubD: Point, reshareComKey: Point, reshareDistKey: Point, pi: ReshareProof) throws -> Bool {
+static void dh_pvss_reshare_prove(const EC_GROUP *group, int party_index, const dh_key_pair *party_committee_kp, const dh_key_pair *party_dist_kp, const EC_POINT *previous_dist_key, const EC_POINT *current_enc_shares[], const int current_n, const dh_pvss_ctx *next_pp, const EC_POINT *next_committee_keys[], EC_POINT *enc_re_shares[], nizk_reshare_proof *pi, BN_CTX *ctx) {
     
+    // compute shared key
+    EC_POINT *shared_key = EC_POINT_new(group);
+    assert(shared_key && "dh_pvss_reshare_prove: allocation error for shared_key");
+    point_mul(group, shared_key, party_committee_kp->priv, previous_dist_key, ctx);
+
+    // decrypt share
+    EC_POINT *decrypted_share = EC_POINT_new(group);
+    assert(decrypted_share && "dh_pvss_reshare_prove: allocation error for decrypted_share");
+    point_sub(group, decrypted_share, current_enc_shares[party_index], shared_key, ctx);
     
-    //hash to poly coeffs
+    // create shares of it for next epoch committe
+    EC_POINT *re_shares[next_pp->n];
+    shamir_shares_generate(group, re_shares, decrypted_share, next_pp->t, next_pp->n, ctx);
     
-    var data = toBytes(prevPubD)
-    
-    for i in 0...(curEncShares.count - 1) {
-        
-        data = data + toBytes(curEncShares[i])
-        
+    // encrypt the re_shares for the next epoch committee public keys
+    EC_POINT *enc_shared_key = EC_POINT_new(group);
+    assert(enc_shared_key && "dh_pvss_reshare_prove: allocation error for enc_shared_key");
+    for (int i = 0; i<next_pp->n; i++) {
+        point_mul(group, enc_shared_key, party_dist_kp->priv, next_committee_keys[i], ctx);
+        enc_re_shares[i] = EC_POINT_new(group);
+        point_add(group, enc_re_shares[i], enc_shared_key, re_shares[i], ctx);
     }
     
-    let coeffs = hashToPolyCoeffs(data: data, degree: nextPP.n - nextPP.t - 1)
+    // degree n-t-1 polynomial <- hash(previous_dist_key, current_enc_shares)
+    const int num_poly_coeffs = next_pp->n - next_pp->t;
+    BIGNUM *poly_coeffs[num_poly_coeffs]; // polynomial container
+    openssl_hash_points2poly_1(group, ctx, num_poly_coeffs, poly_coeffs, previous_dist_key, current_n, current_enc_shares);
     
-    //derive U, V, W
+    // generate scrape sum terms
+    BIGNUM *scrape_terms[next_pp->n];
+    generate_scrape_sum_terms(group, scrape_terms, next_pp->betas, next_pp->v_primes, poly_coeffs, next_pp->n, num_poly_coeffs, ctx);
     
-    let encShareDiffs = try encReshares.map {
-        
-        try domain.subtractPoints($0, curEncShares[partyIndex])
-        
+    // compute U', V' and W'
+    EC_POINT *enc_re_share_diffs[next_pp->n];
+    for (int i = 0; i<next_pp->n; i++) {
+        enc_re_share_diffs[i] = EC_POINT_new(group);
+        point_sub(group, enc_re_share_diffs[i], enc_re_shares[i], current_enc_shares[party_index], ctx);
     }
+    EC_POINT *U_prime = EC_POINT_new(group);
+    EC_POINT *V_prime = EC_POINT_new(group);
+    EC_POINT *W_prime = EC_POINT_new(group);
+    assert(U_prime && "dh_pvss_reshare_prove: allocation error for U_prime");
+    assert(V_prime && "dh_pvss_reshare_prove: allocation error for V_prime");
+    assert(W_prime && "dh_pvss_reshare_prove: allocation error for V_prime");
     
-    let scrapeTerms = try genScrapeSumTerms(n: nextPP.n, evalPoints: nextPP.betas, codeCoeffs: nextPP.vprimes, polyCoeffs: coeffs)
+    /*
+     // compute U and V
+     point_weighted_sum(group, U, n, (const BIGNUM**)scrape_terms, com_keys, ctx);
+     point_weighted_sum(group, V, n, (const BIGNUM**)scrape_terms, (const EC_POINT**)encrypted_shares, ctx);
+     */
     
-    let Uprime = try zip(encShareDiffs, scrapeTerms)
-        .map{try domain.multiplyPoint($0, $1)}
-        .reduce(zeroPoint){ try domain.addPoints($0,$1)}
-    let Vprime = try zip(nextComKeys, scrapeTerms)
-        .map{try domain.multiplyPoint($0, $1)}
-        .reduce(zeroPoint){ try domain.addPoints($0,$1)}
-    let Wsum = scrapeTerms.reduce(BInt.ZERO){$0 + $1}
-    let Wprime = try domain.multiplyPoint(prevPubD, Wsum)
-    
-    //verify proof (a).ii
-    
-    let validProof = try NIZKReshareVerify(ga: domain.g, gb: Vprime, gc: Wprime, Y1: reshareComKey, Y2: reshareDistKey, Y3: Uprime, pi: pi)
-    
-    return validProof
+    // cleanup
+    for (int i = 0; i<next_pp->n; i++) {
+        EC_POINT_free(re_shares[i]);
+    }
+    EC_POINT_free(enc_shared_key);
+    for (int i = 0; i<num_poly_coeffs; i++) {
+        BN_free(poly_coeffs[i]);
+    }
+    for (int i = 0; i<next_pp->n; i++) {
+        BN_free(scrape_terms[i]);
+    }
+    for (int i = 0; i<next_pp->n; i++) {
+        EC_POINT_free(enc_re_share_diffs[i]);
+    }
+    EC_POINT_free(U_prime);
+    EC_POINT_free(V_prime);
+    EC_POINT_free(W_prime);
+
     
 }
-
-func reconstructReshare (pp: PVSSPubParams, validIndexes: Array<Int>, encReShares: Array<Point>) throws -> Point{
-    
-    if validIndexes.count < (pp.t + 1) {
-        
-        print("not enough valid reshares")
-        exit(1)
-        
-    }
-    
-    let alphas = Array(validIndexes[0...t].map{BInt($0)})// first t+1 valid indexes as BInt
-    
-    var sum = zeroPoint
-    
-    for l in 0...(alphas.count - 1) {
-        
-        let lambda = lagX(alphas: alphas, i: l).mod(domain.order)
-        let lambC = try domain.multiplyPoint(encReShares[validIndexes[l]], lambda)
-        sum = try domain.addPoints(sum,lambC)
-        
-    }
-    
-    return sum
-}
-#endif
 
 static int dh_pvss_test_1(int print) {
     const EC_GROUP *group = get0_group();
