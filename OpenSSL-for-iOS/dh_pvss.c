@@ -70,8 +70,12 @@ static void derive_scrape_coeffs(const EC_GROUP *group, BIGNUM **coeffs, int fro
     BN_free(term);
 }
 
-void dh_pvss_setup(dh_pvss_ctx *pp, const EC_GROUP *group, const int t, const int n, BN_CTX *ctx) {
-    assert( (n - t - 2) > 0 && "usage error, n and t badly chosen");
+void dh_pvss_setup(dh_pvss_ctx *pp, const EC_GROUP *group, const int t, const int n, BN_CTX *bn_ctx) {
+    assert(group && "dh_pvss_setup: usage error, no group specified");
+    pp->group = group;
+    assert(bn_ctx && "dh_pvss_setup: usage error, no BIGNUM context specified");
+    pp->bn_ctx = bn_ctx;
+    assert( (n - t - 2) > 0 && "dh_pvss_setup: usage error, n and t badly chosen");
     pp->t = t;
     pp->n = n;
 
@@ -80,23 +84,23 @@ void dh_pvss_setup(dh_pvss_ctx *pp, const EC_GROUP *group, const int t, const in
     pp->betas    = malloc(sizeof(BIGNUM *) * (n + 1));
     pp->v_primes = malloc(sizeof(BIGNUM *) * (n + 1));
     pp->vs       = malloc(sizeof(BIGNUM *) * n);
-    assert(pp->alphas && "dh_pvss_ctx_init: allocation error alphas");
-    assert(pp->betas && "dh_pvss_ctx_init: allocation error betas");
-    assert(pp->v_primes && "dh_pvss_ctx_init: allocation error v_primes");
-    assert(pp->vs && "dh_pvss_ctx_init: allocation error vs");
+    assert(pp->alphas && "dh_pvss_setup: allocation error alphas");
+    assert(pp->betas && "dh_pvss_setup: allocation error betas");
+    assert(pp->v_primes && "dh_pvss_setup: allocation error v_primes");
+    assert(pp->vs && "dh_pvss_setup: allocation error vs");
 
     // allocate vector entries
     for (int i=0; i<n+1; i++) {
         pp->alphas[i]   = BN_new();
         pp->betas[i]    = BN_new();
         pp->v_primes[i] = BN_new();
-        assert(pp->alphas[i] && "dh_pvss_ctx_init: allocation error for entry in alphas");
-        assert(pp->betas[i] && "dh_pvss_ctx_init: allocation error for entry in betas");
-        assert(pp->v_primes[i] && "dh_pvss_ctx_init: allocation error for entry in v_primes");
+        assert(pp->alphas[i] && "dh_pvss_setup: allocation error for entry in alphas");
+        assert(pp->betas[i] && "dh_pvss_setup: allocation error for entry in betas");
+        assert(pp->v_primes[i] && "dh_pvss_setup: allocation error for entry in v_primes");
     }
     for (int i=0; i<n; i++) {
         pp->vs[i] = BN_new();
-        assert(pp->vs[i] && "dh_pvss_ctx_init: allocation error for entry in vs");
+        assert(pp->vs[i] && "dh_pvss_setup: allocation error for entry in vs");
     }
 
     // fill alphas and betas
@@ -106,8 +110,8 @@ void dh_pvss_setup(dh_pvss_ctx *pp, const EC_GROUP *group, const int t, const in
     }
 
     // fill vs and v_primes
-    derive_scrape_coeffs(group, pp->vs, 1, n, pp->alphas, ctx);
-    derive_scrape_coeffs(group, pp->v_primes, 0, n, pp->betas, ctx);
+    derive_scrape_coeffs(group, pp->vs, 1, n, pp->alphas, bn_ctx);
+    derive_scrape_coeffs(group, pp->v_primes, 0, n, pp->betas, bn_ctx);
 }
 
 static void generate_scrape_sum_terms(const EC_GROUP *group, BIGNUM** terms, BIGNUM **eval_points, BIGNUM** code_coeffs, BIGNUM **poly_coeff, int n, int num_poly_coeffs, BN_CTX *ctx) {
@@ -139,7 +143,9 @@ static void generate_scrape_sum_terms(const EC_GROUP *group, BIGNUM** terms, BIG
     BN_free(exp);
 }
 
-void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **encrypted_shares, dh_pvss_ctx *pp, dh_key_pair *dist_key, const EC_POINT *com_keys[], EC_POINT *secret, nizk_dl_eq_proof *pi, BN_CTX *ctx) {
+void dh_pvss_distribute_prove(dh_pvss_ctx *pp, EC_POINT **encrypted_shares, dh_key_pair *dist_key, const EC_POINT *com_keys[], EC_POINT *secret, nizk_dl_eq_proof *pi) {
+    const EC_GROUP *group = pp->group;
+    BN_CTX *ctx = pp->bn_ctx;
     const int n = pp->n;
     const int t = pp->t;
 
@@ -188,10 +194,12 @@ void dh_pvss_distribute_prove(const EC_GROUP *group, EC_POINT **encrypted_shares
         BN_free(poly_coeffs[i]);
     }
     
-    // implicitly return (pi, enc_shares)
+    // implicitly return (pi, encrypted_shares)
 }
 
-int dh_pvss_distribute_verify(const EC_GROUP *group, nizk_dl_eq_proof *pi, const EC_POINT **enc_shares, dh_pvss_ctx *pp, const EC_POINT *pub_dist, const EC_POINT **com_keys, BN_CTX *ctx) {
+int dh_pvss_distribute_verify(dh_pvss_ctx *pp, nizk_dl_eq_proof *pi, const EC_POINT **enc_shares, const EC_POINT *pub_dist, const EC_POINT **com_keys) {
+    const EC_GROUP *group = pp->group;
+    BN_CTX *ctx = pp->bn_ctx;
     const EC_POINT *generator = get0_generator(group);
     const int n = pp->n;
     const int t = pp->t;
@@ -279,14 +287,154 @@ EC_POINT *dh_pvss_reconstruct(const EC_GROUP *group, const EC_POINT *shares[], i
     return shamir_shares_reconstruct(group, shares, share_indexes, t, length, ctx);
 }
 
-EC_POINT *dh_pvss_committe_dist_key_calc(const EC_GROUP *group, const EC_POINT *keys[], int key_indexes[], int t, int length, BN_CTX *ctx) {
+EC_POINT *dh_pvss_committee_dist_key_calc(const EC_GROUP *group, const EC_POINT *keys[], int key_indices[], int t, int length, BN_CTX *ctx) {
     // the implementation of this is identical to shamir reconstruct, so we call shamir reconstuct, but with keys instead of shares
-    return shamir_shares_reconstruct(group, keys, key_indexes, t, length, ctx);
+    return shamir_shares_reconstruct(group, keys, key_indices, t, length, ctx);
 }
 
-void dh_pvss_reshare_prove(const EC_GROUP *group, int party_index, const dh_key_pair *party_committee_kp, const dh_key_pair *party_dist_kp, const EC_POINT *previous_dist_key, const EC_POINT *current_enc_shares[], const EC_POINT *next_committee_keys[]) {
+void dh_pvss_reshare_prove(const EC_GROUP *group, int party_index, const dh_key_pair *party_committee_kp, const dh_key_pair *party_distribution_kp, const EC_POINT *previous_distribution_key, const EC_POINT *current_encrypted_shares[], const EC_POINT *next_committee_keys[], nizk_reshare_proof *pi, BN_CTX *ctx) {
+
+    // implicitly return (pi, encrypted_shares)
+}
+
+//const EC_GROUP *group, EC_POINT **encrypted_shares, dh_pvss_ctx *pp, dh_key_pair *dist_key, const EC_POINT *com_keys[], EC_POINT *secret, nizk_dl_eq_proof *pi, BN_CTX *ctx
+
+#if 0
+//i:th party cur epoch reshares i:th encryted shares to the next epoch committee, using its own distkeys, pub params for next epoch and public Dist key pubD from previous epoch
+func resharePVSS(
+    partyIndex: Int, comPrivKey: BInt, comPubKey: Point, partyPrivD: BInt, partyPubD: Point, curEncShares: Array<Point>, prevPubD: Point, nextComKeys: Array<Point>, nextPP: PVSSPubParams ) throws -> (Array<Point>, ReshareProof) {
+        
+        // decrypt encrypted share (a)
+        
+        let decSharedKey = try domain.multiplyPoint(prevPubD,comPrivKey)
+        let decShare = try domain.subtractPoints(curEncShares[partyIndex], decSharedKey)
+        
+        //create shares of it fot next epoch committe (b)
+        
+        let reShares = try gShamirShare(indexes: nextPP.alphas, S: decShare, t: nextPP.t, n: nextPP.n)
+        
+        //encrypt the shares for next epoch committee keys (c)
+        
+        var encReshares = Array<Point>()
+        
+        for i in 0...(nextPP.n - 1){
+            
+            let encSharedKey = try domain.multiplyPoint(nextComKeys[i], partyPrivD)
+            let encReshare = try domain.addPoints(encSharedKey, reShares[i])
+            encReshares.append(encReshare)
+            
+        }
+        
+        //hash to poly coeffs (d)
+        var data = toBytes(prevPubD)
+        
+        for i in 0...(curEncShares.count - 1) {
+            
+            data = data + toBytes(curEncShares[i])
+            
+        }
+        
+        let coeffs = hashToPolyCoeffs(data: data, degree: nextPP.n - nextPP.t - 1)
+        
+        //derive U, V, W (e)
+        
+        let encShareDiffs = try encReshares.map {
+            
+            try domain.subtractPoints($0, curEncShares[partyIndex])
+            
+        }
+        
+        let scrapeTerms = try genScrapeSumTerms(n: nextPP.n, evalPoints: nextPP.betas, codeCoeffs: nextPP.vprimes, polyCoeffs: coeffs)
+        
+        let Uprime = try zip(encShareDiffs, scrapeTerms)
+            .map{try domain.multiplyPoint($0, $1)}
+            .reduce(zeroPoint){ try domain.addPoints($0,$1)}
+        let Vprime = try zip(nextComKeys, scrapeTerms)
+            .map{try domain.multiplyPoint($0, $1)}
+            .reduce(zeroPoint){ try domain.addPoints($0,$1)}
+        let Wsum = scrapeTerms.reduce(BInt.ZERO){$0 + $1}
+        let Wprime = try domain.multiplyPoint(prevPubD, Wsum)
+        
+        //prove correctness (f)
+        
+        let pi = try NIZKReshareProve(w1: comPrivKey, w2: partyPrivD, ga: domain.g, gb: Vprime, gc: Wprime, Y1: comPubKey, Y2: partyPubD, Y3: Uprime)
+        
+        return (encReshares, pi)
+        
+    }
+#endif
+
+int dh_pvss_reshare_verify(const EC_GROUP *group, int party_index, const dh_key_pair *party_committee_kp, const dh_key_pair *party_dist_kp, const EC_POINT *previous_dist_key, const EC_POINT *current_encrypted_shares[], const EC_POINT *encrypted_reshares[], const EC_POINT *next_committee_keys[], nizk_reshare_proof *pi, BN_CTX *ctx) {
+    return 1; // not verified
+}
+
+#if 0
+func verifyReshare (partyIndex: Int, curEncShares: Array<Point>, encReshares: Array<Point>, nextComKeys: Array<Point>, nextPP: PVSSPubParams, prevPubD: Point, reshareComKey: Point, reshareDistKey: Point, pi: ReshareProof) throws -> Bool {
     
-} //const EC_GROUP *group, EC_POINT **encrypted_shares, dh_pvss_ctx *pp, dh_key_pair *dist_key, const EC_POINT *com_keys[], EC_POINT *secret, nizk_dl_eq_proof *pi, BN_CTX *ctx
+    
+    //hash to poly coeffs
+    
+    var data = toBytes(prevPubD)
+    
+    for i in 0...(curEncShares.count - 1) {
+        
+        data = data + toBytes(curEncShares[i])
+        
+    }
+    
+    let coeffs = hashToPolyCoeffs(data: data, degree: nextPP.n - nextPP.t - 1)
+    
+    //derive U, V, W
+    
+    let encShareDiffs = try encReshares.map {
+        
+        try domain.subtractPoints($0, curEncShares[partyIndex])
+        
+    }
+    
+    let scrapeTerms = try genScrapeSumTerms(n: nextPP.n, evalPoints: nextPP.betas, codeCoeffs: nextPP.vprimes, polyCoeffs: coeffs)
+    
+    let Uprime = try zip(encShareDiffs, scrapeTerms)
+        .map{try domain.multiplyPoint($0, $1)}
+        .reduce(zeroPoint){ try domain.addPoints($0,$1)}
+    let Vprime = try zip(nextComKeys, scrapeTerms)
+        .map{try domain.multiplyPoint($0, $1)}
+        .reduce(zeroPoint){ try domain.addPoints($0,$1)}
+    let Wsum = scrapeTerms.reduce(BInt.ZERO){$0 + $1}
+    let Wprime = try domain.multiplyPoint(prevPubD, Wsum)
+    
+    //verify proof (a).ii
+    
+    let validProof = try NIZKReshareVerify(ga: domain.g, gb: Vprime, gc: Wprime, Y1: reshareComKey, Y2: reshareDistKey, Y3: Uprime, pi: pi)
+    
+    return validProof
+    
+}
+
+func reconstructReshare (pp: PVSSPubParams, validIndexes: Array<Int>, encReShares: Array<Point>) throws -> Point{
+    
+    if validIndexes.count < (pp.t + 1) {
+        
+        print("not enough valid reshares")
+        exit(1)
+        
+    }
+    
+    let alphas = Array(validIndexes[0...t].map{BInt($0)})// first t+1 valid indexes as BInt
+    
+    var sum = zeroPoint
+    
+    for l in 0...(alphas.count - 1) {
+        
+        let lambda = lagX(alphas: alphas, i: l).mod(domain.order)
+        let lambC = try domain.multiplyPoint(encReShares[validIndexes[l]], lambda)
+        sum = try domain.addPoints(sum,lambC)
+        
+    }
+    
+    return sum
+}
+#endif
 
 static int dh_pvss_test_1(int print) {
     const EC_GROUP *group = get0_group();
@@ -313,10 +461,10 @@ static int dh_pvss_test_1(int print) {
     // make encrypted shares
     EC_POINT *enc_shares[n];
     nizk_dl_eq_proof pi;
-    dh_pvss_distribute_prove(group, enc_shares, &pp, &first_dist_kp, (const EC_POINT**)committee_public_keys, secret, &pi, ctx);
+    dh_pvss_distribute_prove(&pp, enc_shares, &first_dist_kp, (const EC_POINT**)committee_public_keys, secret, &pi);
     
     // positive test
-    int ret1 = dh_pvss_distribute_verify(group, &pi, (const EC_POINT**)enc_shares, &pp, first_dist_kp.pub, (const EC_POINT**)committee_public_keys, ctx);
+    int ret1 = dh_pvss_distribute_verify(&pp, &pi, (const EC_POINT**)enc_shares, first_dist_kp.pub, (const EC_POINT**)committee_public_keys);
     if (print) {
         printf("Test 1 %s: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
@@ -361,16 +509,16 @@ static int dh_pvss_test_2(int print) {
     // make encrypted shares
     EC_POINT *enc_shares[pp.n];
     nizk_dl_eq_proof pi;
-    dh_pvss_distribute_prove(group, enc_shares, &pp, &first_dist_kp, (const EC_POINT**)committee_public_keys, secret, &pi, ctx);
+    dh_pvss_distribute_prove(&pp, enc_shares, &first_dist_kp, (const EC_POINT**)committee_public_keys, secret, &pi);
     
     // positive test
-    int ret1 = dh_pvss_distribute_verify(group, &pi, (const EC_POINT**)enc_shares, &pp, first_dist_kp.pub, (const EC_POINT**)committee_public_keys, ctx);
+    int ret1 = dh_pvss_distribute_verify(&pp, &pi, (const EC_POINT**)enc_shares, first_dist_kp.pub, (const EC_POINT**)committee_public_keys);
     if (print) {
         printf("Test 2 part 1 %s: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
     
     //negative test
-    int ret2 = dh_pvss_distribute_verify(group, &pi, (const EC_POINT**)enc_shares, &pp, committee_public_keys[0], (const EC_POINT**)committee_public_keys, ctx);
+    int ret2 = dh_pvss_distribute_verify(&pp, &pi, (const EC_POINT**)enc_shares, committee_public_keys[0], (const EC_POINT**)committee_public_keys);
     if (print) {
         if (ret2) {
             printf("Test 2 part 2 OK: Incorrect NIZK DL Proof not accepted (which is CORRECT)\n");
@@ -418,10 +566,10 @@ static int dh_pvss_test_3(int print) {
     // make encrypted shares with proof
     EC_POINT *encrypted_shares[n];
     nizk_dl_eq_proof distribution_pi;
-    dh_pvss_distribute_prove(group, encrypted_shares, &pp, &first_dist_kp, (const EC_POINT**)committee_public_keys, secret, &distribution_pi, ctx);
+    dh_pvss_distribute_prove(&pp, encrypted_shares, &first_dist_kp, (const EC_POINT**)committee_public_keys, secret, &distribution_pi);
 
     // verify encrypted shares
-    int ret1 = dh_pvss_distribute_verify(group, &distribution_pi, (const EC_POINT**)encrypted_shares, &pp, first_dist_kp.pub, (const EC_POINT**)committee_public_keys, ctx);
+    int ret1 = dh_pvss_distribute_verify(&pp, &distribution_pi, (const EC_POINT**)encrypted_shares, first_dist_kp.pub, (const EC_POINT**)committee_public_keys);
     if (print) {
         printf("Test 3 part 1 %s: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
