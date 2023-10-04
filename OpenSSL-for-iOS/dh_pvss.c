@@ -587,10 +587,10 @@ static int dh_pvss_test_4(int print) {
     // make encrypted shares with proof
     EC_POINT *encrypted_shares[n];
     nizk_dl_eq_proof distribution_pi;
-    dh_pvss_distribute_prove(group, encrypted_shares, &pp, &first_dist_kp, (const EC_POINT**)committee_public_keys, secret, &distribution_pi, ctx);
+    dh_pvss_distribute_prove(&pp, encrypted_shares, &first_dist_kp, (const EC_POINT**)committee_public_keys, secret, &distribution_pi);
 
     // verify encrypted shares
-    int ret1 = dh_pvss_distribute_verify(group, &distribution_pi, (const EC_POINT**)encrypted_shares, &pp, first_dist_kp.pub, (const EC_POINT**)committee_public_keys, ctx);
+    int ret1 = dh_pvss_distribute_verify(&pp, &distribution_pi, (const EC_POINT**)encrypted_shares, first_dist_kp.pub, (const EC_POINT**)committee_public_keys);
     if (print) {
         printf("Test 4 part 1 %s: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
