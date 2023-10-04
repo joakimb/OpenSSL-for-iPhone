@@ -274,6 +274,20 @@ static int dh_pvss_decrypt_share_verify(const EC_GROUP *group, const EC_POINT *d
     return ret; // return proof verification result
 }
 
+EC_POINT *dh_pvss_reconstruct(const EC_GROUP *group, EC_POINT *shares[], int share_indexes[], int t, int length, BN_CTX *ctx){
+    // decrypted shares are plain shamir shares, so we just call shamir reconstruct
+    return shamir_shares_reconstruct(group, shares, share_indexes, t, length, ctx);
+}
+
+EC_POINT *dh_pvss_committe_dist_key_calc(const EC_GROUP *group, EC_POINT *keys[], int key_indexes[], int t, int length, BN_CTX *ctx) {
+    // the implementation of this is identical to shamir reconstruct, so we call shamir reconstuct, but with keys instead of shares
+    return shamir_shares_reconstruct(group, keys, key_indexes, t, length, ctx);
+}
+
+void dh_pvss_reshare_prove(const EC_GROUP *group, int party_index, const dh_key_pair *party_committee_kp, const dh_key_pair *party_dist_kp, const EC_POINT *previous_dist_key, const EC_POINT *current_enc_shares[], const EC_POINT *next_committee_keys[]) {
+    
+} //const EC_GROUP *group, EC_POINT **encrypted_shares, dh_pvss_ctx *pp, dh_key_pair *dist_key, const EC_POINT *com_keys[], EC_POINT *secret, nizk_dl_eq_proof *pi, BN_CTX *ctx
+
 static int dh_pvss_test_1(int print) {
     const EC_GROUP *group = get0_group();
     BN_CTX *ctx = BN_CTX_new();

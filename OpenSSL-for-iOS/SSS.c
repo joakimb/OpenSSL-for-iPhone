@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include "SSS.h"
 
-void shamir_shares_generate(const EC_GROUP *group, EC_POINT *shares[], EC_POINT *secret, const int t, const int n, BN_CTX *ctx) {
+void shamir_shares_generate(const EC_GROUP *group, EC_POINT *shares[], const EC_POINT *secret, const int t, const int n, BN_CTX *ctx) {
     const BIGNUM *order = get0_order(group);
 
     // sample coefficients
@@ -50,7 +50,7 @@ void shamir_shares_generate(const EC_GROUP *group, EC_POINT *shares[], EC_POINT 
     BN_free(exp);
 }
 
-static void lagX(const EC_GROUP *group, BIGNUM *prod, int share_indexes[], int length, int i, BN_CTX *ctx) {
+static void lagX(const EC_GROUP *group, BIGNUM *prod, const int share_indexes[], int length, int i, BN_CTX *ctx) {
     const BIGNUM *order = get0_order(group);
 
     BIGNUM *a = BN_new();
@@ -83,7 +83,7 @@ static void lagX(const EC_GROUP *group, BIGNUM *prod, int share_indexes[], int l
     BN_free(a);
 }
 
-EC_POINT *shamir_shares_reconstruct(const EC_GROUP *group, EC_POINT *shares[], int shareIndexes[], int t, int length, BN_CTX *ctx) {
+EC_POINT *shamir_shares_reconstruct(const EC_GROUP *group, EC_POINT *shares[], const int shareIndexes[], const int t, const int length, BN_CTX *ctx) {
     if (length != t+1) { // incorrect number of shares to reconstruct secret
         return NULL;
     }

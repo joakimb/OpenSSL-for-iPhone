@@ -11,8 +11,8 @@
 #include "P256.h"
 
 // array of size n for resulting shares, the secret, and t and n
-void shamir_shares_generate(const EC_GROUP *group, EC_POINT *shares[], EC_POINT *secret, const int t, const int n, BN_CTX *ctx);
-EC_POINT *shamir_shares_reconstruct(const EC_GROUP *group, EC_POINT *shares[], int shareIndexes[], int t, int length, BN_CTX *ctx);
+void shamir_shares_generate(const EC_GROUP *group, EC_POINT *shares[], const EC_POINT *secret, const int t, const int n, BN_CTX *ctx);
+EC_POINT *shamir_shares_reconstruct(const EC_GROUP *group, EC_POINT *shares[], const int shareIndexes[], const int t, const int length, BN_CTX *ctx);
 int shamir_shares_test_suite(int print);
 
 #endif /* SSS_H */
