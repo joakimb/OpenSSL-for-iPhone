@@ -10,6 +10,7 @@
 #include <assert.h>
 #include "SSS.h"
 #include "openssl_hashing_tools.h"
+#include <string.h>
 
 /* dh key pair utilities */
 
@@ -286,6 +287,8 @@ EC_POINT *dh_pvss_committe_dist_key_calc(const EC_GROUP *group, const EC_POINT *
 
 static void dh_pvss_reshare_prove(const EC_GROUP *group, int party_index, const dh_key_pair *party_committee_kp, const dh_key_pair *party_dist_kp, const EC_POINT *previous_dist_key, const EC_POINT *current_enc_shares[], const int current_n, const dh_pvss_ctx *next_pp, const EC_POINT *next_committee_keys[], EC_POINT *enc_re_shares[], nizk_reshare_proof *pi, BN_CTX *ctx) {
     
+    const EC_POINT *generator = get0_generator(group);
+   
     // compute shared key
     EC_POINT *shared_key = EC_POINT_new(group);
     assert(shared_key && "dh_pvss_reshare_prove: allocation error for shared_key");
@@ -331,11 +334,16 @@ static void dh_pvss_reshare_prove(const EC_GROUP *group, int party_index, const 
     assert(V_prime && "dh_pvss_reshare_prove: allocation error for V_prime");
     assert(W_prime && "dh_pvss_reshare_prove: allocation error for V_prime");
     
-    /*
-     // compute U and V
-     point_weighted_sum(group, U, n, (const BIGNUM**)scrape_terms, com_keys, ctx);
-     point_weighted_sum(group, V, n, (const BIGNUM**)scrape_terms, (const EC_POINT**)encrypted_shares, ctx);
-     */
+    point_weighted_sum(group, U_prime, next_pp->n, (const BIGNUM**)scrape_terms, enc_re_share_diffs, ctx);
+    point_weighted_sum(group, V_prime, next_pp->n, (const BIGNUM**)scrape_terms, next_committee_keys, ctx);
+    BIGNUM *W_sum = BN_new();
+    for (int i = 0; i<next_pp->n; i++) {
+        BN_add(W_sum, W_sum, scrape_terms[i]);
+    }
+    point_mul(group, W_prime, W_sum, previous_dist_key, ctx);
+    
+    // prove correctness
+    nizk_reshare_prove(group, party_committee_kp->priv, party_dist_kp->priv, generator, V_prime, W_prime, party_committee_kp->pub, party_dist_kp->pub, U_prime, pi, ctx);
     
     // cleanup
     for (int i = 0; i<next_pp->n; i++) {
@@ -353,6 +361,7 @@ static void dh_pvss_reshare_prove(const EC_GROUP *group, int party_index, const 
     }
     EC_POINT_free(U_prime);
     EC_POINT_free(V_prime);
+    BN_free(W_sum);
     EC_POINT_free(W_prime);
 
     
@@ -543,12 +552,109 @@ static int dh_pvss_test_3(int print) {
     return !(ret1 == 0 && num_failed_decryptions == 0 && num_failed_verifications == 0);
 }
 
+static int dh_pvss_test_4(int print) {
+//    dh_pvss_reshare_prove(const EC_GROUP *group, int party_index, const dh_key_pair *party_committee_kp, const dh_key_pair *party_dist_kp, const EC_POINT *previous_dist_key, const EC_POINT *current_enc_shares[], const int current_n, const dh_pvss_ctx *next_pp, const EC_POINT *next_committee_keys[], EC_POINT *enc_re_shares[], nizk_reshare_proof *pi, BN_CTX *ctx)
+    
+    const EC_GROUP *group = get0_group();
+    BN_CTX *ctx = BN_CTX_new();
+
+    // setup
+    const int t = 50;
+    const int n = 100;
+    dh_pvss_ctx pp;
+    dh_pvss_setup(&pp, group, t, n, ctx);
+    EC_POINT *secret = point_random(group, ctx);
+
+    // keygen
+    dh_key_pair first_dist_kp;
+    dh_key_pair_generate(group, &first_dist_kp, ctx);
+    dh_key_pair committee_key_pairs[n];
+    EC_POINT *committee_public_keys[n];
+    for (int i=0; i<n; i++) {
+        dh_key_pair *com_member_key_pair = &committee_key_pairs[i];
+        dh_key_pair_generate(group, com_member_key_pair, ctx);
+        committee_public_keys[i] = com_member_key_pair->pub;
+    }
+
+    // make encrypted shares with proof
+    EC_POINT *encrypted_shares[n];
+    nizk_dl_eq_proof distribution_pi;
+    dh_pvss_distribute_prove(group, encrypted_shares, &pp, &first_dist_kp, (const EC_POINT**)committee_public_keys, secret, &distribution_pi, ctx);
+
+    // verify encrypted shares
+    int ret1 = dh_pvss_distribute_verify(group, &distribution_pi, (const EC_POINT**)encrypted_shares, &pp, first_dist_kp.pub, (const EC_POINT**)committee_public_keys, ctx);
+    if (print) {
+        printf("Test 4 part 1 %s: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+    }
+
+    // decrypting the encrypted shares and verifiying
+    EC_POINT *decrypted_shares[n];
+    int num_failed_decryptions = 0;
+    int num_failed_verifications = 0;
+    for (int i=0; i<n; i++) {
+        nizk_dl_eq_proof committee_member_pi;
+        decrypted_shares[i] = dh_pvss_decrypt_share_prove(group, first_dist_kp.pub, &committee_key_pairs[i], encrypted_shares[i], &committee_member_pi, ctx);
+        if (decrypted_shares[i] == NULL) {
+            num_failed_decryptions++;
+            if (print) {
+                printf("failed to decrypt an encrypted share\n");
+            }
+            continue; // decryption failed, so skip verification test
+        }
+        int ret2 = dh_pvss_decrypt_share_verify(group, first_dist_kp.pub, committee_public_keys[i], encrypted_shares[i], decrypted_shares[i], &committee_member_pi, ctx);
+        if (ret2) {
+            num_failed_verifications++;
+            if (print) {
+                printf("failed to verify a decrypted share\n");
+            }
+        }
+        
+        // cleanup
+        nizk_dl_eq_proof_free(&committee_member_pi);
+    }
+     if (print) {
+        if (num_failed_decryptions == 0 && num_failed_verifications == 0) {
+            printf("Test 4 part 2 OK: all encrypted shares could be decrypted and verified\n");
+        } else {
+            printf("Test 4 part 2 NOT OK: failed to decrypt %d shares, and failed to verify %d shares\n", num_failed_decryptions, num_failed_verifications);
+        }
+    }
+    
+    // reconstruct secret
+    EC_POINT *reconstruction_shares[t+1];
+    int reconstruction_indexes[t+1];
+    memcpy(reconstruction_shares, decrypted_shares[5],(t+1) * sizeof(EC_POINT*));
+    memcpy(reconstruction_indexes, pp.alphas[5],(t+1) * sizeof(int));
+    EC_POINT *reconstructed_secret = dh_pvss_reconstruct(group, reconstruction_shares, reconstruction_indexes, pp.t, t+1, ctx);
+    int ret2 = point_cmp(group, secret, reconstructed_secret, ctx);
+    if (print) {
+        printf("Test 4 part 1 %s: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+    }
+    
+    
+
+    // cleanup
+    BN_CTX_free(ctx);
+    dh_pvss_ctx_free(&pp);
+    EC_POINT_free(secret);
+    dh_key_pair_free(&first_dist_kp);
+    for (int i=0; i<n; i++){
+        dh_key_pair_free(&committee_key_pairs[i]);
+        EC_POINT_free(encrypted_shares[i]);
+    }
+    nizk_dl_eq_proof_free(&distribution_pi);
+    EC_POINT_free(reconstructed_secret);
+    
+    return !(ret1 == 0 && num_failed_decryptions == 0 && num_failed_verifications == 0 && ret2 != 0);
+}
+
 typedef int (*test_function)(int);
 
 static test_function test_suite[] = {
     &dh_pvss_test_1,
     &dh_pvss_test_2,
-    &dh_pvss_test_3
+    &dh_pvss_test_3,
+    &dh_pvss_test_4
 };
 
 // return test results

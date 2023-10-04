@@ -84,6 +84,7 @@ static void lagX(const EC_GROUP *group, BIGNUM *prod, const int share_indexes[],
 }
 
 EC_POINT *shamir_shares_reconstruct(const EC_GROUP *group, const EC_POINT *shares[], const int shareIndexes[], const int t, const int length, BN_CTX *ctx) {
+    // TODO: remove parameter t input (unused)
     if (length != t+1) { // incorrect number of shares to reconstruct secret
         return NULL;
     }
