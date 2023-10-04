@@ -130,6 +130,7 @@ BIGNUM* bn_random(const BIGNUM *modulus, BN_CTX *ctx) {
 // check for point equality
 int point_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx) {
     int ret = EC_POINT_cmp(group, a, b, ctx);
+    // EC_POINT_cmp returns 1 if the points are not equal, 0 if they are, or -1 on error.
     assert(ret != -1 && "nizk_dl_eq_verify: error in EC_POINT_cmp(Ra_prime, Ra)");
     return ret;
 }
