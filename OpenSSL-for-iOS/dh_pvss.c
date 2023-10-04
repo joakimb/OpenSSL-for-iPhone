@@ -639,7 +639,7 @@ static int dh_pvss_test_4(int print) {
     EC_POINT *reconstructed_secret = dh_pvss_reconstruct(group, reconstruction_shares, reconstruction_indexes, pp.t, t+1, ctx);
     int ret2 = point_cmp(group, secret, reconstructed_secret, ctx);
     if (print) {
-        printf("Test 4 part 1 %s: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+        printf("Test 4 part 3 %s: Correct DH PVSS reconstruction %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
     
     // TODO: setup for next epoch committe
