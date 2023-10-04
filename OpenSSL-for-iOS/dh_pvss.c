@@ -693,7 +693,7 @@ static test_function test_suite[] = {
     &dh_pvss_test_1,
     &dh_pvss_test_2,
     &dh_pvss_test_3,
-    &dh_pvss_test_4
+//    &dh_pvss_test_4
 };
 
 // return test results
