@@ -30,8 +30,6 @@ BIGNUM *openssl_hash_point_list2bn(const EC_GROUP *group, BN_CTX *bn_ctx, int li
 BIGNUM *openssl_hash_point_lists2bn(const EC_GROUP *group, BN_CTX *bn_ctx, int num_lists, int *list_len, const EC_POINT **point_list[]);
 
 // hash points to polynomial
-void openssl_hash_points2poly_1(const EC_GROUP *group, BN_CTX *ctx, int num_coeffs, BIGNUM *poly_coeff[], const EC_POINT *p, int n, const EC_POINT *p_list_1[]);
-void openssl_hash_points2poly_2(const EC_GROUP *group, BN_CTX *bn_ctx, int num_coeffs, BIGNUM *poly_coeff[], const EC_POINT *p, int n, const EC_POINT *p_list_1[], const EC_POINT *p_list_2[]);
 void openssl_hash_points2poly(const EC_GROUP *group, BN_CTX *ctx, int num_coeffs, BIGNUM *poly_coeff[], int num_point_lists, int *num_points, const EC_POINT ***point_list);
 
 #endif
