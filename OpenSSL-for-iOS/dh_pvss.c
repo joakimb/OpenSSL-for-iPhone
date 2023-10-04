@@ -274,12 +274,12 @@ static int dh_pvss_decrypt_share_verify(const EC_GROUP *group, const EC_POINT *d
     return ret; // return proof verification result
 }
 
-EC_POINT *dh_pvss_reconstruct(const EC_GROUP *group, EC_POINT *shares[], int share_indexes[], int t, int length, BN_CTX *ctx){
+EC_POINT *dh_pvss_reconstruct(const EC_GROUP *group, const EC_POINT *shares[], int share_indexes[], int t, int length, BN_CTX *ctx){
     // decrypted shares are plain shamir shares, so we just call shamir reconstruct
     return shamir_shares_reconstruct(group, shares, share_indexes, t, length, ctx);
 }
 
-EC_POINT *dh_pvss_committe_dist_key_calc(const EC_GROUP *group, EC_POINT *keys[], int key_indexes[], int t, int length, BN_CTX *ctx) {
+EC_POINT *dh_pvss_committe_dist_key_calc(const EC_GROUP *group, const EC_POINT *keys[], int key_indexes[], int t, int length, BN_CTX *ctx) {
     // the implementation of this is identical to shamir reconstruct, so we call shamir reconstuct, but with keys instead of shares
     return shamir_shares_reconstruct(group, keys, key_indexes, t, length, ctx);
 }

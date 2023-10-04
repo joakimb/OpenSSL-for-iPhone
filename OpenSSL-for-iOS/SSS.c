@@ -83,7 +83,7 @@ static void lagX(const EC_GROUP *group, BIGNUM *prod, const int share_indexes[],
     BN_free(a);
 }
 
-EC_POINT *shamir_shares_reconstruct(const EC_GROUP *group, EC_POINT *shares[], const int shareIndexes[], const int t, const int length, BN_CTX *ctx) {
+EC_POINT *shamir_shares_reconstruct(const EC_GROUP *group, const EC_POINT *shares[], const int shareIndexes[], const int t, const int length, BN_CTX *ctx) {
     if (length != t+1) { // incorrect number of shares to reconstruct secret
         return NULL;
     }
@@ -139,7 +139,7 @@ int shamir_shares_test_suite(int print) {
 
     // reconstruct with 2nd and 3rd share
     int share_indexes[t + 1];
-    EC_POINT *recShares[t + 1];
+    const EC_POINT *recShares[t + 1];
     for (int i=0; i<t+1; i++) {
         share_indexes[i] = i + 2; // user indices 1 to t + 1
         recShares[i] = shares[i + 1];
