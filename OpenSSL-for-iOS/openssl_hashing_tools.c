@@ -196,3 +196,29 @@ void openssl_hash_points2poly_2(const EC_GROUP *group, BN_CTX *ctx, int num_coef
     BN_free(b);
     BN_free(a);
 }
+
+void openssl_hash_points2poly(const EC_GROUP *group, BN_CTX *ctx, int num_coeffs, BIGNUM *poly_coeff[], int num_point_lists, int *num_points, const EC_POINT ***point_list) {
+    const BIGNUM *order = get0_order(group);
+
+    assert(num_point_lists > 0 && "openssl_hash_points2poly: usage error, no point lists passed");
+    BIGNUM *list_digest[num_point_lists];
+    for (int i=0; i<num_point_lists; i++) {
+        list_digest[i] = openssl_hash_point_list2bn(group, ctx, num_points[i], point_list[i]);
+    }
+
+    // hash chain coefficients
+    poly_coeff[0] = openssl_hash_bn_list2bn(num_point_lists, (const BIGNUM**)list_digest);
+    for (int i=1; i<num_coeffs; i++) {
+        poly_coeff[i] = openssl_hash_bn2bn(poly_coeff[i-1]);
+    }
+    // reduce coefficients modulo group order
+    // (not needed if group size is at most 2^{digest size in bits})
+    for (int i=0; i<num_coeffs; i++) {
+        BN_nnmod(poly_coeff[i], poly_coeff[i], order, ctx);
+    }
+
+    // cleanup
+    for (int i=0; i<num_point_lists; i++) {
+        BN_free(list_digest[i]);
+    }
+}
