@@ -10,7 +10,6 @@
 #include <assert.h>
 #include "SSS.h"
 #include "openssl_hashing_tools.h"
-#include <string.h>
 
 /* dh key pair utilities */
 
@@ -631,15 +630,23 @@ static int dh_pvss_test_4(int print) {
     // reconstruct secret
     EC_POINT *reconstruction_shares[t+1];
     int reconstruction_indexes[t+1];
-    memcpy(reconstruction_shares, decrypted_shares[5],(t+1) * sizeof(EC_POINT*));
-    memcpy(reconstruction_indexes, pp.alphas[5],(t+1) * sizeof(int));
+    int first = 5;
+    for (int i = first; i<+t+1+first; i++) {
+        reconstruction_shares[i-first] = decrypted_shares[i];
+        reconstruction_indexes[i-first] = pp.alphas[i];
+    }
+    
     EC_POINT *reconstructed_secret = dh_pvss_reconstruct(group, reconstruction_shares, reconstruction_indexes, pp.t, t+1, ctx);
     int ret2 = point_cmp(group, secret, reconstructed_secret, ctx);
     if (print) {
         printf("Test 4 part 1 %s: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
     
+    // TODO: setup for next epoch committe
     
+    // TODO: reshare
+    
+    // TODO: verify reshare
 
     // cleanup
     BN_CTX_free(ctx);
