@@ -375,7 +375,7 @@ void dh_pvss_reshare_prove(const EC_GROUP *group, int party_index, const dh_key_
     EC_POINT_free(W_prime);
 }
 
-int dh_pvss_reshare_verify(const dh_pvss_ctx *pp, const dh_pvss_ctx *next_pp, int party_index, const dh_key_pair *party_committee_kp, const dh_key_pair *party_dist_kp, const EC_POINT *previous_dist_key, const EC_POINT *current_enc_shares[], const EC_POINT *next_committee_keys[], EC_POINT *enc_re_shares[], nizk_reshare_proof *pi) {
+int dh_pvss_reshare_verify(const dh_pvss_ctx *pp, const dh_pvss_ctx *next_pp, int party_index, const EC_POINT *party_committee_pub_key, const EC_POINT *party_dist_pub_key, const EC_POINT *previous_dist_key, const EC_POINT *current_enc_shares[], const EC_POINT *next_committee_keys[], EC_POINT *enc_re_shares[], nizk_reshare_proof *pi) {
     const EC_GROUP *group = pp->group; // TODO: use next group where appropriate
     const EC_POINT *generator = get0_generator(group);
     BN_CTX *ctx = pp->bn_ctx; // TODO: use next bn_ctx where appropriate
@@ -415,7 +415,7 @@ int dh_pvss_reshare_verify(const dh_pvss_ctx *pp, const dh_pvss_ctx *next_pp, in
     point_mul(group, W_prime, W_sum, previous_dist_key, ctx);
     
     // verify correctness
-    int ret = nizk_reshare_verify(group, generator, V_prime, W_prime, party_committee_kp->pub, party_dist_kp->pub, U_prime, pi, ctx);
+    int ret = nizk_reshare_verify(group, generator, V_prime, W_prime, party_committee_pub_key, party_dist_pub_key, U_prime, pi, ctx);
     
     // cleanup
     for (int i=0; i<num_poly_coeffs; i++) {
@@ -728,9 +728,9 @@ static int dh_pvss_test_4(int print) {
     }
     
     EC_POINT *reconstructed_secret = dh_pvss_reconstruct(group, (const EC_POINT**)reconstruction_shares, reconstruction_indices, pp.t, t+1, ctx);
-    int ret2 = point_cmp(group, secret, reconstructed_secret, ctx); // zero if equal
+    int ret3 = point_cmp(group, secret, reconstructed_secret, ctx); // zero if equal
     if (print) {
-        printf("Test 4 part 3 %s: Correct DH PVSS reconstruction %s accepted\n", ret2 ? "NOT OK" : "OK", ret2 ? "NOT" : "indeed");
+        printf("Test 4 part 3 %s: Correct DH PVSS reconstruction %s accepted\n", ret3 ? "NOT OK" : "OK", ret3 ? "NOT" : "indeed");
     }
 
     
@@ -754,6 +754,10 @@ static int dh_pvss_test_4(int print) {
     dh_pvss_reshare_prove(group, party_index, &committee_key_pairs[party_index], &dist_key_pairs[party_index], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, pp.n, &next_pp, (const EC_POINT**)next_committee_public_keys, encrypted_re_shares, &reshare_pi, ctx);
     
     // TODO: verify reshare
+    int ret4 = dh_pvss_reshare_verify(&pp, &next_pp, party_index, committee_public_keys[party_index], dist_public_keys[party_index], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, (const EC_POINT**)next_committee_public_keys, encrypted_re_shares, &reshare_pi);
+    if (print) {
+        printf("Test 4 part 4 %s: Correct DH PVSS Reshare Proof %s accepted\n", ret4 ? "NOT OK" : "OK", ret4 ? "NOT" : "indeed");
+    }
     
     // cleanup
     BN_CTX_free(ctx);
@@ -772,7 +776,7 @@ static int dh_pvss_test_4(int print) {
     }
     nizk_reshare_proof_free(&reshare_pi);
     
-    return !(ret1 == 0 && num_failed_decryptions == 0 && num_failed_verifications == 0 && ret2 == 0);
+    return !(ret1 == 0 && num_failed_decryptions == 0 && num_failed_verifications == 0 && ret3 == 0 && ret4 == 0);
 }
 
 typedef int (*test_function)(int);
