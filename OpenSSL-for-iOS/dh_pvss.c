@@ -490,7 +490,7 @@ static int dh_pvss_test_1(int print) {
     // positive test
     int ret1 = dh_pvss_distribute_verify(&pp, &pi, (const EC_POINT**)enc_shares, first_dist_kp.pub, (const EC_POINT**)committee_public_keys);
     if (print) {
-        printf("Test 1 %s: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+        printf("%6s Test 1: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
     
     // cleanup
@@ -538,16 +538,16 @@ static int dh_pvss_test_2(int print) {
     // positive test
     int ret1 = dh_pvss_distribute_verify(&pp, &pi, (const EC_POINT**)enc_shares, first_dist_kp.pub, (const EC_POINT**)committee_public_keys);
     if (print) {
-        printf("Test 2 part 1 %s: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+        printf("%6s Test 2 - 1: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
     
     //negative test
     int ret2 = dh_pvss_distribute_verify(&pp, &pi, (const EC_POINT**)enc_shares, committee_public_keys[0], (const EC_POINT**)committee_public_keys);
     if (print) {
         if (ret2) {
-            printf("Test 2 part 2 OK: Incorrect NIZK DL Proof not accepted (which is CORRECT)\n");
+            printf("    OK Test 2 - 2: Incorrect NIZK DL Proof not accepted (which is CORRECT)\n");
         } else {
-            printf("Test 2 part 2 NOT OK: Incorrect NIZK DL Proof IS accepted (which is an ERROR)\n");
+            printf("NOT OK Test 2 - 2: Incorrect NIZK DL Proof IS accepted (which is an ERROR)\n");
         }
     }
     
@@ -595,7 +595,7 @@ static int dh_pvss_test_3(int print) {
     // verify encrypted shares
     int ret1 = dh_pvss_distribute_verify(&pp, &distribution_pi, (const EC_POINT**)encrypted_shares, first_dist_kp.pub, (const EC_POINT**)committee_public_keys);
     if (print) {
-        printf("Test 3 part 1 %s: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+        printf("%6s Test 3 - 1: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
     
     // decrypting the encrypted shares and verifiying
@@ -625,9 +625,9 @@ static int dh_pvss_test_3(int print) {
     }
     if (print) {
         if (num_failed_decryptions == 0 && num_failed_verifications == 0) {
-            printf("Test 3 part 2 OK: all encrypted shares could be decrypted and verified\n");
+            printf("    OK Test 3 - 2: all encrypted shares could be decrypted and verified\n");
         } else {
-            printf("Test 3 part 2 NOT OK: failed to decrypt %d shares, and failed to verify %d shares\n", num_failed_decryptions, num_failed_verifications);
+            printf("NOT OK Test 3 - 2: failed to decrypt %d shares, and failed to verify %d shares\n", num_failed_decryptions, num_failed_verifications);
         }
     }
     
@@ -681,16 +681,16 @@ static int dh_pvss_test_4(int print) {
     // positive test verify encrypted shares
     int ret1 = dh_pvss_distribute_verify(&pp, &distribution_pi, (const EC_POINT**)encrypted_shares, first_dist_kp.pub, (const EC_POINT**)committee_public_keys);
     if (print) {
-        printf("Test 4 part 1 %s: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+        printf("%6s Test 4 - 1: Correct DH PVSS Distribution Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
     
     // negative test verify encrypted shares
     int ret1b = dh_pvss_distribute_verify(&pp, &distribution_pi, (const EC_POINT**)encrypted_shares, committee_public_keys[0], (const EC_POINT**)committee_public_keys);
     if (print) {
         if (ret1b) {
-            printf("Test 4 part 1b OK: Incorrect DH PVSS Reshare Proof not accepted (which is CORRECT)\n");
+            printf("    OK Test 4 - 2: Incorrect DH PVSS Reshare Proof not accepted (which is CORRECT)\n");
         } else {
-            printf("Test 4 part 1b NOT OK: Incorrect DH PVSS Reshare Proof IS accepted (which is an ERROR)\n");
+            printf("NOT OK Test 4 - 2: Incorrect DH PVSS Reshare Proof IS accepted (which is an ERROR)\n");
         }
     }
     
@@ -721,9 +721,9 @@ static int dh_pvss_test_4(int print) {
     }
     if (print) {
         if (num_failed_decryptions == 0 && num_failed_verifications == 0) {
-            printf("Test 4 part 2 OK: all encrypted shares could be decrypted and verified\n");
+            printf("    OK Test 4 - 3: all encrypted shares could be decrypted and verified\n");
         } else {
-            printf("Test 4 part 2 NOT OK: failed to decrypt %d shares, and failed to verify %d shares\n", num_failed_decryptions, num_failed_verifications);
+            printf("NOT OK Test 4 - 3: failed to decrypt %d shares, and failed to verify %d shares\n", num_failed_decryptions, num_failed_verifications);
         }
     }
     
@@ -740,7 +740,7 @@ static int dh_pvss_test_4(int print) {
     EC_POINT *reconstructed_secret = dh_pvss_reconstruct(group, (const EC_POINT**)reconstruction_shares, reconstruction_indices, pp.t, t+1, ctx);
     int ret3 = point_cmp(group, secret, reconstructed_secret, ctx); // zero if equal
     if (print) {
-        printf("Test 4 part 3 %s: Correct DH PVSS reconstruction %s accepted\n", ret3 ? "NOT OK" : "OK", ret3 ? "NOT" : "indeed");
+        printf("%6s Test 4 - 4: Correct DH PVSS reconstruction %s accepted\n", ret3 ? "NOT OK" : "OK", ret3 ? "NOT" : "indeed");
     }
     
     // setup for next epoch committe
@@ -766,16 +766,16 @@ static int dh_pvss_test_4(int print) {
     // positive test for reshare
     int ret4 = dh_pvss_reshare_verify(&pp, &next_pp, party_index, committee_public_keys[party_index], dist_public_keys[party_index], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, (const EC_POINT**)next_committee_public_keys, encrypted_re_shares, &reshare_pi);
     if (print) {
-        printf("Test 4 part 4 %s: Correct DH PVSS Reshare Proof %s accepted\n", ret4 ? "NOT OK" : "OK", ret4 ? "NOT" : "indeed");
+        printf("%6s Test 4 - 5: Correct DH PVSS Reshare Proof %s accepted\n", ret4 ? "NOT OK" : "OK", ret4 ? "NOT" : "indeed");
     }
     
     // negative test for reshare
     int ret5 = dh_pvss_reshare_verify(&pp, &next_pp, party_index, committee_public_keys[party_index], dist_public_keys[party_index + 1], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, (const EC_POINT**)next_committee_public_keys, encrypted_re_shares, &reshare_pi);
     if (print) {
         if (ret5) {
-            printf("Test 4 part 5 OK: Incorrect DH PVSS Reshare Proof not accepted (which is CORRECT)\n");
+            printf("    OK Test 4 - 6: Incorrect DH PVSS Reshare Proof not accepted (which is CORRECT)\n");
         } else {
-            printf("Test 4 part 5 NOT OK: Incorrect DH PVSS Reshare Proof IS accepted (which is an ERROR)\n");
+            printf("NOT OK Test 4 - 6: Incorrect DH PVSS Reshare Proof IS accepted (which is an ERROR)\n");
         }
     }
     
@@ -786,7 +786,7 @@ static int dh_pvss_test_4(int print) {
     nizk_reshare_proof reshare_pis[pp.n];
     for (int i = 0; i<pp.n; i++) {
         if ((i+1)%10 == 0){
-            printf("Test 4 part 6. reshare progress: %d of %d \n",i+1, pp.n);
+            printf("       Test 4 - X: reshare progress: %d of %d \n",i+1, pp.n);
         }
         dh_pvss_reshare_prove(group, i, &committee_key_pairs[i], &dist_key_pairs[i], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, pp.n, &next_pp, (const EC_POINT**)next_committee_public_keys, all_encrypted_re_shares[i], &reshare_pis[i], ctx);
         
@@ -800,7 +800,7 @@ static int dh_pvss_test_4(int print) {
     EC_POINT *reconstructed_encrypted_reshares[next_pp.n];
     for (int j = 0; j<next_pp.n; j++) {
         if ((j+1)%10 == 0){
-            printf("Test 4 part 6. reshare reconstruction progress: %d of %d \n",j+1, next_pp.n);
+            printf("       Test 4 - Y: reshare reconstruction progress: %d of %d \n",j+1, next_pp.n);
         }
         EC_POINT *slice_of_encrypted_reshares[pp.n];
         for (int i = 0; i<pp.n; i++) { // get the the j:th share from all n rehares
@@ -833,7 +833,7 @@ static int dh_pvss_test_4(int print) {
     EC_POINT *reconstructed_reshared = dh_pvss_reconstruct(group, (const EC_POINT **)decrypted_reshares, reshare_reconstruction_indices, next_pp.t, next_pp.t+1, ctx);
     int ret6 = point_cmp(group, secret, reconstructed_reshared, ctx); // zero if equal
     if (print) {
-        printf("Test 4 part 6 %s: Correct reconstruction of reshared secret %s accepted\n", ret6 ? "NOT OK" : "OK", ret6 ? "NOT" : "indeed");
+        printf("%6s Test 4 - 7: Correct reconstruction of reshared secret %s accepted\n", ret6 ? "NOT OK" : "OK", ret6 ? "NOT" : "indeed");
     }
     
     // cleanup

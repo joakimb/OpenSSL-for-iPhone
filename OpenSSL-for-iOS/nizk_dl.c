@@ -62,7 +62,7 @@ int nizk_dl_verify(const EC_GROUP *group, const EC_POINT *X, const nizk_dl_proof
     point_mul(group, Z_prime, c, X, ctx);
     point_add(group, Z_prime, Z_prime, pi->u, ctx);
 
-    // Z == Z_prime ?
+    // Z == Z_prime? (zero if equal)
     int ret = EC_POINT_cmp(group, Z, Z_prime, ctx);
 
     // cleanup
@@ -89,9 +89,9 @@ static int nizk_dl_test_1(int print) {
     // test 1: produce correct proof and verify
     nizk_dl_proof pi;
     nizk_dl_prove(group, seven, &pi, ctx);
-    int ret1 = nizk_dl_verify(group, secret, &pi, ctx);
+    int ret = nizk_dl_verify(group, secret, &pi, ctx);
     if (print) {
-        printf("Test 1 %s: Correct NIZK DL Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+        printf("%6s Test 1: Correct NIZK DL Proof %s accepted\n", ret ? "NOT OK" : "OK", ret ? "NOT" : "indeed");
     }
 
     // cleanup
@@ -101,7 +101,7 @@ static int nizk_dl_test_1(int print) {
     BN_CTX_free(ctx);
 
     // return test results
-    return ret1 != 0;
+    return ret != 0;
 }
 
 static int nizk_dl_test_2(int print) {
@@ -118,7 +118,7 @@ static int nizk_dl_test_2(int print) {
     nizk_dl_prove(group, seven, &pi, ctx);
     int ret1 = nizk_dl_verify(group, secret, &pi, ctx);
     if (print) {
-        printf("Test 2 part 1 %s: Correct NIZK DL Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+        printf("%6s Test 2 - 1: Correct NIZK DL Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
 
     // negative tests
@@ -128,9 +128,9 @@ static int nizk_dl_test_2(int print) {
     int ret2 = nizk_dl_verify(group, secret, &pi, ctx);
     if (print) {
         if (ret2) {
-            printf("Test 2 part 2 OK: Incorrect NIZK DL Proof not accepted (which is CORRECT)\n");
+            printf("    OK Test 2 - 2: Incorrect NIZK DL Proof not accepted (which is CORRECT)\n");
         } else {
-            printf("Test 2 part 2 NOT OK: Incorrect NIZK DL Proof IS accepted (which is an ERROR)\n");
+            printf("NOT OK Test 2 - 2: Incorrect NIZK DL Proof IS accepted (which is an ERROR)\n");
         }
     }
 
@@ -156,7 +156,7 @@ static int nizk_dl_test_3(int print) {
     nizk_dl_prove(group, seven, &pi, ctx);
     int ret1 = nizk_dl_verify(group, secret, &pi, ctx);
     if (print) {
-        printf("Test 3 part 1 %s: Correct NIZK DL Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+        printf("%6s Test 3 - 1: Correct NIZK DL Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
 
     // negative tests
@@ -166,9 +166,9 @@ static int nizk_dl_test_3(int print) {
     int ret2 = nizk_dl_verify(group, secret, &pi, ctx);
     if (print) {
         if (ret2) {
-            printf("Test 3 part 2 OK: Incorrect NIZK DL Proof not accepted (which is CORRECT)\n");
+            printf("    OK Test 3 - 2: Incorrect NIZK DL Proof not accepted (which is CORRECT)\n");
         } else {
-            printf("Test 3 part 2 NOT OK: Incorrect NIZK DL Proof IS accepted (which is an ERROR)\n");
+            printf("NOT OK Test 3 - 2: Incorrect NIZK DL Proof IS accepted (which is an ERROR)\n");
         }
     }
 

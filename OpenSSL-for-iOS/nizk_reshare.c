@@ -147,7 +147,7 @@ int nizk_reshare_test_1(int print) {
     nizk_reshare_prove(group, w1, w2, ga, gb, gc, Y1, Y2, Y3, &pi, ctx);
     int ret1 = nizk_reshare_verify(group, ga, gb, gc, Y1, Y2, Y3, &pi, ctx);
     if (print) {
-        printf("Test 1 %s: Correct NIZK Reshare Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+        printf("%6s Test 1: Correct NIZK Reshare Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
 
     // cleanup
@@ -199,7 +199,7 @@ int nizk_reshare_test_2(int print) {
     int ret1 = nizk_reshare_verify(group, ga, gb, gc, Y1, Y2, Y3, &pi, ctx);
 
     if (print) {
-        printf("Test 2 part 1 %s: Correct NIZK Reshare Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+        printf("%6s Test 2 - 1: Correct NIZK Reshare Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
     
     //negative tests
@@ -218,9 +218,9 @@ int nizk_reshare_test_2(int print) {
         if (print) {
             if (neg_rets[i]) {
                 neg_ret_sum++;
-                printf("Test 2 part %d OK: Incorrect NIZK Reshare Proof not accepted (which is CORRECT)\n",i+2);
+                printf("    OK Test 2 - %d: Incorrect NIZK Reshare Proof not accepted (which is CORRECT)\n",i+2);
             } else {
-                printf("Test 2 part %d NOT OK: Incorrect NIZK Reshare Proof IS accepted (which is an ERROR)\n",i+2);
+                printf("NOT OK Test 2 - %d: Incorrect NIZK Reshare Proof IS accepted (which is an ERROR)\n",i+2);
             }
         }
     }

@@ -11,7 +11,7 @@
 #include <assert.h>
 #include "P256.h"
 
-const int debug = 1;
+const int debug = 0;
 
 static EC_GROUP *group = NULL;
 

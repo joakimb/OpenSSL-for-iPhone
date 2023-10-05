@@ -112,7 +112,7 @@ static int nizk_dl_eq_test_1(int print) {
     int ret1 = nizk_dl_eq_verify(group, a, A, b, B, &pi, ctx);
 
     if (print) {
-        printf("Test 1 part 1 %s: Correct NIZK DL EQ Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+        printf("%6s Test 1 - 1: Correct NIZK DL EQ Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
 
     // negative tests
@@ -122,9 +122,9 @@ static int nizk_dl_eq_test_1(int print) {
     int ret2 = nizk_dl_eq_verify(group, a, A, b, B_bad, &pi, ctx);
     if (print) {
         if (ret2) {
-            printf("Test 1 part 2 OK: Incorrect NIZK DL EQ Proof not accepted (which is CORRECT)\n");
+            printf("    OK Test 1 - 2: Incorrect NIZK DL EQ Proof not accepted (which is CORRECT)\n");
         } else {
-            printf("Test 1 part 2 NOT OK: Incorrect NIZK DL EQ Proof IS accepted (which is an ERROR)\n");
+            printf("NOT OK Test 1 - 2: Incorrect NIZK DL EQ Proof IS accepted (which is an ERROR)\n");
         }
     }
 
@@ -165,7 +165,7 @@ static int nizk_dl_eq_test_2(int print) {
     int ret1 = nizk_dl_eq_verify(group, a, A, b, B, &pi, ctx);
 
     if (print) {
-        printf("Test 2 part 1 %s: Correct NIZK DL EQ Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
+        printf("%6s Test 2 - 1: Correct NIZK DL EQ Proof %s accepted\n", ret1 ? "NOT OK" : "OK", ret1 ? "NOT" : "indeed");
     }
 
     // negative tests
@@ -175,9 +175,9 @@ static int nizk_dl_eq_test_2(int print) {
     int ret2 = nizk_dl_eq_verify(group, a, A_bad, b, B, &pi, ctx);
     if (print) {
         if (ret2) {
-            printf("Test 2 part 2 OK: Incorrect NIZK DL EQ Proof not accepted (which is CORRECT)\n");
+            printf("    OK Test 2 - 2: Incorrect NIZK DL EQ Proof not accepted (which is CORRECT)\n");
         } else {
-            printf("Test 2 part 2 NOT OK: Incorrect NIZK DL EQ Proof IS accepted (which is an ERROR)\n");
+            printf("NOT OK Test 2 - 2: Incorrect NIZK DL EQ Proof IS accepted (which is an ERROR)\n");
         }
     }
 
