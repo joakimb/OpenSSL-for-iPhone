@@ -15,4 +15,6 @@ void shamir_shares_generate(const EC_GROUP *group, EC_POINT *shares[], const EC_
 EC_POINT *shamir_shares_reconstruct(const EC_GROUP *group, const EC_POINT *shares[], const int shareIndexes[], const int t, const int length, BN_CTX *ctx);
 int shamir_shares_test_suite(int print);
 
+void lagX(const EC_GROUP *group, BIGNUM *prod, const int share_indexes[], int length, int i, BN_CTX *ctx);
+
 #endif /* SSS_H */

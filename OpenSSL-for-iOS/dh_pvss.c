@@ -375,6 +375,90 @@ static void dh_pvss_reshare_prove(const EC_GROUP *group, int party_index, const 
     EC_POINT_free(W_prime);
 }
 
+static int dh_pvss_reshare_verify(const EC_GROUP *group, int party_index, const dh_key_pair *party_committee_kp, const dh_key_pair *party_dist_kp, const EC_POINT *previous_dist_key, const EC_POINT *current_enc_shares[], const int current_n, const dh_pvss_ctx *next_pp, const EC_POINT *next_committee_keys[], EC_POINT *enc_re_shares[], nizk_reshare_proof *pi, BN_CTX *ctx) {
+    const EC_POINT *generator = get0_generator(group);
+   
+    // degree n-t-1 polynomial <- hash(previous_dist_key, current_enc_shares)
+    const int num_poly_coeffs = next_pp->n - next_pp->t;
+    BIGNUM *poly_coeffs[num_poly_coeffs]; // polynomial container
+    const int num_point_lists = 2;
+    int num_points[num_point_lists] = {1, current_n};
+    const EC_POINT **point_lists[num_point_lists] = { &(previous_dist_key), current_enc_shares };
+    openssl_hash_points2poly(group, ctx, num_poly_coeffs, poly_coeffs, num_point_lists, num_points, point_lists);
+
+    // generate scrape sum terms
+    BIGNUM *scrape_terms[next_pp->n];
+    generate_scrape_sum_terms(group, scrape_terms, next_pp->betas, next_pp->v_primes, poly_coeffs, next_pp->n, num_poly_coeffs, ctx);
+    
+    // compute U', V' and W'
+    EC_POINT *enc_re_share_diffs[next_pp->n];
+    for (int i=0; i<next_pp->n; i++) {
+        enc_re_share_diffs[i] = EC_POINT_new(group);
+        point_sub(group, enc_re_share_diffs[i], enc_re_shares[i], current_enc_shares[party_index], ctx);
+    }
+    EC_POINT *U_prime = EC_POINT_new(group);
+    EC_POINT *V_prime = EC_POINT_new(group);
+    EC_POINT *W_prime = EC_POINT_new(group);
+    assert(U_prime && "dh_pvss_reshare_prove: allocation error for U_prime");
+    assert(V_prime && "dh_pvss_reshare_prove: allocation error for V_prime");
+    assert(W_prime && "dh_pvss_reshare_prove: allocation error for V_prime");
+    
+    point_weighted_sum(group, U_prime, next_pp->n, (const BIGNUM**)scrape_terms, (const EC_POINT**)enc_re_share_diffs, ctx);
+    point_weighted_sum(group, V_prime, next_pp->n, (const BIGNUM**)scrape_terms, next_committee_keys, ctx);
+    BIGNUM *W_sum = BN_new();
+    for (int i=0; i<next_pp->n; i++) {
+        BN_add(W_sum, W_sum, scrape_terms[i]);
+    }
+    point_mul(group, W_prime, W_sum, previous_dist_key, ctx);
+
+    // verify correctness
+    int ret = nizk_reshare_verify(group, generator, V_prime, W_prime, party_committee_kp->pub, party_dist_kp->pub, U_prime, pi, ctx);
+    
+    // cleanup
+    for (int i=0; i<num_poly_coeffs; i++) {
+        BN_free(poly_coeffs[i]);
+    }
+    for (int i=0; i<next_pp->n; i++) {
+        BN_free(scrape_terms[i]);
+        EC_POINT_free(enc_re_share_diffs[i]);
+    }
+    EC_POINT_free(U_prime);
+    EC_POINT_free(V_prime);
+    BN_free(W_sum);
+    EC_POINT_free(W_prime);
+    
+    return ret;
+}
+
+static EC_POINT *dh_pvss_reconstruct_reshare(const dh_pvss_ctx *pp, int party_index, int num_valid_indices, int *valid_indices, EC_POINT *enc_re_shares[]) {
+    const EC_GROUP *group = pp->group;
+    const EC_POINT *generator = get0_generator(group);
+    const BIGNUM *order = get0_order(group);
+    BN_CTX *ctx = pp->bn_ctx;
+    const int t = pp->t;
+    const int n = pp->n;
+
+    if (num_valid_indices < t + 1) {
+        return NULL; // reconstruction not possible
+    }
+
+    EC_POINT *sum = EC_POINT_new(group);
+    BIGNUM *lambda = BN_new();
+    EC_POINT *lambC = EC_POINT_new(group);
+    for (int i=0; i<t+1; i++) {
+        lagX(group, lambda, valid_indices, t+1, i, ctx);
+        BN_nnmod(lambda, lambda, order, ctx);
+        point_mul(group, lambC, lambda, enc_re_shares[valid_indices[i]], ctx);
+        point_add(group, sum, sum, lambC, ctx);
+    }
+
+    // cleanup
+    BN_free(lambda);
+    EC_POINT_free(lambC);
+
+    return sum;
+}
+
 static int dh_pvss_test_1(int print) {
     const EC_GROUP *group = get0_group();
     BN_CTX *ctx = BN_CTX_new();

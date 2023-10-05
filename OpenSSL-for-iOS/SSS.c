@@ -50,7 +50,7 @@ void shamir_shares_generate(const EC_GROUP *group, EC_POINT *shares[], const EC_
     BN_free(exp);
 }
 
-static void lagX(const EC_GROUP *group, BIGNUM *prod, const int share_indexes[], int length, int i, BN_CTX *ctx) {
+void lagX(const EC_GROUP *group, BIGNUM *prod, const int share_indexes[], int length, int i, BN_CTX *ctx) {
     const BIGNUM *order = get0_order(group);
 
     BIGNUM *a = BN_new();
