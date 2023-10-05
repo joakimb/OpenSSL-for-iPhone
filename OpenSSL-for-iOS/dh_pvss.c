@@ -242,7 +242,7 @@ int dh_pvss_distribute_verify(dh_pvss_ctx *pp, nizk_dl_eq_proof *pi, const EC_PO
     return ret;
 }
 
-static EC_POINT *dh_pvss_decrypt_share_prove(const EC_GROUP *group, const EC_POINT *dist_key_pub, dh_key_pair *C, const EC_POINT *encrypted_share, nizk_dl_eq_proof *pi, BN_CTX *ctx) {
+EC_POINT *dh_pvss_decrypt_share_prove(const EC_GROUP *group, const EC_POINT *dist_key_pub, dh_key_pair *C, const EC_POINT *encrypted_share, nizk_dl_eq_proof *pi, BN_CTX *ctx) {
     const EC_POINT *generator = get0_generator(group);
 
     // compute shared key
@@ -270,7 +270,7 @@ static EC_POINT *dh_pvss_decrypt_share_prove(const EC_GROUP *group, const EC_POI
     return decrypted_share; // return decrypted share and (implicitly) proof
 }
 
-static int dh_pvss_decrypt_share_verify(const EC_GROUP *group, const EC_POINT *dist_key_pub, const EC_POINT *C_pub, const EC_POINT *encrypted_share, const EC_POINT *decrypted_share, nizk_dl_eq_proof *pi, BN_CTX *ctx) {
+int dh_pvss_decrypt_share_verify(const EC_GROUP *group, const EC_POINT *dist_key_pub, const EC_POINT *C_pub, const EC_POINT *encrypted_share, const EC_POINT *decrypted_share, nizk_dl_eq_proof *pi, BN_CTX *ctx) {
     const EC_POINT *generator = get0_generator(group);
 
     // compute difference
@@ -297,7 +297,7 @@ EC_POINT *dh_pvss_committee_dist_key_calc(const EC_GROUP *group, const EC_POINT 
     return shamir_shares_reconstruct(group, keys, key_indices, t, length, ctx);
 }
 
-static void dh_pvss_reshare_prove(const EC_GROUP *group, int party_index, const dh_key_pair *party_committee_kp, const dh_key_pair *party_dist_kp, const EC_POINT *previous_dist_key, const EC_POINT *current_enc_shares[], const int current_n, const dh_pvss_ctx *next_pp, const EC_POINT *next_committee_keys[], EC_POINT *enc_re_shares[], nizk_reshare_proof *pi, BN_CTX *ctx) {
+void dh_pvss_reshare_prove(const EC_GROUP *group, int party_index, const dh_key_pair *party_committee_kp, const dh_key_pair *party_dist_kp, const EC_POINT *previous_dist_key, const EC_POINT *current_enc_shares[], const int current_n, const dh_pvss_ctx *next_pp, const EC_POINT *next_committee_keys[], EC_POINT *enc_re_shares[], nizk_reshare_proof *pi, BN_CTX *ctx) {
     const EC_POINT *generator = get0_generator(group);
    
     // compute shared key
@@ -375,9 +375,12 @@ static void dh_pvss_reshare_prove(const EC_GROUP *group, int party_index, const 
     EC_POINT_free(W_prime);
 }
 
-static int dh_pvss_reshare_verify(const EC_GROUP *group, int party_index, const dh_key_pair *party_committee_kp, const dh_key_pair *party_dist_kp, const EC_POINT *previous_dist_key, const EC_POINT *current_enc_shares[], const int current_n, const dh_pvss_ctx *next_pp, const EC_POINT *next_committee_keys[], EC_POINT *enc_re_shares[], nizk_reshare_proof *pi, BN_CTX *ctx) {
+int dh_pvss_reshare_verify(const dh_pvss_ctx *pp, const dh_pvss_ctx *next_pp, int party_index, const dh_key_pair *party_committee_kp, const dh_key_pair *party_dist_kp, const EC_POINT *previous_dist_key, const EC_POINT *current_enc_shares[], const EC_POINT *next_committee_keys[], EC_POINT *enc_re_shares[], nizk_reshare_proof *pi) {
+    const EC_GROUP *group = pp->group; // TODO: use next group where appropriate
     const EC_POINT *generator = get0_generator(group);
-   
+    BN_CTX *ctx = pp->bn_ctx; // TODO: use next bn_ctx where appropriate
+    const int current_n = pp->n;
+
     // degree n-t-1 polynomial <- hash(previous_dist_key, current_enc_shares)
     const int num_poly_coeffs = next_pp->n - next_pp->t;
     BIGNUM *poly_coeffs[num_poly_coeffs]; // polynomial container
@@ -430,13 +433,11 @@ static int dh_pvss_reshare_verify(const EC_GROUP *group, int party_index, const 
     return ret;
 }
 
-static EC_POINT *dh_pvss_reconstruct_reshare(const dh_pvss_ctx *pp, int party_index, int num_valid_indices, int *valid_indices, EC_POINT *enc_re_shares[]) {
+EC_POINT *dh_pvss_reconstruct_reshare(const dh_pvss_ctx *pp, int num_valid_indices, int *valid_indices, EC_POINT *enc_re_shares[]) {
     const EC_GROUP *group = pp->group;
-    const EC_POINT *generator = get0_generator(group);
     const BIGNUM *order = get0_order(group);
     BN_CTX *ctx = pp->bn_ctx;
     const int t = pp->t;
-    const int n = pp->n;
 
     if (num_valid_indices < t + 1) {
         return NULL; // reconstruction not possible
