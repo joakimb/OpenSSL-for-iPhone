@@ -439,7 +439,9 @@ EC_POINT *dh_pvss_reconstruct_reshare(const dh_pvss_ctx *pp, int num_valid_indic
     BN_CTX *ctx = pp->bn_ctx;
     const int t = pp->t;
     
-    if (num_valid_indices < t + 1) {
+    // TODO: expect corresponding entries in enc_re_shares only
+
+    if (num_valid_indices != t + 1) {
         return NULL; // reconstruction not possible
     }
     
@@ -448,8 +450,15 @@ EC_POINT *dh_pvss_reconstruct_reshare(const dh_pvss_ctx *pp, int num_valid_indic
     EC_POINT *lambC = EC_POINT_new(group);
     for (int i=0; i<t+1; i++) {
         lagX(group, lambda, valid_indices, t+1, i, ctx);
+        
+        printf("lambda: ");
+        bn_print(lambda);
+        printf("\n");
+
+        
         BN_nnmod(lambda, lambda, order, ctx);
-        point_mul(group, lambC, lambda, enc_re_shares[valid_indices[i]], ctx);
+        point_mul(group, lambC, lambda, enc_re_shares[i], ctx);
+//        point_mul(group, lambC, lambda, enc_re_shares[valid_indices[i]], ctx);
         point_add(group, sum, sum, lambC, ctx);
     }
     
@@ -651,12 +660,16 @@ static int dh_pvss_test_4(int print) {
     BN_CTX *ctx = BN_CTX_new();
     
     // setup
-    const int t = 5;
-    const int n = 10;
+    const int t = 1;
+    const int n = 4;
     dh_pvss_ctx pp;
     dh_pvss_setup(&pp, group, t, n, ctx);
     EC_POINT *secret = point_random(group, ctx);
-    
+
+    printf("secret: ");
+    point_print(group, secret, ctx);
+    printf("\n");
+
     // keygen
     dh_key_pair first_dist_kp;
     dh_key_pair_generate(group, &first_dist_kp, ctx);
@@ -789,24 +802,43 @@ static int dh_pvss_test_4(int print) {
             printf("       Test 4 - X: reshare progress: %d of %d \n",i+1, pp.n);
         }
         dh_pvss_reshare_prove(group, i, &committee_key_pairs[i], &dist_key_pairs[i], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, pp.n, &next_pp, (const EC_POINT**)next_committee_public_keys, all_encrypted_re_shares[i], &reshare_pis[i], ctx);
-        
+        printf("%dth reshare: ", i);
+        for (int j=0; j<t+1; j++) {
+            point_print(group, all_encrypted_re_shares[i][j], ctx);
+        }
+        printf("\n");
     }
-    
+
     // 2. reconstruct reshare
-    int valid_indices[n];
-    for (int i = 0; i<pp.n; i++) {
-        valid_indices[i] = i;//assume all indices valid for this test
+    int valid_indices[pp.t+1];
+    for (int i = 0; i<pp.t+1; i++) {
+        valid_indices[i] = i+1; // assume all indices valid for this test
     }
     EC_POINT *reconstructed_encrypted_reshares[next_pp.n];
-    for (int j = 0; j<next_pp.n; j++) {
-        if ((j+1)%10 == 0){
-            printf("       Test 4 - Y: reshare reconstruction progress: %d of %d \n",j+1, next_pp.n);
+    for (int j = 0; j<next_pp.n; j++) { // loop over slices
+
+        EC_POINT *slice_of_encrypted_reshares[next_pp.t+1];
+        for (int i=0; i<next_pp.t+1; i++) { // get the the j:th share from all n rehares
+            slice_of_encrypted_reshares[i] = all_encrypted_re_shares[ valid_indices[i] - 1 ][j];
         }
-        EC_POINT *slice_of_encrypted_reshares[pp.n];
-        for (int i = 0; i<pp.n; i++) { // get the the j:th share from all n rehares
-            slice_of_encrypted_reshares[i] = all_encrypted_re_shares[i][j];
+
+        printf("%d:th slice of encrypted reshare: ", j);
+        for (int i = 0; i<t+1; i++) { // loop over slice
+            point_print(group, slice_of_encrypted_reshares[i], ctx);
         }
-        reconstructed_encrypted_reshares[j] = dh_pvss_reconstruct_reshare(&pp, pp.n, valid_indices, slice_of_encrypted_reshares);
+        printf("\n");
+        printf("valid_indices:");
+        for (int i = 0; i<t+1; i++) { // loop over slice
+            printf(" %d", valid_indices[i]);
+        }
+        printf("\n");
+        fflush(stdout);
+        
+        reconstructed_encrypted_reshares[j] = dh_pvss_reconstruct_reshare(&pp, next_pp.t+1, valid_indices, slice_of_encrypted_reshares);
+
+        printf("%d:th reconstructed: ",j);
+        point_print(group, reconstructed_encrypted_reshares[j], ctx);
+        printf("\n");
     }
     
     // 3. decrypt reconstructed reshares
@@ -815,7 +847,7 @@ static int dh_pvss_test_4(int print) {
     EC_POINT *reshare_reconstruction_keys[next_pp.t+1];
     dh_key_pair reshare_reconstruction_keys_pairs[next_pp.t+1];
     EC_POINT *reshare_reconstruction_shares[next_pp.t+1];
-    for (int i=first; i<first+next_pp.t+1; i++) {// fill indexes and keys
+    for (int i=first; i<first+next_pp.t+1; i++) { // fill indexes and keys
         int pp_alpha_as_int = (int)BN_get_word(pp.alphas[i]); // this works since alphas were chosen small enough to fit in an int
         reshare_reconstruction_indices[i-first] = pp_alpha_as_int;
         reshare_reconstruction_keys[i-first] = committee_public_keys[i-1];
@@ -835,7 +867,13 @@ static int dh_pvss_test_4(int print) {
     if (print) {
         printf("%6s Test 4 - 7: Correct reconstruction of reshared secret %s accepted\n", ret6 ? "NOT OK" : "OK", ret6 ? "NOT" : "indeed");
     }
-    
+    printf("secret: ");
+    point_print(group, secret, ctx);
+    printf("\n");
+    printf("reconstructed_reshared: ");
+    point_print(group, reconstructed_reshared, ctx);
+    printf("\n");
+
     // cleanup
     BN_CTX_free(ctx);
     dh_pvss_ctx_free(&pp);

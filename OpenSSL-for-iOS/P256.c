@@ -11,7 +11,8 @@
 #include <assert.h>
 #include "P256.h"
 
-const int debug = 0;
+const int use_toy_curve = 0;
+const int kill_randomness = 0;
 
 static EC_GROUP *group = NULL;
 
@@ -21,7 +22,7 @@ const EC_GROUP *get0_group(void) {
     }
 
     // instantiate group
-    if (debug) { // use toy curve
+    if (use_toy_curve) { // use toy curve
         // ----------- Custom group (toy curve EC29 for debugging) ---------
         BIGNUM *p = BN_new();
         BIGNUM *a = BN_new();
@@ -82,7 +83,7 @@ void point_print(const EC_GROUP *group, const EC_POINT *p, BN_CTX *ctx){
     unsigned char *buf = malloc(bufsize);
     assert(buf && "print_point: allocation error");
     EC_POINT_point2oct(group, p, POINT_CONVERSION_UNCOMPRESSED, buf, bufsize, ctx);
-
+#if 0
     // print point coordinates in hex
     printf("(");
     for (size_t i = 0; i <= (bufsize - 1) / 2; i++) {
@@ -93,17 +94,17 @@ void point_print(const EC_GROUP *group, const EC_POINT *p, BN_CTX *ctx){
         printf("%02X", buf[i]);
     }
     printf(")");
-#if 0
+#else
     // print point coordinates in dec
     printf("(");
         for (size_t i = 0; i <= (bufsize - 1) / 2; i++) {
         printf("%d", (int)buf[i]);
     }
-    printf(",\n ");
+    printf(", ");
     for (size_t i = (bufsize - 1) / 2 + 1; i < bufsize; i++) {
         printf("%d", (int)buf[i]);
     }
-    printf(")\n");
+    printf(")");
 #endif
     free(buf);
 }
@@ -113,7 +114,7 @@ BIGNUM* bn_random(const BIGNUM *modulus, BN_CTX *ctx) {
     BIGNUM *r = BN_new();
     assert(r && "random_bignum: no r generated");
 
-    if (debug) { // eliminate randomness, all rands are five
+    if (kill_randomness) { // eliminate randomness, all rands are five
         int ret = BN_set_word(r, 5);
         assert(ret == 1 && "random_bignum: BN_set_word error");
         return r;
