@@ -670,6 +670,15 @@ static int dh_pvss_test_4(int print) {
     point_print(group, secret, ctx);
     printf("\n");
 
+    BIGNUM *five = BN_new();
+    BN_set_word(five, 5);
+    const EC_POINT *generator = get0_generator(group);
+    EC_POINT *point = EC_POINT_new(group);
+    EC_POINT_mul(group, point, five, NULL, NULL, ctx);
+//    EC_POINT_mul(group, point, NULL, generator, five, ctx);
+    point_print(group, point, ctx);
+
+    
     // keygen
     dh_key_pair first_dist_kp;
     dh_key_pair_generate(group, &first_dist_kp, ctx);

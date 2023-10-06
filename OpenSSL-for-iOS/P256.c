@@ -12,7 +12,7 @@
 #include "P256.h"
 
 const int use_toy_curve = 0;
-const int kill_randomness = 0;
+const int kill_randomness = 1;
 
 static EC_GROUP *group = NULL;
 
@@ -72,7 +72,18 @@ void bn_print(const BIGNUM *x) {
 }
 
 void point_print(const EC_GROUP *group, const EC_POINT *p, BN_CTX *ctx){
-
+    BIGNUM *x = BN_new();
+    BIGNUM *y = BN_new();
+    if (EC_POINT_get_affine_coordinates_GFp(group, p, x, y, NULL)) {
+        printf("(");
+        bn_print(x);
+        printf(", ");
+        bn_print(y);
+        printf(")");
+    }
+    BN_free(x);
+    BN_free(y);
+#if 0
     // using uncompressed point format for printing
 
     // call with NULL to get buffer size needed
@@ -107,6 +118,7 @@ void point_print(const EC_GROUP *group, const EC_POINT *p, BN_CTX *ctx){
     printf(")");
 #endif
     free(buf);
+#endif
 }
 
 // random bignum (modulo group order)
@@ -182,6 +194,7 @@ void point_sub(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_P
 
 // convert bignum to point
 EC_POINT *bn2point(const EC_GROUP *group, const BIGNUM *bn, BN_CTX *ctx) {
+    const EC_POINT *generator = get0_generator(group);
     EC_POINT *point = EC_POINT_new(group);
     assert(point && "bn2point: no point allocated");
     int ret = EC_POINT_mul(group, point, bn, NULL, NULL, ctx);
