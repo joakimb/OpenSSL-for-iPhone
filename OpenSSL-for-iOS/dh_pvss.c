@@ -5,55 +5,21 @@
 //  Created by Joakim Brorsson on 2023-10-01.
 //  Copyright © 2023 Felix Schulze. All rights reserved.
 //
-
 #include "dh_pvss.h"
 #include <assert.h>
 #include "SSS.h"
 #include "openssl_hashing_tools.h"
 
-/* dh key pair utilities */
-
-void dh_key_pair_free(dh_key_pair *kp) {
-    bn_free(kp->priv);
-    point_free(kp->pub);
-}
-
-void dh_key_pair_generate(const EC_GROUP *group, dh_key_pair *kp, BN_CTX *ctx) {
-    const BIGNUM *order = get0_order(group);
-    kp->priv = bn_random(order, ctx);
-    kp->pub = bn2point(group, kp->priv, ctx);
-}
-
-void dh_key_pair_prove(const EC_GROUP *group, dh_key_pair *kp, nizk_dl_proof *pi, BN_CTX *ctx) {
-    nizk_dl_prove(group, kp->priv, pi, ctx);
-}
-
-int dh_pub_key_verify(const EC_GROUP *group, const EC_POINT *pub_key, const nizk_dl_proof *pi, BN_CTX *ctx) {
-    return nizk_dl_verify(group, pub_key, pi, ctx);
-}
-
-/* dhpvss */
-
 void dh_pvss_ctx_free(dh_pvss_ctx *pp) {
-    // free entries
-    for (int i=0; i<pp->n+1; i++) {
-        bn_free(pp->alphas[i]);
-        bn_free(pp->betas[i]);
-        bn_free(pp->v_primes[i]);
-    }
-    for (int i=0; i<pp->n; i++) {
-        bn_free(pp->vs[i]);
-    }
-    // free arrays
-    free(pp->alphas);
-    free(pp->betas);
-    free(pp->v_primes);
-    free(pp->vs);
+    bn_free_array(pp->n+1, pp->alphas);
+    bn_free_array(pp->n+1, pp->betas);
+    bn_free_array(pp->n+1, pp->v_primes);
+    bn_free_array(pp->n, pp->vs);
 }
 
 static void derive_scrape_coeffs(const EC_GROUP *group, BIGNUM **coeffs, int from, int n, BIGNUM **evaluationPoints, BN_CTX *ctx) {
     const BIGNUM *order = get0_order(group);
-    
+
     BIGNUM *term = bn_new();
     for (int i = 1; i <= n; i++) {
         BIGNUM *coeff = coeffs[i - 1];
@@ -80,31 +46,17 @@ void dh_pvss_setup(dh_pvss_ctx *pp, const EC_GROUP *group, const int t, const in
     pp->n = n;
     
     // allocate vectors
-    pp->alphas   = malloc(sizeof(BIGNUM *) * (n + 1));
-    pp->betas    = malloc(sizeof(BIGNUM *) * (n + 1));
-    pp->v_primes = malloc(sizeof(BIGNUM *) * (n + 1));
-    pp->vs       = malloc(sizeof(BIGNUM *) * n);
-    assert(pp->alphas && "dh_pvss_setup: allocation error alphas");
-    assert(pp->betas && "dh_pvss_setup: allocation error betas");
-    assert(pp->v_primes && "dh_pvss_setup: allocation error v_primes");
-    assert(pp->vs && "dh_pvss_setup: allocation error vs");
-    
-    // allocate vector entries
-    for (int i=0; i<n+1; i++) {
-        pp->alphas[i]   = bn_new();
-        pp->betas[i]    = bn_new();
-        pp->v_primes[i] = bn_new();
-    }
-    for (int i=0; i<n; i++) {
-        pp->vs[i] = bn_new();
-    }
-    
+    pp->alphas   = bn_new_array(n+1);
+    pp->betas    = bn_new_array(n+1);
+    pp->v_primes = bn_new_array(n+1);
+    pp->vs       = bn_new_array(n);
+
     // fill alphas and betas
     for (int i=0; i<n+1; i++) {
         BN_set_word(pp->alphas[i], i);
         BN_set_word(pp->betas[i], i);
     }
-    
+
     // fill vs and v_primes
     derive_scrape_coeffs(group, pp->vs, 1, n, pp->alphas, bn_ctx);
     derive_scrape_coeffs(group, pp->v_primes, 0, n, pp->betas, bn_ctx);
@@ -234,17 +186,14 @@ EC_POINT *dh_pvss_decrypt_share_prove(const EC_GROUP *group, const EC_POINT *dis
     
     // compute shared key
     EC_POINT *shared_key = point_new(group);
-    assert(shared_key && "dh_pvss_decrypt_share: allocation error for shared_key");
     point_mul(group, shared_key, C->priv, dist_key_pub, ctx);
     
     // decrypt share
     EC_POINT *decrypted_share = point_new(group);
-    assert(decrypted_share && "dh_pvss_decrypt_share: allocation error for decrypted_share");
     point_sub(group, decrypted_share, encrypted_share, shared_key, ctx);
     
     // compute difference
     EC_POINT *diff = point_new(group);
-    assert(diff && "dh_pvss_decrypt_share: allocation error for diff");
     point_sub(group, diff, encrypted_share, decrypted_share, ctx);
     
     // prove correct decryption
@@ -262,7 +211,6 @@ int dh_pvss_decrypt_share_verify(const EC_GROUP *group, const EC_POINT *dist_key
     
     // compute difference
     EC_POINT *diff = point_new(group);
-    assert(diff && "dh_pvss_decrypt_share: allocation error for diff");
     point_sub(group, diff, encrypted_share, decrypted_share, ctx);
     
     // prove correct decryption
@@ -331,9 +279,6 @@ void dh_pvss_reshare_prove(const EC_GROUP *group, int party_index, const dh_key_
     EC_POINT *U_prime = point_new(group);
     EC_POINT *V_prime = point_new(group);
     EC_POINT *W_prime = point_new(group);
-    assert(U_prime && "dh_pvss_reshare_prove: allocation error for U_prime");
-    assert(V_prime && "dh_pvss_reshare_prove: allocation error for V_prime");
-    assert(W_prime && "dh_pvss_reshare_prove: allocation error for V_prime");
     
     point_weighted_sum(group, U_prime, next_pp->n, (const BIGNUM**)scrape_terms, (const EC_POINT**)enc_re_share_diffs, ctx);
     point_weighted_sum(group, V_prime, next_pp->n, (const BIGNUM**)scrape_terms, next_committee_keys, ctx);
@@ -389,9 +334,6 @@ int dh_pvss_reshare_verify(const dh_pvss_ctx *pp, const dh_pvss_ctx *next_pp, in
     EC_POINT *U_prime = point_new(group);
     EC_POINT *V_prime = point_new(group);
     EC_POINT *W_prime = point_new(group);
-    assert(U_prime && "dh_pvss_reshare_prove: allocation error for U_prime");
-    assert(V_prime && "dh_pvss_reshare_prove: allocation error for V_prime");
-    assert(W_prime && "dh_pvss_reshare_prove: allocation error for V_prime");
     
     point_weighted_sum(group, U_prime, next_pp->n, (const BIGNUM**)scrape_terms, (const EC_POINT**)enc_re_share_diffs, ctx);
     point_weighted_sum(group, V_prime, next_pp->n, (const BIGNUM**)scrape_terms, next_committee_keys, ctx);

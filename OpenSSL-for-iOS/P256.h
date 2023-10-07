@@ -6,18 +6,11 @@
 //  Copyright © 2023 Felix Schulze. All rights reserved.
 //
 
-#ifndef P256_h
-#define P256_h
-
-#include <stdio.h>
+#ifndef P256_H
+#define P256_H
 #include <openssl/bn.h>
-#include <time.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <openssl/ec.h>
 #import <openssl/evp.h>
-
-#endif /* P256_h */
 
 // get curve group
 const EC_GROUP* get0_group(void);
@@ -35,6 +28,12 @@ BIGNUM *bn_new(void);
 
 // free
 void bn_free(BIGNUM *bn);
+
+// get vector of new bignums
+BIGNUM **bn_new_array(int len);
+
+// free bn array
+void bn_free_array(int len, BIGNUM **bn_array);
 
 // get random element in Zp
 BIGNUM *bn_random(const BIGNUM *modulus, BN_CTX *ctx);
@@ -72,3 +71,5 @@ void point_sub(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_P
 
 // helper to print point to terminal
 void point_print(const EC_GROUP *group, const EC_POINT *p, BN_CTX *ctx);
+
+#endif /* P256_H */

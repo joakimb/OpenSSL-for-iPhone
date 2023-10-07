@@ -10,6 +10,7 @@
 		150275DA2AA7141100462E61 /* ShamirP256.m in Sources */ = {isa = PBXBuildFile; fileRef = 150275D92AA7141100462E61 /* ShamirP256.m */; };
 		1506C7DC2AC98A2D008EA6E3 /* dh_pvss.c in Sources */ = {isa = PBXBuildFile; fileRef = 1506C7DB2AC98A2D008EA6E3 /* dh_pvss.c */; };
 		152D4AF32AB45B49007ACC8E /* SSS.c in Sources */ = {isa = PBXBuildFile; fileRef = 152D4AF22AB45B49007ACC8E /* SSS.c */; };
+		154C552D2AD1BE39004CAABA /* dh_key_pair.c in Sources */ = {isa = PBXBuildFile; fileRef = 154C552C2AD1BE39004CAABA /* dh_key_pair.c */; };
 		15BFDB692AC43C8E00249EF2 /* openssl_hashing_tools.c in Sources */ = {isa = PBXBuildFile; fileRef = 15BFDB682AC43C8E00249EF2 /* openssl_hashing_tools.c */; };
 		15BFDB6C2AC63B0900249EF2 /* nizk_dl.c in Sources */ = {isa = PBXBuildFile; fileRef = 15BFDB6B2AC63B0900249EF2 /* nizk_dl.c */; };
 		15BFDB6F2AC63C2A00249EF2 /* nizk_dl_eq.c in Sources */ = {isa = PBXBuildFile; fileRef = 15BFDB6E2AC63C2A00249EF2 /* nizk_dl_eq.c */; };
@@ -54,6 +55,8 @@
 		1506C7DB2AC98A2D008EA6E3 /* dh_pvss.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = dh_pvss.c; sourceTree = "<group>"; wrapsLines = 1; };
 		152D4AF12AB45B49007ACC8E /* SSS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SSS.h; sourceTree = "<group>"; };
 		152D4AF22AB45B49007ACC8E /* SSS.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = SSS.c; sourceTree = "<group>"; };
+		154C552B2AD1BE39004CAABA /* dh_key_pair.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dh_key_pair.h; sourceTree = "<group>"; };
+		154C552C2AD1BE39004CAABA /* dh_key_pair.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = dh_key_pair.c; sourceTree = "<group>"; };
 		15BFDB672AC43C8E00249EF2 /* openssl_hashing_tools.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = openssl_hashing_tools.h; sourceTree = "<group>"; };
 		15BFDB682AC43C8E00249EF2 /* openssl_hashing_tools.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = openssl_hashing_tools.c; sourceTree = "<group>"; };
 		15BFDB6A2AC63B0900249EF2 /* nizk_dl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = nizk_dl.h; sourceTree = "<group>"; };
@@ -187,6 +190,8 @@
 				152D4AF22AB45B49007ACC8E /* SSS.c */,
 				15BFDB702AC7194000249EF2 /* nizk_reshare.h */,
 				15BFDB712AC7194000249EF2 /* nizk_reshare.c */,
+				154C552B2AD1BE39004CAABA /* dh_key_pair.h */,
+				154C552C2AD1BE39004CAABA /* dh_key_pair.c */,
 				1506C7DA2AC98A2D008EA6E3 /* dh_pvss.h */,
 				1506C7DB2AC98A2D008EA6E3 /* dh_pvss.c */,
 				15BFDB6A2AC63B0900249EF2 /* nizk_dl.h */,
@@ -404,6 +409,7 @@
 				2A3821001BFB5EEB00328618 /* AppDelegate.swift in Sources */,
 				1506C7DC2AC98A2D008EA6E3 /* dh_pvss.c in Sources */,
 				15FF080B2AA8B08100B2B623 /* BigNum.swift in Sources */,
+				154C552D2AD1BE39004CAABA /* dh_key_pair.c in Sources */,
 				152D4AF32AB45B49007ACC8E /* SSS.c in Sources */,
 				2A3821021BFB607A00328618 /* ViewController.swift in Sources */,
 				15BFDB692AC43C8E00249EF2 /* openssl_hashing_tools.c in Sources */,

@@ -5,11 +5,8 @@
 //  Created by Joakim Brorsson on 2023-09-07.
 //  Copyright © 2023 Felix Schulze. All rights reserved.
 //
-
-
-#include <string.h>
-#include <assert.h>
 #include "P256.h"
+#include <assert.h>
 
 const int use_toy_curve = 0;
 const int kill_randomness = 1;
@@ -89,6 +86,26 @@ EC_POINT *point_new(const EC_GROUP *group) {
 
 void point_free(EC_POINT *a) {
     EC_POINT_free(a);
+}
+
+// get vector of new bignums
+BIGNUM **bn_new_array(int len) {
+    BIGNUM **bn_array = malloc(len * sizeof(BIGNUM*));
+    assert(bn_array && "bn_new_array: allocation error (bn_array)");
+    for (int i=0; i<len; i++) {
+        bn_array[i] = bn_new();
+        assert(bn_array[i] && "bn_new_array: allocation error (bn_array entry)");
+    }
+    return bn_array;
+}
+
+// free bn array
+void bn_free_array(int len, BIGNUM **bn_array) {
+    for (int i=0; i<len; i++) {
+        bn_free(bn_array[i]);
+        bn_array[i] = NULL; // superfluous assignment, increases likelihood of catching misusage
+    }
+    free(bn_array);
 }
 
 void point_print(const EC_GROUP *group, const EC_POINT *p, BN_CTX *ctx){

@@ -5,9 +5,8 @@
 //  Created by Paul Stankovski Wagner on 2023-09-29.
 //  Copyright © 2023 Felix Schulze. All rights reserved.
 //
-#include <stdio.h>
-#include <assert.h>
 #include "nizk_reshare.h"
+#include <assert.h>
 #include "openssl_hashing_tools.h"
 
 void nizk_reshare_proof_free(nizk_reshare_proof *pi) {

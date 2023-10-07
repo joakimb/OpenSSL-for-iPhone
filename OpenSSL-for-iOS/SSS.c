@@ -5,8 +5,8 @@
 //  Created by Joakim Brorsson on 2023-09-15.
 //  Copyright © 2023 Felix Schulze. All rights reserved.
 //
-#include <stdio.h>
 #include "SSS.h"
+//#include <stdio.h>
 
 void shamir_shares_generate(const EC_GROUP *group, EC_POINT *shares[], const EC_POINT *secret, const int t, const int n, BN_CTX *ctx) {
     const BIGNUM *order = get0_order(group);
