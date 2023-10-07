@@ -42,12 +42,12 @@ void shamir_shares_generate(const EC_GROUP *group, EC_POINT *shares[], const EC_
 
     // cleanup
     for (int i=0; i<t+1; i++){
-        BN_free(coeffs[i]);
+        bn_free(coeffs[i]);
     }
-    BN_free(peval);
-    BN_free(pterm);
-    BN_free(base);
-    BN_free(exp);
+    bn_free(peval);
+    bn_free(pterm);
+    bn_free(base);
+    bn_free(exp);
 }
 
 void lagX(const EC_GROUP *group, BIGNUM *prod, const int share_indexes[], int length, int i, BN_CTX *ctx) {
@@ -76,11 +76,11 @@ void lagX(const EC_GROUP *group, BIGNUM *prod, const int share_indexes[], int le
     }
 
     // cleanup
-    BN_free(fraction);
-    BN_free(denominator);
-    BN_free(numerator);
-    BN_free(b);
-    BN_free(a);
+    bn_free(fraction);
+    bn_free(denominator);
+    bn_free(numerator);
+    bn_free(b);
+    bn_free(a);
 }
 
 EC_POINT *shamir_shares_reconstruct(const EC_GROUP *group, const EC_POINT *shares[], const int shareIndexes[], const int t, const int length, BN_CTX *ctx) {
@@ -103,12 +103,15 @@ EC_POINT *shamir_shares_reconstruct(const EC_GROUP *group, const EC_POINT *share
 
     // cleanup
     point_free(term);
-    BN_free(lagrange_prod);
-    BN_free(zero);
+    bn_free(lagrange_prod);
+    bn_free(zero);
     return sum; // return secret
 }
 
 int shamir_shares_test_suite(int print) {
+
+    print_allocation_status();
+
     const EC_GROUP *group = get0_group();
     BN_CTX *ctx = BN_CTX_new();
 
@@ -160,10 +163,12 @@ int shamir_shares_test_suite(int print) {
     for (int i=0; i<n; i++) {
         point_free(shares[i]);
     }
-    BN_free(seven);
+    bn_free(seven);
     point_free(secret);
     point_free(reconstructed);
     BN_CTX_free(ctx);
+    
+    print_allocation_status();
     
     return res;
 }

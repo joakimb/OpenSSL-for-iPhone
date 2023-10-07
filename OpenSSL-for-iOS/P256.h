@@ -72,4 +72,7 @@ void point_sub(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_P
 // helper to print point to terminal
 void point_print(const EC_GROUP *group, const EC_POINT *p, BN_CTX *ctx);
 
+// print utilitary information about bn_new/bn_free and point_new/point_free
+void print_allocation_status(void);
+
 #endif /* P256_H */

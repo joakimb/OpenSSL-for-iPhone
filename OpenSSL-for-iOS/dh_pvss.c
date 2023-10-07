@@ -858,6 +858,7 @@ int dh_pvss_test_suite(int print) {
         }
     }
     if (print) {
+        print_allocation_status();
         fflush(stdout);
     }
     return ret;

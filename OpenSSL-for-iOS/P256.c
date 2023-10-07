@@ -11,6 +11,19 @@
 const int use_toy_curve = 0;
 const int kill_randomness = 1;
 
+
+// temporary utilitary functions for simple allocation/deallocation check
+static int num_bn_new = 0;
+static int num_bn_free = 0;
+static int num_point_new = 0;
+static int num_point_free = 0;
+// print utilitary information about bn_new/bn_free and point_new/point_free
+void print_allocation_status(void) {
+    printf("BIGNUM allocation: %d new, %d free (%d unfreed)\n", num_bn_new, num_bn_free, num_bn_new-num_bn_free);
+    printf("EC_POINT allocation: %d new, %d free (%d unfreed)\n", num_point_new, num_point_free, num_point_new-num_point_free);
+}
+
+
 static EC_GROUP *group = NULL;
 
 const EC_GROUP *get0_group(void) {
@@ -51,11 +64,13 @@ const EC_GROUP *get0_group(void) {
 BIGNUM *bn_new(void) {
     BIGNUM *bn = BN_new();
     assert(bn && "bn_new: allocation failed");
+    num_bn_new++;
     return bn;
 }
 
 void bn_free(BIGNUM *bn) {
     BN_free(bn);
+    num_bn_free++;
 }
 
 const BIGNUM* get0_order(const EC_GROUP *group) {
@@ -81,11 +96,13 @@ void bn_print(const BIGNUM *x) {
 EC_POINT *point_new(const EC_GROUP *group) {
     EC_POINT *p = EC_POINT_new(group);
     assert(p && "point_new: allocation failed");
+    num_point_new++;
     return p;
 }
 
 void point_free(EC_POINT *a) {
     EC_POINT_free(a);
+    num_point_free++;
 }
 
 // get vector of new bignums

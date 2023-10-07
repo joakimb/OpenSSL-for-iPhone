@@ -204,6 +204,7 @@ int nizk_dl_test_suite(int print) {
         }
     }
     if (print) {
+        print_allocation_status();
         fflush(stdout);
     }
     return ret;
