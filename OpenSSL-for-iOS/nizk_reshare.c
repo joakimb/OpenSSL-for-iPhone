@@ -252,6 +252,7 @@ static test_function test_suite[] = {
 int nizk_reshare_test_suite(int print) {
     if (print) {
         printf("NIZK RESHARE test suite\n");
+        print_allocation_status();
     }
     int num_tests = sizeof(test_suite)/sizeof(test_function);
     int ret = 0;

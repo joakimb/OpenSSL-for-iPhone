@@ -524,7 +524,7 @@ static int dh_pvss_test_3(int print) {
         dh_key_pair_generate(group, com_member_key_pair, ctx);
         committee_public_keys[i] = com_member_key_pair->pub;
     }
-    
+
     // make encrypted shares with proof
     EC_POINT *encrypted_shares[n];
     nizk_dl_eq_proof distribution_pi;
@@ -577,6 +577,7 @@ static int dh_pvss_test_3(int print) {
     for (int i=0; i<n; i++){
         dh_key_pair_free(&committee_key_pairs[i]);
         point_free(encrypted_shares[i]);
+        point_free(decrypted_shares[i]);
     }
     nizk_dl_eq_proof_free(&distribution_pi);
     
@@ -812,6 +813,7 @@ static int dh_pvss_test_4(int print) {
         dh_key_pair_free(&committee_key_pairs[i]);
         dh_key_pair_free(&dist_key_pairs[i]);
         point_free(encrypted_shares[i]);
+        point_free(decrypted_shares[i]);
     }
     nizk_dl_eq_proof_free(&distribution_pi);
     point_free(reconstructed_secret);
@@ -849,6 +851,7 @@ static test_function test_suite[] = {
 int dh_pvss_test_suite(int print) {
     if (print) {
         printf("DH PVSS test suite\n");
+        print_allocation_status();
     }
     int num_tests = sizeof(test_suite)/sizeof(test_function);
     int ret = 0;
@@ -856,6 +859,7 @@ int dh_pvss_test_suite(int print) {
         if (test_suite[i](print)) {
             ret = 1;
         }
+        print_allocation_status();
     }
     if (print) {
         print_allocation_status();

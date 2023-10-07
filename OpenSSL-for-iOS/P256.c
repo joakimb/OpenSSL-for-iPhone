@@ -13,14 +13,14 @@ const int kill_randomness = 1;
 
 
 // temporary utilitary functions for simple allocation/deallocation check
-static int num_bn_new = 0;
-static int num_bn_free = 0;
-static int num_point_new = 0;
-static int num_point_free = 0;
+static int num_bn_allocated = 0;
+static int num_bn_freed = 0;
+static int num_point_allocated = 0;
+static int num_point_freed = 0;
 // print utilitary information about bn_new/bn_free and point_new/point_free
 void print_allocation_status(void) {
-    printf("BIGNUM allocation: %d new, %d free (%d unfreed)\n", num_bn_new, num_bn_free, num_bn_new-num_bn_free);
-    printf("EC_POINT allocation: %d new, %d free (%d unfreed)\n", num_point_new, num_point_free, num_point_new-num_point_free);
+    printf("BIGNUM allocation: %d new, %d free (%d unfreed)\n", num_bn_allocated, num_bn_freed, num_bn_allocated-num_bn_freed);
+    printf("EC_POINT allocation: %d new, %d free (%d unfreed)\n", num_point_allocated, num_point_freed, num_point_allocated-num_point_freed);
 }
 
 
@@ -64,13 +64,13 @@ const EC_GROUP *get0_group(void) {
 BIGNUM *bn_new(void) {
     BIGNUM *bn = BN_new();
     assert(bn && "bn_new: allocation failed");
-    num_bn_new++;
+    num_bn_allocated++;
     return bn;
 }
 
 void bn_free(BIGNUM *bn) {
     BN_free(bn);
-    num_bn_free++;
+    num_bn_freed++;
 }
 
 const BIGNUM* get0_order(const EC_GROUP *group) {
@@ -96,13 +96,13 @@ void bn_print(const BIGNUM *x) {
 EC_POINT *point_new(const EC_GROUP *group) {
     EC_POINT *p = EC_POINT_new(group);
     assert(p && "point_new: allocation failed");
-    num_point_new++;
+    num_point_allocated++;
     return p;
 }
 
 void point_free(EC_POINT *a) {
     EC_POINT_free(a);
-    num_point_free++;
+    num_point_freed++;
 }
 
 // get vector of new bignums
@@ -158,6 +158,13 @@ BIGNUM* bn_random(const BIGNUM *modulus, BN_CTX *ctx) {
     return r;
 }
 
+BIGNUM *bn_from_binary_data(int len, const unsigned char *buf) {
+    BIGNUM *bn = BN_bin2bn(buf, len, NULL);
+    assert(bn && "bn_from_binary_data: allocation failure");
+    num_bn_allocated++;
+    return bn;
+}
+
 // check for point equality
 int point_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx) {
     int ret = EC_POINT_cmp(group, a, b, ctx);
@@ -202,6 +209,7 @@ void point_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_P
 
 void point_sub(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx) {
     EC_POINT *b_copy = EC_POINT_dup(b, group);
+    num_point_allocated++;
     assert(b_copy && "point_sub: point duplication failed");
     int ret = EC_POINT_invert(group, b_copy, ctx); // invert b_copy instead of b to avoid side effects on input parameter
     assert(ret == 1 && "point_sub: EC_POINT_invert failed");

@@ -54,7 +54,7 @@ void openssl_hash(const unsigned char *buf, size_t buf_len, unsigned char *md) {
 }
 
 BIGNUM *openssl_hash2bignum(const unsigned char *md) {
-    return BN_bin2bn(md, SHA256_DIGEST_LENGTH, NULL); // convert/map hash digest to BIGNUM
+    return bn_from_binary_data(SHA256_DIGEST_LENGTH, md);
 }
 
 BIGNUM *openssl_hash_bn2bn(const BIGNUM *bn) {
@@ -153,6 +153,6 @@ void openssl_hash_points2poly(const EC_GROUP *group, BN_CTX *ctx, int num_coeffs
 
     // cleanup
     for (int i=0; i<num_point_lists; i++) {
-        BN_free(list_digest[i]);
+        bn_free(list_digest[i]);
     }
 }

@@ -38,6 +38,9 @@ void bn_free_array(int len, BIGNUM **bn_array);
 // get random element in Zp
 BIGNUM *bn_random(const BIGNUM *modulus, BN_CTX *ctx);
 
+// interpret binary data as bignum
+BIGNUM *bn_from_binary_data(int len, const unsigned char *buf);
+
 // return bignum as point on curve (generator^bignum)
 EC_POINT* bn2point(const EC_GROUP *group, const BIGNUM *bn, BN_CTX *ctx);
 
