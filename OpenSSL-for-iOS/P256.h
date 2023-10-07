@@ -28,7 +28,13 @@ const BIGNUM* get0_order(const EC_GROUP *group);
 // get curve group generator
 const EC_POINT* get0_generator(const EC_GROUP *group);
 
-/* BIGNUM functions, mostly wrappers for OPENSSL BN_xxx functionality */
+/* BIGNUM functions, wrappers for OPENSSL BN_xxx functionality */
+
+// get new bignum
+BIGNUM *bn_new(void);
+
+// free
+void bn_free(BIGNUM *bn);
 
 // get random element in Zp
 BIGNUM *bn_random(const BIGNUM *modulus, BN_CTX *ctx);
@@ -40,7 +46,11 @@ EC_POINT* bn2point(const EC_GROUP *group, const BIGNUM *bn, BN_CTX *ctx);
 void bn_print(const BIGNUM *x);
 
 
-/* point functions, mostly wrappers for OPENSSL EC_POINT_xxx functionality */
+/* point functions, wrappers for OPENSSL EC_POINT_xxx functionality */
+
+EC_POINT *point_new(const EC_GROUP *group);
+
+void point_free(EC_POINT *a);
 
 // check for point equality
 int point_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx);

@@ -13,17 +13,17 @@ void shamir_shares_generate(const EC_GROUP *group, EC_POINT *shares[], const EC_
 
     // sample coefficients
     BIGNUM *coeffs[t+1]; // coefficient container (on stack)
-    coeffs[0] = BN_new();
+    coeffs[0] = bn_new();
     BN_set_word(coeffs[0], 0);
     for (int i = 1; i < t + 1; i++){
         coeffs[i] = bn_random(order, ctx);
     }
 
     // make shares
-    BIGNUM *peval = BN_new(); // space for evaluating polynomial
-    BIGNUM *pterm = BN_new(); // space for storing polynomial terms
-    BIGNUM *base = BN_new(); // space for storing polynomial terms
-    BIGNUM *exp = BN_new(); // space for storing polynomial terms
+    BIGNUM *peval = bn_new(); // space for evaluating polynomial
+    BIGNUM *pterm = bn_new(); // space for storing polynomial terms
+    BIGNUM *base = bn_new(); // space for storing polynomial terms
+    BIGNUM *exp = bn_new(); // space for storing polynomial terms
     // make shares for user i, counting starts from 1, not 0
     for (int i=1; i<=n; i++){
         BN_set_word(peval, 0); // reset space for reuse
@@ -53,11 +53,11 @@ void shamir_shares_generate(const EC_GROUP *group, EC_POINT *shares[], const EC_
 void lagX(const EC_GROUP *group, BIGNUM *prod, const int share_indexes[], int length, int i, BN_CTX *ctx) {
     const BIGNUM *order = get0_order(group);
 
-    BIGNUM *a = BN_new();
-    BIGNUM *b = BN_new();
-    BIGNUM *numerator = BN_new();
-    BIGNUM *denominator = BN_new();
-    BIGNUM *fraction = BN_new();
+    BIGNUM *a = bn_new();
+    BIGNUM *b = bn_new();
+    BIGNUM *numerator = bn_new();
+    BIGNUM *denominator = bn_new();
+    BIGNUM *fraction = bn_new();
     BN_set_word(prod, 1);
 
     for (int j = 0; j < length; j++) {
@@ -89,12 +89,12 @@ EC_POINT *shamir_shares_reconstruct(const EC_GROUP *group, const EC_POINT *share
         return NULL;
     }
 
-    BIGNUM *zero = BN_new();
+    BIGNUM *zero = bn_new();
     BN_set_word(zero, 0); // explicitly set, probably superfluous
-    EC_POINT *term = EC_POINT_new(group);
+    EC_POINT *term = point_new(group);
     EC_POINT *sum = bn2point(group, zero, ctx);
 
-    BIGNUM *lagrange_prod = BN_new();
+    BIGNUM *lagrange_prod = bn_new();
     for (int i=0; i<length; i++) {
         lagX(group, lagrange_prod, shareIndexes, length, i, ctx);
         point_mul(group, term, lagrange_prod, shares[i], ctx);
@@ -102,7 +102,7 @@ EC_POINT *shamir_shares_reconstruct(const EC_GROUP *group, const EC_POINT *share
     }
 
     // cleanup
-    EC_POINT_free(term);
+    point_free(term);
     BN_free(lagrange_prod);
     BN_free(zero);
     return sum; // return secret
@@ -118,7 +118,7 @@ int shamir_shares_test_suite(int print) {
     const int n = 3;
     EC_POINT *shares[n];
 
-    BIGNUM *seven = BN_new();
+    BIGNUM *seven = bn_new();
     BN_dec2bn(&seven, "7");
     EC_POINT *secret = bn2point(group, seven, ctx);
     if (print) {
@@ -158,11 +158,11 @@ int shamir_shares_test_suite(int print) {
 
     // cleanup
     for (int i=0; i<n; i++) {
-        EC_POINT_free(shares[i]);
+        point_free(shares[i]);
     }
     BN_free(seven);
-    EC_POINT_free(secret);
-    EC_POINT_free(reconstructed);
+    point_free(secret);
+    point_free(reconstructed);
     BN_CTX_free(ctx);
     
     return res;

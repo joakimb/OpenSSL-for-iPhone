@@ -16,11 +16,11 @@ void nizk_dl_eq_proof_free(nizk_dl_eq_proof *pi) {
     assert(pi->Ra && "nizk_dl_eq_proof_free: usage error, Ra is NULL");
     assert(pi->Rb && "nizk_dl_eq_proof_free: usage error, Rb is NULL");
     assert(pi->z && "nizk_dl_eq_proof_free: usage error, z is NULL");
-    EC_POINT_free(pi->Ra);
+    point_free(pi->Ra);
     pi->Ra = NULL; // superflous safety
-    EC_POINT_free(pi->Rb);
+    point_free(pi->Rb);
     pi->Rb = NULL; // superflous safety
-    BN_free(pi->z);
+    bn_free(pi->z);
     pi->z = NULL; // superflous safety
 }
 
@@ -29,26 +29,26 @@ void nizk_dl_eq_prove(const EC_GROUP *group, const BIGNUM *exp, const EC_POINT *
 
     // compute Ra
     BIGNUM *r = bn_random(order, ctx); // draw r uniformly at random
-    pi->Ra = EC_POINT_new(group);
+    pi->Ra = point_new(group);
     point_mul(group, pi->Ra, r, a, ctx);
 
     // compute Rb
-    pi->Rb = EC_POINT_new(group);
+    pi->Rb = point_new(group);
     point_mul(group, pi->Rb, r, b, ctx);
 
     // compute c
     BIGNUM *c = openssl_hash_points2bn(group, ctx, 6, a, A, b, B, pi->Ra, pi->Rb);
 
     // compute z
-    pi->z = BN_new();
+    pi->z = bn_new();
     int ret = BN_mod_mul(pi->z, c, exp, order, ctx);
     assert(ret == 1 && "nizk_dl_eq_prove: BN_mod_mul computation failed");
     ret = BN_mod_sub(pi->z, r, pi->z, order, ctx);
     assert(ret == 1 && "nizk_dl_eq_prove: BN_mod_sub computation failed");
 
     // cleanup
-    BN_free(c);
-    BN_free(r);
+    bn_free(c);
+    bn_free(r);
     /* implicitly return pi = (Ra, Rb, z) */
 }
 
@@ -57,30 +57,30 @@ int nizk_dl_eq_verify(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *
     BIGNUM *c = openssl_hash_points2bn(group, ctx, 6, a, A, b, B, pi->Ra, pi->Rb);
 
     /* check if pi->Ra = [pi->z]a + [c]A */
-    EC_POINT *Ra_prime = EC_POINT_new(group);
+    EC_POINT *Ra_prime = point_new(group);
     const EC_POINT *a_points[] = { a, A };
     const BIGNUM *bns[] = { pi->z, c };
     EC_POINTs_mul(group, Ra_prime, NULL, 2, a_points, bns, ctx); // no wrapper for EC_POINTs_mul
     int ret = point_cmp(group, Ra_prime, pi->Ra, ctx);
-    EC_POINT_free(Ra_prime);
+    point_free(Ra_prime);
     if (ret == 1) { // not equal
-        BN_free(c);
+        bn_free(c);
         return 1; // verification failed
     }
 
     /* check if pi->Rb = [pi->z]b + [c]B */
-    EC_POINT *Rb_prime = EC_POINT_new(group);
+    EC_POINT *Rb_prime = point_new(group);
     const EC_POINT *b_points[] = { b, B };
     EC_POINTs_mul(group, Rb_prime, NULL, 2, b_points, bns, ctx); // no wrapper for EC_POINTs_mul
     ret = point_cmp(group, Rb_prime, pi->Rb, ctx);
-    EC_POINT_free(Rb_prime);
+    point_free(Rb_prime);
     if (ret == 1) { // not equal
-        BN_free(c);
+        bn_free(c);
         return 1; // verification failed
     }
 
     // cleanup
-    BN_free(c);
+    bn_free(c);
 
     return 0; // verification successful
 }
@@ -93,17 +93,17 @@ int nizk_dl_eq_verify(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *
 static int nizk_dl_eq_test_1(int print) {
     const EC_GROUP *group = get0_group();
     BN_CTX *ctx = BN_CTX_new();
-    BIGNUM *exp = BN_new();
+    BIGNUM *exp = bn_new();
     BN_dec2bn(&exp, "7");
-    BIGNUM *exp_bad = BN_new();
+    BIGNUM *exp_bad = bn_new();
     BN_dec2bn(&exp_bad, "6");
 
     EC_POINT *a = point_random(group, ctx);
-    EC_POINT *A = EC_POINT_new(group);
+    EC_POINT *A = point_new(group);
     point_mul(group, A, exp, a, ctx);
 
     EC_POINT *b = point_random(group, ctx);
-    EC_POINT *B = EC_POINT_new(group);
+    EC_POINT *B = point_new(group);
     point_mul(group, B, exp, b, ctx);
     
     // produce correct proof and verify
@@ -117,7 +117,7 @@ static int nizk_dl_eq_test_1(int print) {
 
     // negative tests
     // try to verify incorrect proof (bad B-value)
-    EC_POINT *B_bad = EC_POINT_new(group);
+    EC_POINT *B_bad = point_new(group);
     point_mul(group, B_bad, exp_bad, b, ctx);
     int ret2 = nizk_dl_eq_verify(group, a, A, b, B_bad, &pi, ctx);
     if (print) {
@@ -130,13 +130,13 @@ static int nizk_dl_eq_test_1(int print) {
 
     // cleanup
     nizk_dl_eq_proof_free(&pi);
-    EC_POINT_free(a);
-    EC_POINT_free(A);
-    EC_POINT_free(b);
-    EC_POINT_free(B);
-    EC_POINT_free(B_bad);
-    BN_free(exp);
-    BN_free(exp_bad);
+    point_free(a);
+    point_free(A);
+    point_free(b);
+    point_free(B);
+    point_free(B_bad);
+    bn_free(exp);
+    bn_free(exp_bad);
     BN_CTX_free(ctx);
 
     // return test results
@@ -146,17 +146,17 @@ static int nizk_dl_eq_test_1(int print) {
 static int nizk_dl_eq_test_2(int print) {
     const EC_GROUP *group = get0_group();
     BN_CTX *ctx = BN_CTX_new();
-    BIGNUM *exp = BN_new();
+    BIGNUM *exp = bn_new();
     BN_dec2bn(&exp, "7");
-    BIGNUM *exp_bad = BN_new();
+    BIGNUM *exp_bad = bn_new();
     BN_dec2bn(&exp_bad, "6");
 
     EC_POINT *a = point_random(group, ctx);
-    EC_POINT *A = EC_POINT_new(group);
+    EC_POINT *A = point_new(group);
     point_mul(group, A, exp, a, ctx);
 
     EC_POINT *b = point_random(group, ctx);
-    EC_POINT *B = EC_POINT_new(group);
+    EC_POINT *B = point_new(group);
     point_mul(group, B, exp, b, ctx);
     
     // produce correct proof and verify
@@ -170,7 +170,7 @@ static int nizk_dl_eq_test_2(int print) {
 
     // negative tests
     // try to verify incorrect proof (bad B-value)
-    EC_POINT *A_bad = EC_POINT_new(group);
+    EC_POINT *A_bad = point_new(group);
     point_mul(group, A_bad, exp_bad, a, ctx);
     int ret2 = nizk_dl_eq_verify(group, a, A_bad, b, B, &pi, ctx);
     if (print) {
@@ -183,13 +183,13 @@ static int nizk_dl_eq_test_2(int print) {
 
     // cleanup
     nizk_dl_eq_proof_free(&pi);
-    EC_POINT_free(a);
-    EC_POINT_free(A);
-    EC_POINT_free(A_bad);
-    EC_POINT_free(b);
-    EC_POINT_free(B);
-    BN_free(exp);
-    BN_free(exp_bad);
+    point_free(a);
+    point_free(A);
+    point_free(A_bad);
+    point_free(b);
+    point_free(B);
+    bn_free(exp);
+    bn_free(exp_bad);
     BN_CTX_free(ctx);
 
     // return test results

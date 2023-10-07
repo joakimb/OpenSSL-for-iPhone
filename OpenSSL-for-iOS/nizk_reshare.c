@@ -17,15 +17,15 @@ void nizk_reshare_proof_free(nizk_reshare_proof *pi) {
     assert(pi->R3 && "nizk_reshare_proof_free: usage error, R3 is NULL");
     assert(pi->z1 && "nizk_reshare_proof_free: usage error, z1 is NULL");
     assert(pi->z2 && "nizk_reshare_proof_free: usage error, z2 is NULL");
-    EC_POINT_free(pi->R1);
+    point_free(pi->R1);
     pi->R1 = NULL; // superflous safety
-    EC_POINT_free(pi->R2);
+    point_free(pi->R2);
     pi->R2 = NULL; // superflous safety
-    EC_POINT_free(pi->R3);
+    point_free(pi->R3);
     pi->R3 = NULL; // superflous safety
-    BN_free(pi->z1);
+    bn_free(pi->z1);
     pi->z1 = NULL; // superflous safety
-    BN_free(pi->z2);
+    bn_free(pi->z2);
     pi->z2 = NULL; // superflous safety
 }
 
@@ -35,35 +35,35 @@ void nizk_reshare_prove(const EC_GROUP *group, const BIGNUM *w1, const BIGNUM *w
     // compute R1, R2, R3
     BIGNUM *r1 = bn_random(order, ctx);
     BIGNUM *r2 = bn_random(order, ctx);
-    pi->R1 = EC_POINT_new(group);
+    pi->R1 = point_new(group);
     point_mul(group, pi->R1, r1, ga, ctx);
-    pi->R2 = EC_POINT_new(group);
+    pi->R2 = point_new(group);
     point_mul(group, pi->R2, r2, ga, ctx);
-    EC_POINT *gb_r2 = EC_POINT_new(group);
+    EC_POINT *gb_r2 = point_new(group);
     point_mul(group, gb_r2, r2, gb, ctx);
-    EC_POINT *gc_r1 = EC_POINT_new(group);
+    EC_POINT *gc_r1 = point_new(group);
     point_mul(group, gc_r1, r1, gc, ctx);
-    pi->R3 = EC_POINT_new(group);
+    pi->R3 = point_new(group);
     point_sub(group, pi->R3, gb_r2, gc_r1, ctx);
 
     // compute c
     BIGNUM *c = openssl_hash_points2bn(group, ctx, 9, ga, gb, gc, Y1, Y2, Y3, pi->R1, pi->R2, pi->R3);
 
     // compute z1, z2
-    pi->z1 = BN_new();
+    pi->z1 = bn_new();
     BN_mod_mul(pi->z1, c, w1, order, ctx);
     BN_mod_add(pi->z1, pi->z1, r1, order, ctx); // r1 + c * w1
 
-    pi->z2 = BN_new();
+    pi->z2 = bn_new();
     BN_mod_mul(pi->z2, c, w2, order, ctx);
     BN_mod_add(pi->z2, pi->z2, r2, order, ctx); // r2 + c * w2
 
     // cleanup
-    EC_POINT_free(gc_r1);
-    EC_POINT_free(gb_r2);
-    BN_free(c);
-    BN_free(r2);
-    BN_free(r1);
+    point_free(gc_r1);
+    point_free(gb_r2);
+    bn_free(c);
+    bn_free(r2);
+    bn_free(r1);
     // implicitly return proof pi
 }
 
@@ -72,49 +72,49 @@ int nizk_reshare_verify(const EC_GROUP *group, const EC_POINT *ga, const EC_POIN
     BIGNUM *c = openssl_hash_points2bn(group, ctx, 9, ga, gb, gc, Y1, Y2, Y3, pi->R1, pi->R2, pi->R3);
 
     // check dl for Y1
-    EC_POINT *cY1 = EC_POINT_new(group);
+    EC_POINT *cY1 = point_new(group);
     point_mul(group, cY1, c, Y1, ctx);
-    EC_POINT *R1cY1 = EC_POINT_new(group);
+    EC_POINT *R1cY1 = point_new(group);
     point_add(group, R1cY1, pi->R1, cY1, ctx);
-    EC_POINT *z1ga = EC_POINT_new(group);
+    EC_POINT *z1ga = point_new(group);
     point_mul(group, z1ga, pi->z1, ga, ctx);
     int ret1 = point_cmp(group, R1cY1, z1ga, ctx);
     
     // check dl for Y2
-    EC_POINT *cY2 = EC_POINT_new(group);
+    EC_POINT *cY2 = point_new(group);
     point_mul(group, cY2, c, Y2, ctx);
-    EC_POINT *R2cY2 = EC_POINT_new(group);
+    EC_POINT *R2cY2 = point_new(group);
     point_add(group, R2cY2, pi->R2, cY2, ctx);
-    EC_POINT *z2ga = EC_POINT_new(group);
+    EC_POINT *z2ga = point_new(group);
     point_mul(group, z2ga, pi->z2, ga, ctx);
     int ret2 = point_cmp(group, R2cY2, z2ga, ctx);
 
     // check pedersen commitment for Y3
-    EC_POINT *cY3 = EC_POINT_new(group);
+    EC_POINT *cY3 = point_new(group);
     point_mul(group, cY3, c, Y3, ctx);
-    EC_POINT *R3cY3 = EC_POINT_new(group);
+    EC_POINT *R3cY3 = point_new(group);
     point_add(group, R3cY3, pi->R3, cY3, ctx);
-    EC_POINT *z2gb = EC_POINT_new(group);
+    EC_POINT *z2gb = point_new(group);
     point_mul(group, z2gb, pi->z2, gb, ctx);
-    EC_POINT *z1gc = EC_POINT_new(group);
+    EC_POINT *z1gc = point_new(group);
     point_mul(group, z1gc, pi->z1, gc, ctx);
-    EC_POINT *z2gb_z1gc = EC_POINT_new(group);
+    EC_POINT *z2gb_z1gc = point_new(group);
     point_sub(group, z2gb_z1gc, z2gb, z1gc, ctx);
     int ret3 = point_cmp(group, R3cY3, z2gb_z1gc, ctx);
 
     // cleanup
-    EC_POINT_free(z2gb_z1gc);
-    EC_POINT_free(z1gc);
-    EC_POINT_free(z2gb);
-    EC_POINT_free(R3cY3);
-    EC_POINT_free(cY3);
-    EC_POINT_free(z2ga);
-    EC_POINT_free(R2cY2);
-    EC_POINT_free(cY2);
-    EC_POINT_free(z1ga);
-    EC_POINT_free(R1cY1);
-    EC_POINT_free(cY1);
-    BN_free(c);
+    point_free(z2gb_z1gc);
+    point_free(z1gc);
+    point_free(z2gb);
+    point_free(R3cY3);
+    point_free(cY3);
+    point_free(z2ga);
+    point_free(R2cY2);
+    point_free(cY2);
+    point_free(z1ga);
+    point_free(R1cY1);
+    point_free(cY1);
+    bn_free(c);
 
     return !(ret1 == 0 && ret2 == 0 & ret3 == 0);
 }
@@ -124,16 +124,16 @@ int nizk_reshare_test_1(int print) {
     BN_CTX *ctx = BN_CTX_new();
 
     // allocate temp variables
-    BIGNUM *w1 = BN_new();
-    BIGNUM *w2 = BN_new();
+    BIGNUM *w1 = bn_new();
+    BIGNUM *w2 = bn_new();
     EC_POINT *ga = point_random(group, ctx);
     EC_POINT *gb = point_random(group, ctx);
     EC_POINT *gc = point_random(group, ctx);
-    EC_POINT *Y1 = EC_POINT_new(group);
-    EC_POINT *Y2 = EC_POINT_new(group);
-    EC_POINT *Y3 = EC_POINT_new(group);
-    EC_POINT *w2gb = EC_POINT_new(group);
-    EC_POINT *w1gc = EC_POINT_new(group);
+    EC_POINT *Y1 = point_new(group);
+    EC_POINT *Y2 = point_new(group);
+    EC_POINT *Y3 = point_new(group);
+    EC_POINT *w2gb = point_new(group);
+    EC_POINT *w1gc = point_new(group);
 
     BN_dec2bn(&w1, "5");
     BN_dec2bn(&w2, "7");
@@ -152,16 +152,16 @@ int nizk_reshare_test_1(int print) {
 
     // cleanup
     nizk_reshare_proof_free(&pi);
-    BN_free(w1);
-    BN_free(w2);
-    EC_POINT_free(ga);
-    EC_POINT_free(gb);
-    EC_POINT_free(gc);
-    EC_POINT_free(Y1);
-    EC_POINT_free(Y2);
-    EC_POINT_free(Y3);
-    EC_POINT_free(w2gb);
-    EC_POINT_free(w1gc);
+    bn_free(w1);
+    bn_free(w2);
+    point_free(ga);
+    point_free(gb);
+    point_free(gc);
+    point_free(Y1);
+    point_free(Y2);
+    point_free(Y3);
+    point_free(w2gb);
+    point_free(w1gc);
     BN_CTX_free(ctx);
  
     return ret1 != 0;
@@ -172,16 +172,16 @@ int nizk_reshare_test_2(int print) {
     BN_CTX *ctx = BN_CTX_new();
 
     // allocate temp variables
-    BIGNUM *w1 = BN_new();
-    BIGNUM *w2 = BN_new();
+    BIGNUM *w1 = bn_new();
+    BIGNUM *w2 = bn_new();
     EC_POINT *ga = point_random(group, ctx);
     EC_POINT *gb = point_random(group, ctx);
     EC_POINT *gc = point_random(group, ctx);
-    EC_POINT *Y1 = EC_POINT_new(group);
-    EC_POINT *Y2 = EC_POINT_new(group);
-    EC_POINT *Y3 = EC_POINT_new(group);
-    EC_POINT *w2gb = EC_POINT_new(group);
-    EC_POINT *w1gc = EC_POINT_new(group);
+    EC_POINT *Y1 = point_new(group);
+    EC_POINT *Y2 = point_new(group);
+    EC_POINT *Y3 = point_new(group);
+    EC_POINT *w2gb = point_new(group);
+    EC_POINT *w1gc = point_new(group);
     
     BN_dec2bn(&w1, "5");
     BN_dec2bn(&w2, "7");
@@ -227,17 +227,17 @@ int nizk_reshare_test_2(int print) {
     
     // cleanup
     nizk_reshare_proof_free(&pi);
-    BN_free(w1);
-    BN_free(w2);
-    EC_POINT_free(ga);
-    EC_POINT_free(gb);
-    EC_POINT_free(gc);
-    EC_POINT_free(Y1);
-    EC_POINT_free(Y2);
-    EC_POINT_free(Y3);
-    EC_POINT_free(w2gb);
-    EC_POINT_free(w1gc);
-    EC_POINT_free(bad);
+    bn_free(w1);
+    bn_free(w2);
+    point_free(ga);
+    point_free(gb);
+    point_free(gc);
+    point_free(Y1);
+    point_free(Y2);
+    point_free(Y3);
+    point_free(w2gb);
+    point_free(w1gc);
+    point_free(bad);
     BN_CTX_free(ctx);
     
     return ret1 != 0 && neg_ret_sum == 6;

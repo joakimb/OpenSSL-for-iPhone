@@ -15,9 +15,9 @@ void nizk_dl_proof_free(nizk_dl_proof *pi) {
     assert(pi && "nizk_dl_proof_free: usage error, no proof passed");
     assert(pi->u && "nizk_dl_proof_free: usage error, u is NULL");
     assert(pi->z && "nizk_dl_proof_free: usage error, z is NULL");
-    EC_POINT_free(pi->u);
+    point_free(pi->u);
     pi->u = NULL; // superflous safety
-    BN_free(pi->z);
+    bn_free(pi->z);
     pi->z = NULL; // superflous safety
 }
 
@@ -36,16 +36,16 @@ void nizk_dl_prove(const EC_GROUP *group, const BIGNUM *x, nizk_dl_proof *pi, BN
     BIGNUM *c = openssl_hash_points2bn(group, ctx, 3, generator, X, pi->u);
 
     // compute z
-    pi->z = BN_new();
+    pi->z = bn_new();
     int ret = BN_mod_mul(pi->z, c, x, order, ctx);
     assert(ret == 1 && "BN_mod_mul computation failed in nizk_dl_prove");
     ret = BN_mod_add(pi->z, pi->z, r, order, ctx);
     assert(ret == 1 && "BN_mod_add computation failed in nizk_dl_prove");
 
     // cleanup
-    BN_free(c);
-    BN_free(r);
-    EC_POINT_free(X);
+    bn_free(c);
+    bn_free(r);
+    point_free(X);
     /* implicitly return pi = (u, z) */
 }
 
@@ -56,19 +56,19 @@ int nizk_dl_verify(const EC_GROUP *group, const EC_POINT *X, const nizk_dl_proof
     EC_POINT *Z = bn2point(group, pi->z, ctx);
 
     // compute Z_prime
-    EC_POINT *Z_prime = EC_POINT_new(group);
+    EC_POINT *Z_prime = point_new(group);
 
     BIGNUM *c = openssl_hash_points2bn(group, ctx, 3, generator, X, pi->u);
     point_mul(group, Z_prime, c, X, ctx);
     point_add(group, Z_prime, Z_prime, pi->u, ctx);
 
     // Z == Z_prime? (zero if equal)
-    int ret = EC_POINT_cmp(group, Z, Z_prime, ctx);
+    int ret = point_cmp(group, Z, Z_prime, ctx);
 
     // cleanup
-    BN_free(c);
-    EC_POINT_free(Z_prime);
-    EC_POINT_free(Z);
+    bn_free(c);
+    point_free(Z_prime);
+    point_free(Z);
 
     return ret;
 }
@@ -82,7 +82,7 @@ int nizk_dl_verify(const EC_GROUP *group, const EC_POINT *X, const nizk_dl_proof
 static int nizk_dl_test_1(int print) {
     const EC_GROUP *group = get0_group();
     BN_CTX *ctx = BN_CTX_new();
-    BIGNUM *seven = BN_new();
+    BIGNUM *seven = bn_new();
     BN_dec2bn(&seven, "7");
     EC_POINT *secret = bn2point(group, seven, ctx);
     
@@ -96,8 +96,8 @@ static int nizk_dl_test_1(int print) {
 
     // cleanup
     nizk_dl_proof_free(&pi);
-    EC_POINT_free(secret);
-    BN_free(seven);
+    point_free(secret);
+    bn_free(seven);
     BN_CTX_free(ctx);
 
     // return test results
@@ -109,7 +109,7 @@ static int nizk_dl_test_2(int print) {
     const BIGNUM *order = get0_order(group);
     
     BN_CTX *ctx = BN_CTX_new();
-    BIGNUM *seven = BN_new();
+    BIGNUM *seven = bn_new();
     BN_dec2bn(&seven, "7");
     EC_POINT *secret = bn2point(group, seven, ctx);
 
@@ -123,7 +123,7 @@ static int nizk_dl_test_2(int print) {
 
     // negative tests
     // try to verify incorrect proof (z-value wrong)
-    BN_free(pi.z);
+    bn_free(pi.z);
     pi.z = bn_random(order, ctx); // omitted to check if new erroneous z-value is actually by chance the correct value
     int ret2 = nizk_dl_verify(group, secret, &pi, ctx);
     if (print) {
@@ -136,8 +136,8 @@ static int nizk_dl_test_2(int print) {
 
     // cleanup
     nizk_dl_proof_free(&pi);
-    EC_POINT_free(secret);
-    BN_free(seven);
+    point_free(secret);
+    bn_free(seven);
     BN_CTX_free(ctx);
 
     // return test results
@@ -147,7 +147,7 @@ static int nizk_dl_test_2(int print) {
 static int nizk_dl_test_3(int print) {
     const EC_GROUP *group = get0_group();
     BN_CTX *ctx = BN_CTX_new();
-    BIGNUM *seven = BN_new();
+    BIGNUM *seven = bn_new();
     BN_dec2bn(&seven, "7");
     EC_POINT *secret = bn2point(group, seven, ctx);
 
@@ -161,7 +161,7 @@ static int nizk_dl_test_3(int print) {
 
     // negative tests
     // try to verify incorrect proof (both u- and z-value wrong)
-    EC_POINT_free(pi.u);
+    point_free(pi.u);
     pi.u = point_random(group, ctx);  // omitted to check if modified u-value actually by chance produces a valid proof
     int ret2 = nizk_dl_verify(group, secret, &pi, ctx);
     if (print) {
@@ -174,8 +174,8 @@ static int nizk_dl_test_3(int print) {
 
     // cleanup
     nizk_dl_proof_free(&pi);
-    EC_POINT_free(secret);
-    BN_free(seven);
+    point_free(secret);
+    bn_free(seven);
     BN_CTX_free(ctx);
 
     // return test results

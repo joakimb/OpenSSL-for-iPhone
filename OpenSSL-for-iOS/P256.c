@@ -24,13 +24,13 @@ const EC_GROUP *get0_group(void) {
     // instantiate group
     if (use_toy_curve) { // use toy curve
         // ----------- Custom group (toy curve EC29 for debugging) ---------
-        BIGNUM *p = BN_new();
-        BIGNUM *a = BN_new();
-        BIGNUM *b = BN_new();
-        BIGNUM *x = BN_new();
-        BIGNUM *y = BN_new();
-        BIGNUM *order = BN_new();
-        BIGNUM *cofactor = BN_new();
+        BIGNUM *p = bn_new();
+        BIGNUM *a = bn_new();
+        BIGNUM *b = bn_new();
+        BIGNUM *x = bn_new();
+        BIGNUM *y = bn_new();
+        BIGNUM *order = bn_new();
+        BIGNUM *cofactor = bn_new();
         BN_dec2bn(&p, "29");
         BN_dec2bn(&a, "4");
         BN_dec2bn(&b, "20");
@@ -40,15 +40,25 @@ const EC_GROUP *get0_group(void) {
         BN_dec2bn(&cofactor, "1");
         group = EC_GROUP_new_curve_GFp(p, a, b, NULL);
         // set generator point, order and cofactor for the custom curve
-        EC_POINT *generator = EC_POINT_new(group);
+        EC_POINT *generator = point_new(group);
         EC_POINT_set_affine_coordinates_GFp(group, generator, x, y, NULL);
         EC_GROUP_set_generator(group, generator, order, cofactor);
-        EC_POINT_free(generator);
+        point_free(generator);
     } else {
         group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
     }
     assert(group && "get0Group: group not instantiated");
     return group;
+}
+
+BIGNUM *bn_new(void) {
+    BIGNUM *bn = BN_new();
+    assert(bn && "bn_new: allocation failed");
+    return bn;
+}
+
+void bn_free(BIGNUM *bn) {
+    BN_free(bn);
 }
 
 const BIGNUM* get0_order(const EC_GROUP *group) {
@@ -71,9 +81,19 @@ void bn_print(const BIGNUM *x) {
     OPENSSL_free(num);
 }
 
+EC_POINT *point_new(const EC_GROUP *group) {
+    EC_POINT *p = EC_POINT_new(group);
+    assert(p && "point_new: allocation failed");
+    return p;
+}
+
+void point_free(EC_POINT *a) {
+    EC_POINT_free(a);
+}
+
 void point_print(const EC_GROUP *group, const EC_POINT *p, BN_CTX *ctx){
-    BIGNUM *x = BN_new();
-    BIGNUM *y = BN_new();
+    BIGNUM *x = bn_new();
+    BIGNUM *y = bn_new();
     if (EC_POINT_get_affine_coordinates_GFp(group, p, x, y, NULL)) {
         printf("(");
         bn_print(x);
@@ -81,49 +101,13 @@ void point_print(const EC_GROUP *group, const EC_POINT *p, BN_CTX *ctx){
         bn_print(y);
         printf(")");
     }
-    BN_free(x);
-    BN_free(y);
-#if 0
-    // using uncompressed point format for printing
-
-    // call with NULL to get buffer size needed
-    assert(group && "print_point: usage error, no group");
-    assert(p && "print_point: usage error, no point");
-    assert(ctx && "print_point: usage error, no ctx");
-    size_t bufsize = EC_POINT_point2oct(group, p, POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
-    unsigned char *buf = malloc(bufsize);
-    assert(buf && "print_point: allocation error");
-    EC_POINT_point2oct(group, p, POINT_CONVERSION_UNCOMPRESSED, buf, bufsize, ctx);
-#if 0
-    // print point coordinates in hex
-    printf("(");
-    for (size_t i = 0; i <= (bufsize - 1) / 2; i++) {
-        printf("%02X", buf[i]);
-    }
-    printf(", ");
-    for (size_t i = (bufsize - 1) / 2 + 1; i < bufsize; i++) {
-        printf("%02X", buf[i]);
-    }
-    printf(")");
-#else
-    // print point coordinates in dec
-    printf("(");
-        for (size_t i = 0; i <= (bufsize - 1) / 2; i++) {
-        printf("%d", (int)buf[i]);
-    }
-    printf(", ");
-    for (size_t i = (bufsize - 1) / 2 + 1; i < bufsize; i++) {
-        printf("%d", (int)buf[i]);
-    }
-    printf(")");
-#endif
-    free(buf);
-#endif
+    bn_free(x);
+    bn_free(y);
 }
 
 // random bignum (modulo group order)
 BIGNUM* bn_random(const BIGNUM *modulus, BN_CTX *ctx) {
-    BIGNUM *r = BN_new();
+    BIGNUM *r = bn_new();
     assert(r && "random_bignum: no r generated");
 
     if (kill_randomness) { // eliminate randomness, all rands are five
@@ -153,7 +137,7 @@ EC_POINT *point_random(const EC_GROUP *group, BN_CTX *ctx) {
     const BIGNUM *order = get0_order(group);
     BIGNUM *bn = bn_random(order, ctx);
     EC_POINT *point = bn2point(group, bn, ctx);
-    BN_free(bn);
+    bn_free(bn);
     return point;
 }
 
@@ -166,7 +150,7 @@ void point_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *bn, const EC_PO
 void point_weighted_sum(const EC_GROUP *group, EC_POINT *r, int num_terms, const BIGNUM **w, const EC_POINT **p, BN_CTX *ctx) {
     assert(num_terms > 0 && "point_weighted_sum: usage error, unexpected parameter");
     point_mul(group, r, w[0], p[0], ctx);
-    EC_POINT *t = EC_POINT_new(group); // temp
+    EC_POINT *t = point_new(group); // temp
     assert(t && "point_weighted_sum: usage error, unexpected parameter");
     for (int i=1; i<num_terms; i++) {
         point_mul(group, t, w[i], p[i], ctx);
@@ -174,7 +158,7 @@ void point_weighted_sum(const EC_GROUP *group, EC_POINT *r, int num_terms, const
     }
 
     // cleanup
-    EC_POINT_free(t);
+    point_free(t);
 }
 
 void point_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx) {
@@ -189,13 +173,12 @@ void point_sub(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_P
     assert(ret == 1 && "point_sub: EC_POINT_invert failed");
     ret = EC_POINT_add(group, r, a, b_copy, ctx);
     assert(ret == 1 && "point_sub: EC_POINT_add failed");
-    EC_POINT_free(b_copy);
+    point_free(b_copy);
 }
 
 // convert bignum to point
 EC_POINT *bn2point(const EC_GROUP *group, const BIGNUM *bn, BN_CTX *ctx) {
-    const EC_POINT *generator = get0_generator(group);
-    EC_POINT *point = EC_POINT_new(group);
+    EC_POINT *point = point_new(group);
     assert(point && "bn2point: no point allocated");
     int ret = EC_POINT_mul(group, point, bn, NULL, NULL, ctx);
     assert(ret == 1 && "bn2point: EC_POINT_mul failed");
