@@ -590,8 +590,8 @@ static int dh_pvss_test_4(int print) {
     BN_CTX *ctx = BN_CTX_new();
     
     // setup
-    const int t = 10;
-    const int n = 40;
+    const int t = 1;
+    const int n = 4;
     dh_pvss_ctx pp;
     dh_pvss_setup(&pp, group, t, n, ctx);
     EC_POINT *secret = point_random(group, ctx);
@@ -602,8 +602,8 @@ static int dh_pvss_test_4(int print) {
     
     // keygen
     dh_key_pair first_dist_kp;
-//    dh_key_pair_generate(group, &first_dist_kp, ctx);
-    dh_DEBUG_key_pair_generate(group, &first_dist_kp, 4, ctx);
+    dh_key_pair_generate(group, &first_dist_kp, ctx);
+//    dh_DEBUG_key_pair_generate(group, &first_dist_kp, 4, ctx);
     dh_key_pair committee_key_pairs[n];
     dh_key_pair dist_key_pairs[n];
     EC_POINT *committee_public_keys[n];
@@ -611,10 +611,10 @@ static int dh_pvss_test_4(int print) {
     for (int i=0; i<n; i++) {
         dh_key_pair *com_member_key_pair = &committee_key_pairs[i];
         dh_key_pair *dist_key_pair = &dist_key_pairs[i];
-//        dh_key_pair_generate(group, com_member_key_pair, ctx);
-        dh_DEBUG_key_pair_generate(group, com_member_key_pair, 5, ctx);
-//        dh_key_pair_generate(group, dist_key_pair, ctx);
-        dh_DEBUG_key_pair_generate(group, dist_key_pair, 5, ctx);
+        dh_key_pair_generate(group, com_member_key_pair, ctx);
+//        dh_DEBUG_key_pair_generate(group, com_member_key_pair, 5, ctx);
+        dh_key_pair_generate(group, dist_key_pair, ctx);
+//        dh_DEBUG_key_pair_generate(group, dist_key_pair, 5, ctx);
         committee_public_keys[i] = com_member_key_pair->pub;
         dist_public_keys[i] = dist_key_pair->pub;
     }
@@ -698,8 +698,8 @@ static int dh_pvss_test_4(int print) {
     EC_POINT *next_committee_public_keys[n];
     for (int i=0; i<next_pp.n; i++) {
         dh_key_pair *next_com_member_key_pair = &next_committee_key_pairs[i];
-//        dh_key_pair_generate(group, next_com_member_key_pair, ctx);
-        dh_DEBUG_key_pair_generate(group, next_com_member_key_pair, 5, ctx);
+        dh_key_pair_generate(group, next_com_member_key_pair, ctx);
+//        dh_DEBUG_key_pair_generate(group, next_com_member_key_pair, 5, ctx);
         next_committee_public_keys[i] = next_com_member_key_pair->pub;
     }
     
@@ -792,7 +792,7 @@ static int dh_pvss_test_4(int print) {
         reshare_reconstruction_keys[i-first] = committee_public_keys[i];
         reshare_reconstruction_keys_pairs[i-first] = &committee_key_pairs[i];
         // TODO: the below i-1 should be i right? but it doesnt work...
-        reshare_reconstruction_shares[i-first] = reconstructed_encrypted_reshares[i-1];
+        reshare_reconstruction_shares[i-first] = reconstructed_encrypted_reshares[i];
     }
     printf("RECON inDICES:\n");
     for (int i = 0; i<t+1; i++) {
