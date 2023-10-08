@@ -9,7 +9,7 @@
 #include <assert.h>
 
 const int use_toy_curve = 0;
-const int kill_randomness = 1;
+const int kill_randomness = 0;
 
 
 // temporary utilitary functions for simple allocation/deallocation check
@@ -56,6 +56,8 @@ const EC_GROUP *get0_group(void) {
         point_free(generator);
     } else {
         group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
+//        printf("oawefh");
+//        exit(1);
     }
     assert(group && "get0Group: group not instantiated");
     return group;

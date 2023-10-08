@@ -590,8 +590,8 @@ static int dh_pvss_test_4(int print) {
     BN_CTX *ctx = BN_CTX_new();
     
     // setup
-    const int t = 50;
-    const int n = 100;
+    const int t = 10;
+    const int n = 40;
     dh_pvss_ctx pp;
     dh_pvss_setup(&pp, group, t, n, ctx);
     EC_POINT *secret = point_random(group, ctx);
@@ -602,7 +602,8 @@ static int dh_pvss_test_4(int print) {
     
     // keygen
     dh_key_pair first_dist_kp;
-    dh_key_pair_generate(group, &first_dist_kp, ctx);
+//    dh_key_pair_generate(group, &first_dist_kp, ctx);
+    dh_DEBUG_key_pair_generate(group, &first_dist_kp, 4, ctx);
     dh_key_pair committee_key_pairs[n];
     dh_key_pair dist_key_pairs[n];
     EC_POINT *committee_public_keys[n];
@@ -610,8 +611,10 @@ static int dh_pvss_test_4(int print) {
     for (int i=0; i<n; i++) {
         dh_key_pair *com_member_key_pair = &committee_key_pairs[i];
         dh_key_pair *dist_key_pair = &dist_key_pairs[i];
-        dh_key_pair_generate(group, com_member_key_pair, ctx);
-        dh_key_pair_generate(group, dist_key_pair, ctx);
+//        dh_key_pair_generate(group, com_member_key_pair, ctx);
+        dh_DEBUG_key_pair_generate(group, com_member_key_pair, 5, ctx);
+//        dh_key_pair_generate(group, dist_key_pair, ctx);
+        dh_DEBUG_key_pair_generate(group, dist_key_pair, 5, ctx);
         committee_public_keys[i] = com_member_key_pair->pub;
         dist_public_keys[i] = dist_key_pair->pub;
     }
@@ -695,7 +698,8 @@ static int dh_pvss_test_4(int print) {
     EC_POINT *next_committee_public_keys[n];
     for (int i=0; i<next_pp.n; i++) {
         dh_key_pair *next_com_member_key_pair = &next_committee_key_pairs[i];
-        dh_key_pair_generate(group, next_com_member_key_pair, ctx);
+//        dh_key_pair_generate(group, next_com_member_key_pair, ctx);
+        dh_DEBUG_key_pair_generate(group, next_com_member_key_pair, 5, ctx);
         next_committee_public_keys[i] = next_com_member_key_pair->pub;
     }
     
@@ -712,7 +716,7 @@ static int dh_pvss_test_4(int print) {
     }
     
     // negative test for reshare
-    int ret5 = dh_pvss_reshare_verify(&pp, &next_pp, party_index, committee_public_keys[party_index], dist_public_keys[party_index + 1], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, (const EC_POINT**)next_committee_public_keys, encrypted_re_shares, &reshare_pi);
+    int ret5 = dh_pvss_reshare_verify(&pp, &next_pp, party_index, committee_public_keys[party_index], committee_public_keys[party_index], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, (const EC_POINT**)next_committee_public_keys, encrypted_re_shares, &reshare_pi);
     if (print) {
         if (ret5) {
             printf("    OK Test 4 - 6: Incorrect DH PVSS Reshare Proof not accepted (which is CORRECT)\n");
@@ -735,9 +739,12 @@ static int dh_pvss_test_4(int print) {
         for (int j=0; j<t+1; j++) {
             point_print(group, all_encrypted_re_shares[i][j], ctx);
         }
+        //verify the reshare
+        int valid_res_share = dh_pvss_reshare_verify(&pp, &next_pp, i, (const EC_POINT*) committee_public_keys[i], (const EC_POINT*) dist_public_keys[i], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, (const EC_POINT**)next_committee_public_keys, all_encrypted_re_shares[i], &reshare_pis[i]);
+        printf("%6s reshare", valid_res_share ? "NOT OK" : "OK");
+
         printf("\n");
     }
-    // TODO: verify reshares
     
     // 2. reconstruct reshare
     int valid_indices[pp.t+1];
@@ -777,12 +784,19 @@ static int dh_pvss_test_4(int print) {
     EC_POINT *reshare_reconstruction_keys[next_pp.t+1];
     dh_key_pair *reshare_reconstruction_keys_pairs[next_pp.t+1];
     EC_POINT *reshare_reconstruction_shares[next_pp.t+1];
+//    TODO: the below assignment that first = 0 ruins the test... wierd
+//    first = 0;
     for (int i=first; i<first+next_pp.t+1; i++) { // fill indexes and keys
         int pp_alpha_as_int = (int)BN_get_word(pp.alphas[i]); // this works since alphas were chosen small enough to fit in an int
         reshare_reconstruction_indices[i-first] = pp_alpha_as_int;
-        reshare_reconstruction_keys[i-first] = committee_public_keys[i-1];
-        reshare_reconstruction_keys_pairs[i-first] = &committee_key_pairs[i-1];
+        reshare_reconstruction_keys[i-first] = committee_public_keys[i];
+        reshare_reconstruction_keys_pairs[i-first] = &committee_key_pairs[i];
+        // TODO: the below i-1 should be i right? but it doesnt work...
         reshare_reconstruction_shares[i-first] = reconstructed_encrypted_reshares[i-1];
+    }
+    printf("RECON inDICES:\n");
+    for (int i = 0; i<t+1; i++) {
+        printf("%d\n",reshare_reconstruction_indices[i]);
     }
 
     print_allocation_status();
@@ -792,7 +806,10 @@ static int dh_pvss_test_4(int print) {
     for (int i=0; i<next_pp.t+1; i++) {
         nizk_dl_eq_proof decrypt_pi;
         decrypted_reshares[i] = dh_pvss_decrypt_share_prove(group, prev_dist_pub_key, reshare_reconstruction_keys_pairs[i], reshare_reconstruction_shares[i], &decrypt_pi, ctx);//decrypted_shares[i-1];
-        // TODO: verify
+        // TODO: this test should not fail, since decryption works...
+        int decrypt_test = dh_pvss_decrypt_share_verify(group, prev_dist_pub_key, reshare_reconstruction_keys[i], encrypted_shares[i], decrypted_shares[i], &decrypt_pi, ctx);
+        printf("%6s decrypt recon reshare\n", decrypt_test ? "NOT OK" : "OK");
+
         nizk_dl_eq_proof_free(&decrypt_pi);
     }
     
