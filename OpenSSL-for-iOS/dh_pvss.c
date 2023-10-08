@@ -591,7 +591,7 @@ static int dh_pvss_test_4(int print) {
     
     // setup
     const int t = 1;
-    const int n = 4;
+    const int n = 6;
     dh_pvss_ctx pp;
     dh_pvss_setup(&pp, group, t, n, ctx);
     EC_POINT *secret = point_random(group, ctx);
@@ -777,9 +777,9 @@ static int dh_pvss_test_4(int print) {
         point_print(group, reconstructed_encrypted_reshares[j], ctx);
         printf("\n");
     }
-    
+
     // 3. decrypt reconstructed reshares
-    
+
     int reshare_reconstruction_indices[next_pp.t+1];
     EC_POINT *reshare_reconstruction_keys[next_pp.t+1];
     dh_key_pair *reshare_reconstruction_keys_pairs[next_pp.t+1];
