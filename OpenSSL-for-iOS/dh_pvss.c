@@ -677,8 +677,8 @@ static int dh_pvss_test_4(int print) {
     int reconstruction_indices[t+1];
     int first = 2;
     for (int i=first; i<first+t+1; i++) {
-        reconstruction_shares[i-first] = decrypted_shares[i-1];
-        int pp_alpha_as_int = (int)BN_get_word(pp.alphas[i]); // this works since alphas were chosen small enough to fit in an int
+        reconstruction_shares[i-first] = decrypted_shares[i];
+        int pp_alpha_as_int = (int)BN_get_word(pp.alphas[i+1]); // this works since alphas were chosen small enough to fit in an int
         reconstruction_indices[i-first] = pp_alpha_as_int;
     }
     
@@ -785,9 +785,9 @@ static int dh_pvss_test_4(int print) {
     dh_key_pair *reshare_reconstruction_keys_pairs[next_pp.t+1];
     EC_POINT *reshare_reconstruction_shares[next_pp.t+1];
 //    TODO: the below assignment that first = 0 ruins the test... wierd
-//    first = 0;
+    first = 0;
     for (int i=first; i<first+next_pp.t+1; i++) { // fill indexes and keys
-        int pp_alpha_as_int = (int)BN_get_word(pp.alphas[i]); // this works since alphas were chosen small enough to fit in an int
+        int pp_alpha_as_int = (int)BN_get_word(pp.alphas[i+1]); // this works since alphas were chosen small enough to fit in an int
         reshare_reconstruction_indices[i-first] = pp_alpha_as_int;
         reshare_reconstruction_keys[i-first] = committee_public_keys[i];
         reshare_reconstruction_keys_pairs[i-first] = &committee_key_pairs[i];
