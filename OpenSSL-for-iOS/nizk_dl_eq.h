@@ -21,4 +21,6 @@ int nizk_dl_eq_verify(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *
 void nizk_dl_eq_proof_free(nizk_dl_eq_proof *pi);
 int nizk_dl_eq_test_suite(int print);
 
+void nizk_dl_eq_print_allocation_status(void);
+
 #endif /* NIZK_DL_EQ_H */
