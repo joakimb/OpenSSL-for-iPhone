@@ -9,6 +9,13 @@
 #include <assert.h>
 #include "openssl_hashing_tools.h"
 
+static int num_initialized = 0;
+static int num_freed = 0;
+
+void nizk_dl_print_allocation_status(void) {
+    printf("nizk_dl: initalized %d, freed %d (%d diff)\n", num_initialized, num_freed, num_initialized - num_freed);
+}
+
 void nizk_dl_proof_free(nizk_dl_proof *pi) {
     assert(pi && "nizk_dl_proof_free: usage error, no proof passed");
     assert(pi->u && "nizk_dl_proof_free: usage error, u is NULL");
@@ -17,6 +24,7 @@ void nizk_dl_proof_free(nizk_dl_proof *pi) {
     pi->u = NULL; // superflous safety
     bn_free(pi->z);
     pi->z = NULL; // superflous safety
+    num_freed++;
 }
 
 void nizk_dl_prove(const EC_GROUP *group, const BIGNUM *x, nizk_dl_proof *pi, BN_CTX *ctx) {
@@ -44,6 +52,8 @@ void nizk_dl_prove(const EC_GROUP *group, const BIGNUM *x, nizk_dl_proof *pi, BN
     bn_free(c);
     bn_free(r);
     point_free(X);
+    
+    num_initialized++;
     /* implicitly return pi = (u, z) */
 }
 

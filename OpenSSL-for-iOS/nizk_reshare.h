@@ -23,4 +23,6 @@ int nizk_reshare_verify(const EC_GROUP *group, const EC_POINT *ga, const EC_POIN
 void nizk_reshare_proof_free(nizk_reshare_proof *pi);
 int nizk_reshare_test_suite(int print);
 
+void nizk_reshare_print_allocation_status(void);
+
 #endif /* NIZK_RESHARE_H */

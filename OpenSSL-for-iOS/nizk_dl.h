@@ -20,4 +20,6 @@ int nizk_dl_verify(const EC_GROUP *group, const EC_POINT *X, const nizk_dl_proof
 void nizk_dl_proof_free(nizk_dl_proof *pi);
 int nizk_dl_test_suite(int print);
 
+void nizk_dl_print_allocation_status(void);
+
 #endif /* NIZK_DL_H */

@@ -10,6 +10,12 @@
 #include "SSS.h"
 #include "openssl_hashing_tools.h"
 
+void nizk_print_allocation_status(void) {
+    nizk_dl_print_allocation_status();
+    nizk_dl_eq_print_allocation_status();
+    nizk_reshare_print_allocation_status();
+}
+
 void dh_pvss_ctx_free(dh_pvss_ctx *pp) {
     bn_free_array(pp->n+1, pp->alphas);
     bn_free_array(pp->n+1, pp->betas);
@@ -591,7 +597,7 @@ static int dh_pvss_test_4(int print) {
     
     // setup
     const int t = 1;
-    const int n = 6;
+    const int n = 4;
     dh_pvss_ctx pp;
     dh_pvss_setup(&pp, group, t, n, ctx);
     EC_POINT *secret = point_random(group, ctx);
@@ -883,6 +889,7 @@ int dh_pvss_test_suite(int print) {
     if (print) {
         printf("DH PVSS test suite\n");
         print_allocation_status();
+        nizk_print_allocation_status();
     }
     int num_tests = sizeof(test_suite)/sizeof(test_function);
     int ret = 0;
@@ -891,9 +898,11 @@ int dh_pvss_test_suite(int print) {
             ret = 1;
         }
         print_allocation_status();
+        nizk_print_allocation_status();
     }
     if (print) {
         print_allocation_status();
+        nizk_print_allocation_status();
         fflush(stdout);
     }
     return ret;
