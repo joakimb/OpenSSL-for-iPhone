@@ -897,3 +897,120 @@ int dh_pvss_test_suite(int print) {
     }
     return ret;
 }
+
+int speed_test(double *times, int t, int n) {
+    
+    int ret = 0;
+    
+    const EC_GROUP *group = get0_group();
+    BN_CTX *ctx = BN_CTX_new();
+    
+    // setup
+    dh_pvss_ctx pp;
+    dh_pvss_setup(&pp, group, t, n, ctx);
+    EC_POINT *secret = point_random(group, ctx);
+
+    printf("secret: ");
+    point_print(group, secret, ctx);
+    printf("\n");
+    
+    // keygen
+    dh_key_pair first_dist_kp;
+    dh_key_pair_generate(group, &first_dist_kp, ctx);
+    dh_key_pair committee_key_pairs[n];
+    dh_key_pair dist_key_pairs[n];
+    EC_POINT *committee_public_keys[n];
+    EC_POINT *dist_public_keys[n];
+    for (int i=0; i<n; i++) {
+        dh_key_pair *com_member_key_pair = &committee_key_pairs[i];
+        dh_key_pair *dist_key_pair = &dist_key_pairs[i];
+        dh_key_pair_generate(group, com_member_key_pair, ctx);
+        dh_key_pair_generate(group, dist_key_pair, ctx);
+        committee_public_keys[i] = com_member_key_pair->pub;
+        dist_public_keys[i] = dist_key_pair->pub;
+    }
+    
+    // make encrypted shares with proof
+    clock_t time_dist_start = clock();
+    EC_POINT *encrypted_shares[n];
+    nizk_dl_eq_proof distribution_pi;
+    dh_pvss_distribute_prove(&pp, encrypted_shares, &first_dist_kp, (const EC_POINT**)committee_public_keys, secret, &distribution_pi);
+    clock_t time_dist_end = clock();
+    double time_dist_elapsed = (double)(time_dist_end - time_dist_start) / CLOCKS_PER_SEC;
+    
+    // positive test verify encrypted shares
+    clock_t time_dist_verify_start = clock();
+    clock_t time_dist_verify_end = clock();
+    ret += dh_pvss_distribute_verify(&pp, &distribution_pi, (const EC_POINT**)encrypted_shares, first_dist_kp.pub, (const EC_POINT**)committee_public_keys);
+    double time_dist_verify_elapsed = (double)(time_dist_verify_end - time_dist_verify_start) / CLOCKS_PER_SEC;
+    
+    
+    // decrypting the encrypted shares and verifiying
+    EC_POINT *decrypted_shares[n];
+    int num_failed_decryptions = 0;
+    int num_failed_verifications = 0;
+    double time_dec_elapsed = 0;//(double)(time_dec_end - time_dec_start) / CLOCKS_PER_SEC;
+    for (int i=0; i<n; i++) {
+        clock_t time_dec_start = clock();
+        nizk_dl_eq_proof committee_member_pi;
+        // TODO: this measures both prove and verify, separate
+        decrypted_shares[i] = dh_pvss_decrypt_share_prove(group, first_dist_kp.pub, &committee_key_pairs[i], encrypted_shares[i], &committee_member_pi, ctx);
+        ret += dh_pvss_decrypt_share_verify(group, first_dist_kp.pub, committee_public_keys[i], encrypted_shares[i], decrypted_shares[i], &committee_member_pi, ctx);
+        clock_t time_dec_end = clock();
+        // cleanup
+        nizk_dl_eq_proof_free(&committee_member_pi);
+        time_dec_elapsed += (double)(time_dec_end - time_dec_start) / CLOCKS_PER_SEC;
+
+    }
+    
+    // reconstruct secret
+    clock_t time_rec_start = clock();
+    clock_t time_rec_end = clock();
+    EC_POINT *reconstruction_shares[t+1];
+    int reconstruction_indices[t+1];
+    int first = 2;
+    for (int i=first; i<first+t+1; i++) {
+        reconstruction_shares[i-first] = decrypted_shares[i];
+        int pp_alpha_as_int = (int)BN_get_word(pp.alphas[i+1]); // this works since alphas were chosen small enough to fit in an int
+        reconstruction_indices[i-first] = pp_alpha_as_int;
+    }
+    EC_POINT *reconstructed_secret = dh_pvss_reconstruct(group, (const EC_POINT**)reconstruction_shares, reconstruction_indices, pp.t, t+1, ctx);
+    double time_rec_elapsed = (double)(time_rec_end - time_rec_start) / CLOCKS_PER_SEC;
+
+    
+    dh_pvss_ctx next_pp;
+    dh_pvss_setup(&next_pp, group, t, n, ctx);
+    // keygen for next epoch committe
+    dh_key_pair next_committee_key_pairs[n];
+    EC_POINT *next_committee_public_keys[n];
+    for (int i=0; i<next_pp.n; i++) {
+        dh_key_pair *next_com_member_key_pair = &next_committee_key_pairs[i];
+        dh_key_pair_generate(group, next_com_member_key_pair, ctx);
+        next_committee_public_keys[i] = next_com_member_key_pair->pub;
+    }
+    
+    // make a single reshare
+    clock_t time_reshare_start = clock();
+    clock_t time_reshare_end = clock();
+    int party_index = 3;
+    EC_POINT *encrypted_re_shares[next_pp.n];
+    nizk_reshare_proof reshare_pi;
+    dh_pvss_reshare_prove(group, party_index, &committee_key_pairs[party_index], &dist_key_pairs[party_index], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, pp.n, &next_pp, (const EC_POINT**)next_committee_public_keys, encrypted_re_shares, &reshare_pi, ctx);
+    double time_reshare_elapsed = (double)(time_reshare_end - time_reshare_start) / CLOCKS_PER_SEC;
+    
+    // positive test for reshare
+    clock_t time_reshare_verify_start = clock();
+    clock_t time_reshare_verify_end = clock();
+    ret += dh_pvss_reshare_verify(&pp, &next_pp, party_index, committee_public_keys[party_index], dist_public_keys[party_index], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, (const EC_POINT**)next_committee_public_keys, encrypted_re_shares, &reshare_pi);
+    double time_reshare_verify_elapsed = (double)(time_reshare_verify_end - time_reshare_verify_start) / CLOCKS_PER_SEC;
+    
+    times[0] = time_dist_elapsed;
+    times[1] = time_dist_verify_elapsed;
+    times[2] = time_dec_elapsed;
+    times[3] = time_rec_elapsed;
+    times[4] = time_reshare_elapsed;
+    times[5] = time_reshare_verify_elapsed;
+    
+    return ret == 0;
+
+}

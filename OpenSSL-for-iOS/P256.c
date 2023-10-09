@@ -8,7 +8,7 @@
 #include "P256.h"
 #include <assert.h>
 
-const int use_toy_curve = 1;
+const int use_toy_curve = 0;
 const int kill_randomness = 0;
 
 
