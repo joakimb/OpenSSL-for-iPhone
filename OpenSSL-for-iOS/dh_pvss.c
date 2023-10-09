@@ -740,6 +740,7 @@ static int dh_pvss_test_4(int print) {
             point_print(group, all_encrypted_re_shares[i][j], ctx);
         }
         //verify the reshare
+        // TODO: why is it i as party index below? should it not be i+1, (NO, if we look at code?)
         int valid_res_share = dh_pvss_reshare_verify(&pp, &next_pp, i, (const EC_POINT*) committee_public_keys[i], (const EC_POINT*) dist_public_keys[i], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, (const EC_POINT**)next_committee_public_keys, all_encrypted_re_shares[i], &reshare_pis[i]);
         printf("%6s reshare", valid_res_share ? "NOT OK" : "OK");
 
@@ -784,14 +785,12 @@ static int dh_pvss_test_4(int print) {
     EC_POINT *reshare_reconstruction_keys[next_pp.t+1];
     dh_key_pair *reshare_reconstruction_keys_pairs[next_pp.t+1];
     EC_POINT *reshare_reconstruction_shares[next_pp.t+1];
-//    TODO: the below assignment that first = 0 ruins the test... wierd
     first = 0;
     for (int i=first; i<first+next_pp.t+1; i++) { // fill indexes and keys
         int pp_alpha_as_int = (int)BN_get_word(pp.alphas[i+1]); // this works since alphas were chosen small enough to fit in an int
         reshare_reconstruction_indices[i-first] = pp_alpha_as_int;
-        reshare_reconstruction_keys[i-first] = committee_public_keys[i];
-        reshare_reconstruction_keys_pairs[i-first] = &committee_key_pairs[i];
-        // TODO: the below i-1 should be i right? but it doesnt work...
+        reshare_reconstruction_keys[i-first] = next_committee_public_keys[i];
+        reshare_reconstruction_keys_pairs[i-first] = &next_committee_key_pairs[i];
         reshare_reconstruction_shares[i-first] = reconstructed_encrypted_reshares[i];
     }
     printf("RECON inDICES:\n");
