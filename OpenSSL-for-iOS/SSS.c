@@ -123,22 +123,11 @@ int shamir_shares_test_suite(int print) {
     BIGNUM *seven = bn_new();
     BN_dec2bn(&seven, "7");
     EC_POINT *secret = bn2point(group, seven, ctx);
-    if (print) {
-        printf("secret: ");
-        point_print(group, secret, ctx);
-        printf("\n");
-    }
+
 
     // generate shares
     shamir_shares_generate(group, shares, secret, t, n, ctx);
 
-    if (print) {
-        printf("shares:\n");
-        for (int i=0; i<n; i++){
-            point_print(group, shares[i], ctx);
-            printf("\n");
-        }
-    }
 
     // reconstruct with 2nd and 3rd share
     int share_indexes[t + 1];
@@ -151,12 +140,6 @@ int shamir_shares_test_suite(int print) {
 
     // check reconstruction
     int res = point_cmp(group, secret, reconstructed, ctx);
-    if (print) {
-        printf("reconstructed: ");
-        point_print(group, reconstructed, ctx);
-        printf("\nReconstruction %s\n", res ? "NOT OK" : "OK");
-        fflush(stdout);
-    }
 
     // cleanup
     for (int i=0; i<n; i++) {
