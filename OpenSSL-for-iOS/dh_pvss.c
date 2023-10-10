@@ -860,6 +860,20 @@ int dh_pvss_test_suite(int print) {
 
 int speed_test(double *times, int t, int n) {
     
+    printf("needed satck space: O( %lu )\n", n * n  * (sizeof(EC_POINT*)));
+    //read stack size
+    pthread_attr_t tattr;
+    int retsize = pthread_attr_init ( &tattr ) ;
+    size_t size;
+    retsize = pthread_attr_getstacksize(&tattr, &size);
+    printf ( "Get: ret=%d,size=%zu\n" , retsize , size ) ; // prints stack size=4096*128
+
+    //expand stack size
+    size = 4096 * 4096 ;
+    retsize = pthread_attr_setstacksize(&tattr, size);// 0 on success
+    int retsize2 = pthread_attr_getstacksize(&tattr, &size); // 0 on success
+    printf ( "Set & Get: ret=%d ret2=%d,size=%zu\n" , retsize , retsize2 , size ) ;
+    
     int ret = 0;
     
     const EC_GROUP *group = get0_group();
@@ -959,8 +973,6 @@ int speed_test(double *times, int t, int n) {
     double time_reshare_verify_elapsed = (double)(time_reshare_verify_end - time_reshare_verify_start) / CLOCKS_PER_SEC;
     
     // the below will make a full reshare -> reconstruct reshare -> decrypt shares -> reconstruct, and then finally see if the correct secret is reconstructed
-    
-
     
     // 1. make a reshare for all parties
     EC_POINT *all_encrypted_re_shares[pp.n][next_pp.n];
