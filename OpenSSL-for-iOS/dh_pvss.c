@@ -50,7 +50,7 @@ void dh_pvss_setup(dh_pvss_ctx *pp, const EC_GROUP *group, const int t, const in
     assert( (n - t - 2) > 0 && "dh_pvss_setup: usage error, n and t badly chosen");
     pp->t = t;
     pp->n = n;
-    
+
     // allocate vectors
     pp->alphas   = bn_new_array(n+1);
     pp->betas    = bn_new_array(n+1);
@@ -589,7 +589,7 @@ static int dh_pvss_test_4(int print) {
     
     const EC_GROUP *group = get0_group();
     BN_CTX *ctx = BN_CTX_new();
-    
+
     // setup
     const int t = 5;
     const int n = 10;
@@ -612,12 +612,12 @@ static int dh_pvss_test_4(int print) {
         committee_public_keys[i] = com_member_key_pair->pub;
         dist_public_keys[i] = dist_key_pair->pub;
     }
-    
+
     // make encrypted shares with proof
     EC_POINT *encrypted_shares[n];
     nizk_dl_eq_proof distribution_pi;
     dh_pvss_distribute_prove(&pp, encrypted_shares, &first_dist_kp, (const EC_POINT**)committee_public_keys, secret, &distribution_pi);
-    
+
     // positive test verify encrypted shares
     int ret1 = dh_pvss_distribute_verify(&pp, &distribution_pi, (const EC_POINT**)encrypted_shares, first_dist_kp.pub, (const EC_POINT**)committee_public_keys);
     if (print) {
@@ -633,7 +633,7 @@ static int dh_pvss_test_4(int print) {
             printf("NOT OK Test 4 - 2: Incorrect DH PVSS Reshare Proof IS accepted (which is an ERROR)\n");
         }
     }
-    
+
     // decrypting the encrypted shares and verifiying
     EC_POINT *decrypted_shares[n];
     int num_failed_decryptions = 0;
@@ -787,6 +787,7 @@ static int dh_pvss_test_4(int print) {
     // cleanup
     BN_CTX_free(ctx);
     dh_pvss_ctx_free(&pp);
+    dh_pvss_ctx_free(&next_pp);
     point_free(secret);
     dh_key_pair_free(&first_dist_kp);
     for (int i=0; i<n; i++){
@@ -838,8 +839,6 @@ static test_function test_suite[] = {
 int dh_pvss_test_suite(int print) {
     if (print) {
         printf("DH PVSS test suite\n");
-        print_allocation_status();
-        nizk_print_allocation_status();
     }
     int num_tests = sizeof(test_suite)/sizeof(test_function);
     int ret = 0;
@@ -847,8 +846,6 @@ int dh_pvss_test_suite(int print) {
         if (test_suite[i](print)) {
             ret = 1;
         }
-        print_allocation_status();
-        nizk_print_allocation_status();
     }
     if (print) {
         print_allocation_status();
@@ -1039,7 +1036,6 @@ int speed_test(double *times, int t, int n) {
  
     // cleanup
     BN_CTX_free(ctx);
-    dh_pvss_ctx_free(&pp);
     point_free(secret);
     dh_key_pair_free(&first_dist_kp);
     for (int i=0; i<n; i++){
@@ -1071,7 +1067,9 @@ int speed_test(double *times, int t, int n) {
         point_free(decrypted_reshares[i]);
     }
     point_free(reconstructed_reshared);
-    
+    dh_pvss_ctx_free(&pp);
+    dh_pvss_ctx_free(&next_pp);
+
     times[0] = time_dist_elapsed;
     times[1] = time_dist_verify_elapsed;
     times[2] = time_dec_elapsed;
@@ -1079,6 +1077,8 @@ int speed_test(double *times, int t, int n) {
     times[4] = time_reshare_elapsed;
     times[5] = time_reshare_verify_elapsed;
     times[6] = time_full_reshare_reconstruct_elapsed;
+    
+    print_allocation_status();
     
     return ret == 0;
 

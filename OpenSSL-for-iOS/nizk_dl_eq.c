@@ -214,7 +214,6 @@ static test_function test_suite[] = {
 int nizk_dl_eq_test_suite(int print) {
     if (print) {
         printf("NIZK DL EQ test suite\n");
-        print_allocation_status();
     }
     int num_tests = sizeof(test_suite)/sizeof(test_function);
     int ret = 0;
@@ -225,6 +224,7 @@ int nizk_dl_eq_test_suite(int print) {
     }
     if (print) {
         print_allocation_status();
+        nizk_dl_eq_print_allocation_status();
         fflush(stdout);
     }
     return ret;
