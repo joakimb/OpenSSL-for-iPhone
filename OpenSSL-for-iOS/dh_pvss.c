@@ -839,8 +839,6 @@ static test_function test_suite[] = {
 int dh_pvss_test_suite(int print) {
     if (print) {
         printf("DH PVSS test suite\n");
-        print_allocation_status();
-        nizk_print_allocation_status();
     }
     int num_tests = sizeof(test_suite)/sizeof(test_function);
     int ret = 0;
@@ -848,8 +846,6 @@ int dh_pvss_test_suite(int print) {
         if (test_suite[i](print)) {
             ret = 1;
         }
-        print_allocation_status();
-        nizk_print_allocation_status();
     }
     if (print) {
         print_allocation_status();
@@ -1044,7 +1040,6 @@ int speed_test(double *times, int t, int n) {
  
     // cleanup
     BN_CTX_free(ctx);
-    dh_pvss_ctx_free(&pp);
     point_free(secret);
     dh_key_pair_free(&first_dist_kp);
     for (int i=0; i<n; i++){
@@ -1076,7 +1071,9 @@ int speed_test(double *times, int t, int n) {
         point_free(decrypted_reshares[i]);
     }
     point_free(reconstructed_reshared);
-    
+    dh_pvss_ctx_free(&pp);
+    dh_pvss_ctx_free(&next_pp);
+
     times[0] = time_dist_elapsed;
     times[1] = time_dist_verify_elapsed;
     times[2] = time_dec_elapsed;
@@ -1084,6 +1081,8 @@ int speed_test(double *times, int t, int n) {
     times[4] = time_reshare_elapsed;
     times[5] = time_reshare_verify_elapsed;
     times[6] = time_full_reshare_reconstruct_elapsed;
+    
+    print_allocation_status();
     
     return ret == 0;
 
