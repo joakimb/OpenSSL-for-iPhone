@@ -32,10 +32,9 @@
 
     NSLog(@"%@",formattedString);
 
-#if 0
     double speeds[7];
-    int t = 250;
-    int n = 500;
+    int t = 25;
+    int n = 50;
     int good_test = speed_test(speeds, t, n);
     NSString *speed_test_string = [NSMutableString stringWithString:@"\nSPEED RESULTS:\n"];
 
@@ -67,7 +66,6 @@
     speed_test_string = [speed_test_string stringByAppendingString:s];
 
     NSLog(@"%@",speed_test_string);
-#endif
 
     return formattedString;
 }
