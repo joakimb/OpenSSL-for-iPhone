@@ -803,11 +803,13 @@ static int dh_pvss_test_4(int print) {
         point_free(encrypted_re_shares[i]);
     }
     nizk_reshare_proof_free(&reshare_pi);
+    
     for (int j = 0; j<next_pp.n; j++) {
         for (int i = 0; i<pp.n; i++) { // get the the j:th share from all n rehares
             point_free(all_encrypted_re_shares[i][j]);
         }
     }
+
     for (int i=0; i<pp.n; i++){
         nizk_reshare_proof_free(&reshare_pis[i]);
     }
@@ -856,20 +858,6 @@ int dh_pvss_test_suite(int print) {
 }
 
 int speed_test(double *times, int t, int n) {
-    
-    printf("needed satck space: O( %lu )\n", n * n  * (sizeof(EC_POINT*)));
-    //read stack size
-    pthread_attr_t tattr;
-    int retsize = pthread_attr_init ( &tattr ) ;
-    size_t size;
-    retsize = pthread_attr_getstacksize(&tattr, &size);
-    printf ( "Get: ret=%d,size=%zu\n" , retsize , size ) ; // prints stack size=4096*128
-
-    //expand stack size
-    size = 4096 * 4096 ;
-    retsize = pthread_attr_setstacksize(&tattr, size);// 0 on success
-    int retsize2 = pthread_attr_getstacksize(&tattr, &size); // 0 on success
-    printf ( "Set & Get: ret=%d ret2=%d,size=%zu\n" , retsize , retsize2 , size ) ;
     
     int ret = 0;
     
@@ -972,7 +960,15 @@ int speed_test(double *times, int t, int n) {
     // the below will make a full reshare -> reconstruct reshare -> decrypt shares -> reconstruct, and then finally see if the correct secret is reconstructed
     
     // 1. make a reshare for all parties
-    EC_POINT *all_encrypted_re_shares[pp.n][next_pp.n];
+    //EC_POINT *all_encrypted_re_shares[pp.n][next_pp.n];
+    
+    EC_POINT **all_encrypted_re_shares[pp.n];
+    
+    for (int i = 0; i<pp.n; i++) {
+        all_encrypted_re_shares[i] = malloc(sizeof(EC_POINT *[next_pp.n]));
+        assert(all_encrypted_re_shares[i] && "bad allocation for all_encrypted_re_shares");
+    }
+    
     nizk_reshare_proof reshare_pis[pp.n];
     for (int i = 0; i<pp.n; i++) {
         dh_pvss_reshare_prove(group, i, &committee_key_pairs[i], &dist_key_pairs[i], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, pp.n, &next_pp, (const EC_POINT**)next_committee_public_keys, all_encrypted_re_shares[i], &reshare_pis[i], ctx);
@@ -1056,6 +1052,11 @@ int speed_test(double *times, int t, int n) {
             point_free(all_encrypted_re_shares[i][j]);
         }
     }
+    
+    for (int i = 0; i<pp.n; i++) {
+        free(all_encrypted_re_shares[i]);
+    }
+    
     for (int i=0; i<pp.n; i++){
         nizk_reshare_proof_free(&reshare_pis[i]);
     }
