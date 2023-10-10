@@ -13,7 +13,7 @@ class ViewController: UIViewController {
 
         self.title = "OpenSSL-for-iOS"
         
-        let p256: ShamirP256 = ShamirP256()
+//        let p256: ShamirP256 = ShamirP256()
         
 //        let order: OpaquePointer =  p256.get0Order()
 //        //let order  =  UnsafePointer<BIGNUM>(p256.get0Order())

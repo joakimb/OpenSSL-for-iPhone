@@ -16,14 +16,6 @@ void dh_key_pair_free(dh_key_pair *kp) {
 void dh_key_pair_generate(const EC_GROUP *group, dh_key_pair *kp, BN_CTX *ctx) {
     const BIGNUM *order = get0_order(group);
     kp->priv = bn_random(order, ctx);
-//    kp->priv = BN_new();
-//    BN_set_word(kp->priv, 5);
-    kp->pub = bn2point(group, kp->priv, ctx);
-}
-
-void dh_DEBUG_key_pair_generate(const EC_GROUP *group, dh_key_pair *kp, int fixed_rand, BN_CTX *ctx) {
-    kp->priv = BN_new();
-    BN_set_word(kp->priv, fixed_rand);
     kp->pub = bn2point(group, kp->priv, ctx);
 }
 
