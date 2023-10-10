@@ -769,7 +769,7 @@ static int dh_pvss_test_4(int print) {
     for (int i=0; i<next_pp.t+1; i++) {
         nizk_dl_eq_proof decrypt_pi;
         decrypted_reshares[i] = dh_pvss_decrypt_share_prove(group, prev_dist_pub_key, reshare_reconstruction_keys_pairs[i], reshare_reconstruction_shares[i], &decrypt_pi, ctx);//decrypted_shares[i-1];
-        int decrypt_test = dh_pvss_decrypt_share_verify(group, prev_dist_pub_key, reshare_reconstruction_keys[i], encrypted_shares[i], decrypted_shares[i], &decrypt_pi, ctx);
+        int decrypt_test = dh_pvss_decrypt_share_verify(group, prev_dist_pub_key, reshare_reconstruction_keys[i], reshare_reconstruction_shares[i], decrypted_reshares[i], &decrypt_pi, ctx);
         if (decrypt_test) {
             printf("COULD NOT VERIFY DECRYPTED SHARE, decrypt_test = %d\n", decrypt_test);
         }
@@ -903,8 +903,6 @@ int speed_test(double *times, int t, int n) {
     clock_t time_dist_verify_end = clock();
     ret += dh_pvss_distribute_verify(&pp, &distribution_pi, (const EC_POINT**)encrypted_shares, first_dist_kp.pub, (const EC_POINT**)committee_public_keys);
     double time_dist_verify_elapsed = (double)(time_dist_verify_end - time_dist_verify_start) / CLOCKS_PER_SEC;
-    printf("ret1 %d\n",ret);
-    
 
     // decrypting the encrypted shares and verifiying
     EC_POINT *decrypted_shares[n];
@@ -915,7 +913,6 @@ int speed_test(double *times, int t, int n) {
         // TODO: this measures both prove and verify, separate
         decrypted_shares[i] = dh_pvss_decrypt_share_prove(group, first_dist_kp.pub, &committee_key_pairs[i], encrypted_shares[i], &committee_member_pi, ctx);
         ret += dh_pvss_decrypt_share_verify(group, first_dist_kp.pub, committee_public_keys[i], encrypted_shares[i], decrypted_shares[i], &committee_member_pi, ctx);
-        printf("ret2 %d\n",ret);
         clock_t time_dec_end = clock();
         // cleanup
         nizk_dl_eq_proof_free(&committee_member_pi);
@@ -937,7 +934,6 @@ int speed_test(double *times, int t, int n) {
     clock_t time_rec_end = clock();
     double time_rec_elapsed = (double)(time_rec_end - time_rec_start) / CLOCKS_PER_SEC;
     ret += point_cmp(group, secret, reconstructed_secret, ctx);
-    printf("ret3 %d\n",ret);
     
     // setup for next epoch committe
     dh_pvss_ctx next_pp;
@@ -965,12 +961,7 @@ int speed_test(double *times, int t, int n) {
     clock_t time_reshare_verify_end = clock();
     ret += dh_pvss_reshare_verify(&pp, &next_pp, party_index, committee_public_keys[party_index], dist_public_keys[party_index], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, (const EC_POINT**)next_committee_public_keys, encrypted_re_shares, &reshare_pi);
     double time_reshare_verify_elapsed = (double)(time_reshare_verify_end - time_reshare_verify_start) / CLOCKS_PER_SEC;
-    printf("ret4 %d\n",ret);
-
     
-    
-    //////////////////////////////////====================== FULL RESHARE
-    ///
     // the below will make a full reshare -> reconstruct reshare -> decrypt shares -> reconstruct, and then finally see if the correct secret is reconstructed
     
 
@@ -984,7 +975,6 @@ int speed_test(double *times, int t, int n) {
         //verify the reshare
         // TODO: why is it i as party index below? should it not be i+1, (NO, if we look at code?)
         ret += dh_pvss_reshare_verify(&pp, &next_pp, i, (const EC_POINT*) committee_public_keys[i], (const EC_POINT*) dist_public_keys[i], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, (const EC_POINT**)next_committee_public_keys, all_encrypted_re_shares[i], &reshare_pis[i]);
-        printf("ret5 %d\n",ret);
     }
     
     // 2. reconstruct reshare
@@ -1031,15 +1021,13 @@ int speed_test(double *times, int t, int n) {
     for (int i=0; i<next_pp.t+1; i++) {
         nizk_dl_eq_proof decrypt_pi;
         decrypted_reshares[i] = dh_pvss_decrypt_share_prove(group, prev_dist_pub_key, reshare_reconstruction_keys_pairs[i], reshare_reconstruction_shares[i], &decrypt_pi, ctx);//decrypted_shares[i-1];
-        ret += dh_pvss_decrypt_share_verify(group, prev_dist_pub_key, reshare_reconstruction_keys[i], encrypted_shares[i], decrypted_shares[i], &decrypt_pi, ctx);
-        printf("ret6 %d\n",ret);
+        ret += dh_pvss_decrypt_share_verify(group, prev_dist_pub_key, reshare_reconstruction_keys[i], reshare_reconstruction_shares[i], decrypted_reshares[i], &decrypt_pi, ctx);
         nizk_dl_eq_proof_free(&decrypt_pi);
     }
     
     // 4. reconstruct and compare
     EC_POINT *reconstructed_reshared = dh_pvss_reconstruct(group, (const EC_POINT **)decrypted_reshares, reshare_reconstruction_indices, next_pp.t, next_pp.t+1, ctx);
     ret += point_cmp(group, secret, reconstructed_reshared, ctx); // zero if equal
-    printf("ret7 %d\n",ret);
  
     // cleanup
     BN_CTX_free(ctx);
