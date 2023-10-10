@@ -869,10 +869,6 @@ int speed_test(double *times, int t, int n) {
     dh_pvss_ctx pp;
     dh_pvss_setup(&pp, group, t, n, ctx);
     EC_POINT *secret = point_random(group, ctx);
-
-    printf("secret: ");
-    point_print(group, secret, ctx);
-    printf("\n");
     
     // keygen
     dh_key_pair first_dist_kp;
@@ -900,8 +896,8 @@ int speed_test(double *times, int t, int n) {
     
     // positive test verify encrypted shares
     clock_t time_dist_verify_start = clock();
-    clock_t time_dist_verify_end = clock();
     ret += dh_pvss_distribute_verify(&pp, &distribution_pi, (const EC_POINT**)encrypted_shares, first_dist_kp.pub, (const EC_POINT**)committee_public_keys);
+    clock_t time_dist_verify_end = clock();
     double time_dist_verify_elapsed = (double)(time_dist_verify_end - time_dist_verify_start) / CLOCKS_PER_SEC;
 
     // decrypting the encrypted shares and verifiying
@@ -949,11 +945,11 @@ int speed_test(double *times, int t, int n) {
     
     // make a single reshare
     clock_t time_reshare_start = clock();
-    clock_t time_reshare_end = clock();
     int party_index = 3;
     EC_POINT *encrypted_re_shares[next_pp.n];
     nizk_reshare_proof reshare_pi;
     dh_pvss_reshare_prove(group, party_index, &committee_key_pairs[party_index], &dist_key_pairs[party_index], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, pp.n, &next_pp, (const EC_POINT**)next_committee_public_keys, encrypted_re_shares, &reshare_pi, ctx);
+    clock_t time_reshare_end = clock();
     double time_reshare_elapsed = (double)(time_reshare_end - time_reshare_start) / CLOCKS_PER_SEC;
     
     // positive test for reshare
