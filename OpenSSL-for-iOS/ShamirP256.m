@@ -14,8 +14,6 @@
     bn_print(x);
 }
 
-
-
 + (NSString *)test:(NSString *) string {
     
     clock_t start_time_total = clock();
@@ -32,7 +30,8 @@
     
     NSString *formattedString = [[NSString alloc] initWithFormat:@"Test suite %s, Time: %f seconds\n", ret ? "NOT OK" : "OK", elapsed_time_total];
     NSLog(formattedString);
-    
+
+#if 0
     double speeds[7];
     int t = 50;
     int n = 100;
@@ -67,7 +66,7 @@
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
     NSLog(speed_test_string);
-
+#endif
     return @"";
 }
 
