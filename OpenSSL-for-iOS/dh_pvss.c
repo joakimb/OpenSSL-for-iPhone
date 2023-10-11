@@ -3,7 +3,6 @@
 //  OpenSSL-for-iOS
 //
 //  Created by Joakim Brorsson on 2023-10-01.
-//  Copyright © 2023 Felix Schulze. All rights reserved.
 //
 #include "dh_pvss.h"
 #include <assert.h>
@@ -976,7 +975,6 @@ int speed_test(double *times, int t, int n) {
         dh_pvss_reshare_prove(group, i, &committee_key_pairs[i], &dist_key_pairs[i], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, pp.n, &next_pp, (const EC_POINT**)next_committee_public_keys, all_encrypted_re_shares[i], &reshare_pis[i], ctx);
 
         //verify the reshare
-        // TODO: why is it i as party index below? should it not be i+1, (NO, if we look at code?)
         ret += dh_pvss_reshare_verify(&pp, &next_pp, i, (const EC_POINT*) committee_public_keys[i], (const EC_POINT*) dist_public_keys[i], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, (const EC_POINT**)next_committee_public_keys, all_encrypted_re_shares[i], &reshare_pis[i]);
     }
     
