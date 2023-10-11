@@ -2,10 +2,6 @@
 //  AppDelegate.swift
 //  OpenSSL-for-iOS
 //
-//  Created by Felix Schulze on 04.12.2010.
-//  Updated by Felix Schulze on 17.11.2015.
-//  Copyright © 2015 Felix Schulze. All rights reserved.
-//  Web: http://www.felixschulze.de
 //
 
 import UIKit

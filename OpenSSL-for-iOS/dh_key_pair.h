@@ -3,7 +3,6 @@
 //  OpenSSL-for-iOS
 //
 //  Created by Paul Stankovski Wagner on 2023-10-07.
-//  Copyright © 2023 Felix Schulze. All rights reserved.
 //
 #ifndef DH_KEY_PAIR_H
 #define DH_KEY_PAIR_H

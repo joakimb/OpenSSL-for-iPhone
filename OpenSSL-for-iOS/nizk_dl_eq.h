@@ -3,7 +3,6 @@
 //  OpenSSL-for-iOS
 //
 //  Created by Paul Stankovski Wagner on 2023-09-29.
-//  Copyright © 2023 Felix Schulze. All rights reserved.
 //
 
 #ifndef NIZK_DL_EQ_H

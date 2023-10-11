@@ -3,7 +3,6 @@
 //  OpenSSL-for-iOS
 //
 //  Created by Joakim Brorsson on 2023-09-05.
-//  Copyright © 2023 Felix Schulze. All rights reserved.
 //
 
 #import "ShamirP256.h"

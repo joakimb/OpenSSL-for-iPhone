@@ -3,7 +3,6 @@
 //  OpenSSL-for-iOS
 //
 //  Created by Joakim Brorsson on 2023-10-01.
-//  Copyright © 2023 Felix Schulze. All rights reserved.
 //
 #include "dh_pvss.h"
 #include <assert.h>

@@ -3,7 +3,6 @@
 //  OpenSSL-for-iOS
 //
 //  Created by Joakim Brorsson on 2023-09-07.
-//  Copyright © 2023 Felix Schulze. All rights reserved.
 //
 
 #ifndef P256_H
