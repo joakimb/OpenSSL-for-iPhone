@@ -841,7 +841,7 @@ static test_function test_suite[] = {
 // setting print to 0 (zero) suppresses stdio printouts, while print 1 is 'verbose'
 int dh_pvss_test_suite(int print) {
     if (print) {
-        printf("DH PVSS test suite\n");
+        printf("DH PVSS test suite BEGIN ----------------------------\n");
     }
     int num_tests = sizeof(test_suite)/sizeof(test_function);
     int ret = 0;
@@ -851,8 +851,11 @@ int dh_pvss_test_suite(int print) {
         }
     }
     if (print) {
+        printf("DH PVSS test suite END ------------------------------\n");
+#ifdef DEBUG
         print_allocation_status();
         nizk_print_allocation_status();
+#endif
         fflush(stdout);
     }
     return ret;
@@ -1078,9 +1081,10 @@ int speed_test(double *times, int t, int n) {
     times[4] = time_reshare_elapsed;
     times[5] = time_reshare_verify_elapsed;
     times[6] = time_full_reshare_reconstruct_elapsed;
-    
-    print_allocation_status();
-    
-    return ret == 0;
 
+    
+#ifdef DEBUG
+    print_allocation_status();
+#endif
+    return ret == 0;
 }

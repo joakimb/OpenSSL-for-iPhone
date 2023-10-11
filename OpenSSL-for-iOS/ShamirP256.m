@@ -67,7 +67,7 @@ void speedTest(int t, int n) {
     
     NSLog(@"%@",formattedString);
     
-    int speed_test_on = 1;
+    int speed_test_on = 0;
     if (speed_test_on) {
         speedTest(5, 10);
         speedTest(50, 100);
