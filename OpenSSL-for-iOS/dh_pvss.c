@@ -10,11 +10,13 @@
 #include "SSS.h"
 #include "openssl_hashing_tools.h"
 
+#ifdef DEBUG
 void nizk_print_allocation_status(void) {
     nizk_dl_print_allocation_status();
     nizk_dl_eq_print_allocation_status();
     nizk_reshare_print_allocation_status();
 }
+#endif
 
 void dh_pvss_ctx_free(dh_pvss_ctx *pp) {
     bn_free_array(pp->n+1, pp->alphas);

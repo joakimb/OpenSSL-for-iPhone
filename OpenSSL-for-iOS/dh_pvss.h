@@ -5,7 +5,6 @@
 //  Created by Joakim Brorsson on 2023-10-01.
 //  Copyright © 2023 Felix Schulze. All rights reserved.
 //
-
 #ifndef DH_PVSS_H
 #define DH_PVSS_H
 #include "dh_key_pair.h"

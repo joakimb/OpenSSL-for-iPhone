@@ -149,8 +149,9 @@ int shamir_shares_test_suite(int print) {
     point_free(secret);
     point_free(reconstructed);
     BN_CTX_free(ctx);
-    
+
+#ifdef DEBUG
     print_allocation_status();
-    
+#endif
     return res;
 }

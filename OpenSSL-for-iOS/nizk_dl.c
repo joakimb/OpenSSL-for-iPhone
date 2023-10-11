@@ -9,12 +9,14 @@
 #include <assert.h>
 #include "openssl_hashing_tools.h"
 
+#ifdef DEBUG
 static int num_initialized = 0;
 static int num_freed = 0;
 
 void nizk_dl_print_allocation_status(void) {
     printf("nizk_dl: initalized %d, freed %d (%d diff)\n", num_initialized, num_freed, num_initialized - num_freed);
 }
+#endif
 
 void nizk_dl_proof_free(nizk_dl_proof *pi) {
     assert(pi && "nizk_dl_proof_free: usage error, no proof passed");
@@ -24,7 +26,9 @@ void nizk_dl_proof_free(nizk_dl_proof *pi) {
     pi->u = NULL; // superflous safety
     bn_free(pi->z);
     pi->z = NULL; // superflous safety
+#ifdef DEBUG
     num_freed++;
+#endif
 }
 
 void nizk_dl_prove(const EC_GROUP *group, const BIGNUM *x, nizk_dl_proof *pi, BN_CTX *ctx) {
@@ -52,8 +56,10 @@ void nizk_dl_prove(const EC_GROUP *group, const BIGNUM *x, nizk_dl_proof *pi, BN
     bn_free(c);
     bn_free(r);
     point_free(X);
-    
+
+#ifdef DEBUG
     num_initialized++;
+#endif
     /* implicitly return pi = (u, z) */
 }
 
@@ -204,7 +210,7 @@ static test_function test_suite[] = {
 // setting print to 0 (zero) suppresses stdio printouts, while print 1 is 'verbose'
 int nizk_dl_test_suite(int print) {
     if (print) {
-        printf("NIZK DL test suite\n");
+        printf("NIZK DL test suite BEGIN ----------------------------\n");
     }
     int num_tests = sizeof(test_suite)/sizeof(test_function);
     int ret = 0;
@@ -214,8 +220,11 @@ int nizk_dl_test_suite(int print) {
         }
     }
     if (print) {
+        printf("NIZK DL test suite END ------------------------------\n");
+#ifdef DEBUG
         print_allocation_status();
         nizk_dl_print_allocation_status();
+#endif
         fflush(stdout);
     }
     return ret;

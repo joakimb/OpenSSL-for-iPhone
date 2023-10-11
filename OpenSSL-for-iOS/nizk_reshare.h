@@ -21,8 +21,10 @@ typedef struct {
 void nizk_reshare_prove(const EC_GROUP *group, const BIGNUM *w1, const BIGNUM *w2, const EC_POINT *ga, const EC_POINT *gb, const EC_POINT *gc, const EC_POINT *Y1, const EC_POINT *Y2, const EC_POINT *Y3, nizk_reshare_proof *pi, BN_CTX *ctx);
 int nizk_reshare_verify(const EC_GROUP *group, const EC_POINT *ga, const EC_POINT *gb, const EC_POINT *gc, const EC_POINT *Y1, const EC_POINT *Y2, const EC_POINT *Y3, const nizk_reshare_proof *pi, BN_CTX *ctx);
 void nizk_reshare_proof_free(nizk_reshare_proof *pi);
-int nizk_reshare_test_suite(int print);
 
+int nizk_reshare_test_suite(int print);
+#ifdef DEBUG
 void nizk_reshare_print_allocation_status(void);
+#endif
 
 #endif /* NIZK_RESHARE_H */

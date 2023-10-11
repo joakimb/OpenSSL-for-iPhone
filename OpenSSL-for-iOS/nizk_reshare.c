@@ -9,12 +9,14 @@
 #include <assert.h>
 #include "openssl_hashing_tools.h"
 
+#ifdef DEBUG
 static int num_initialized = 0;
 static int num_freed = 0;
 
 void nizk_reshare_print_allocation_status(void) {
     printf("nizk_reshare: initalized %d, freed %d (%d diff)\n", num_initialized, num_freed, num_initialized - num_freed);
 }
+#endif
 
 void nizk_reshare_proof_free(nizk_reshare_proof *pi) {
     assert(pi && "nizk_reshare_proof_free: usage error, no proof passed");
@@ -33,7 +35,9 @@ void nizk_reshare_proof_free(nizk_reshare_proof *pi) {
     pi->z1 = NULL; // superflous safety
     bn_free(pi->z2);
     pi->z2 = NULL; // superflous safety
+#ifdef DEBUG
     num_freed++;
+#endif
 }
 
 void nizk_reshare_prove(const EC_GROUP *group, const BIGNUM *w1, const BIGNUM *w2, const EC_POINT *ga, const EC_POINT *gb, const EC_POINT *gc, const EC_POINT *Y1, const EC_POINT *Y2, const EC_POINT *Y3, nizk_reshare_proof *pi, BN_CTX *ctx) {
@@ -71,8 +75,10 @@ void nizk_reshare_prove(const EC_GROUP *group, const BIGNUM *w1, const BIGNUM *w
     bn_free(c);
     bn_free(r2);
     bn_free(r1);
-    
+
+#ifdef DEBUG
     num_initialized++;
+#endif
     // implicitly return proof pi
 }
 
@@ -261,7 +267,7 @@ static test_function test_suite[] = {
 
 int nizk_reshare_test_suite(int print) {
     if (print) {
-        printf("NIZK RESHARE test suite\n");
+        printf("NIZK RESHARE test suite BEGIN -----------------------\n");
     }
     int num_tests = sizeof(test_suite)/sizeof(test_function);
     int ret = 0;
@@ -271,8 +277,11 @@ int nizk_reshare_test_suite(int print) {
         }
     }
     if (print) {
+        printf("NIZK RESHARE test suite END -------------------------\n");
+#ifdef DEBUG
         print_allocation_status();
         nizk_reshare_print_allocation_status();
+#endif
         fflush(stdout);
     }
     return ret;
