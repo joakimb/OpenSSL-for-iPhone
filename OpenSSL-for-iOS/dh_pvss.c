@@ -985,23 +985,20 @@ int speed_test(double *times, int t, int n) {
     clock_t time_full_reshare_reconstruct_start = clock();
     
     int valid_indices[pp.t+1];
-    for (int i = 0; i<pp.t+1; i++) {
+    for (int i=0; i<pp.t+1; i++) {
         valid_indices[i] = i+1; // assume all indices valid for this test
     }
     EC_POINT *reconstructed_encrypted_reshares[next_pp.n];
-    for (int j = 0; j<next_pp.n; j++) { // loop over slices
-
+    for (int j=0; j<next_pp.n; j++) { // loop over slices
         EC_POINT *slice_of_encrypted_reshares[next_pp.t+1];
         for (int i=0; i<next_pp.t+1; i++) { // get the the j:th share from all n rehares
             slice_of_encrypted_reshares[i] = all_encrypted_re_shares[ valid_indices[i] - 1 ][j];
         }
-
-        
         reconstructed_encrypted_reshares[j] = dh_pvss_reconstruct_reshare(&pp, next_pp.t+1, valid_indices, slice_of_encrypted_reshares);
-
     }
     clock_t time_full_reshare_reconstruct_end = clock();
     double time_full_reshare_reconstruct_elapsed = (double)(time_full_reshare_reconstruct_end - time_full_reshare_reconstruct_start) / CLOCKS_PER_SEC;
+    double time_device_reshare_reconstruct_elapsed = time_full_reshare_reconstruct_elapsed / next_pp.n;
     
     // 3. decrypt reconstructed reshares
     
@@ -1080,9 +1077,8 @@ int speed_test(double *times, int t, int n) {
     times[3] = time_rec_elapsed;
     times[4] = time_reshare_elapsed;
     times[5] = time_reshare_verify_elapsed;
-    times[6] = time_full_reshare_reconstruct_elapsed;
+    times[6] = time_device_reshare_reconstruct_elapsed;
 
-    
 #ifdef DEBUG
     print_allocation_status();
 #endif

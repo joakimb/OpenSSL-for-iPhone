@@ -11,6 +11,21 @@
 #include "nizk_reshare.h"
 
 typedef struct {
+    int user_id;
+    EC_POINT *dist_key_public;
+    EC_POINT *com_key;
+} dh_pvss_user_info_public;
+
+typedef struct {
+    EC_POINT *secret;
+} dh_pvss_user_info_private;
+
+typedef struct {
+    dh_pvss_user_info_public pub;
+    dh_pvss_user_info_private priv;
+} dh_pvss_user_info;
+
+typedef struct {
     const EC_GROUP *group;
     BN_CTX *bn_ctx;
     int t;
