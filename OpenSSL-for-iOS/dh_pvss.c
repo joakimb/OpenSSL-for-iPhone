@@ -945,7 +945,7 @@ int speed_test(double *times, int t, int n) {
         dh_key_pair_generate(group, next_com_member_key_pair, ctx);
         next_committee_public_keys[i] = next_com_member_key_pair->pub;
     }
-    
+
     // make a single reshare
     clock_t time_reshare_start = clock();
     int party_index = 3;
@@ -954,11 +954,11 @@ int speed_test(double *times, int t, int n) {
     dh_pvss_reshare_prove(group, party_index, &committee_key_pairs[party_index], &dist_key_pairs[party_index], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, pp.n, &next_pp, (const EC_POINT**)next_committee_public_keys, encrypted_re_shares, &reshare_pi, ctx);
     clock_t time_reshare_end = clock();
     double time_reshare_elapsed = (double)(time_reshare_end - time_reshare_start) / CLOCKS_PER_SEC;
-    
+
     // positive test for reshare
     clock_t time_reshare_verify_start = clock();
-    clock_t time_reshare_verify_end = clock();
     ret += dh_pvss_reshare_verify(&pp, &next_pp, party_index, committee_public_keys[party_index], dist_public_keys[party_index], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, (const EC_POINT**)next_committee_public_keys, encrypted_re_shares, &reshare_pi);
+    clock_t time_reshare_verify_end = clock();
     double time_reshare_verify_elapsed = (double)(time_reshare_verify_end - time_reshare_verify_start) / CLOCKS_PER_SEC;
     
     // the below will make a full reshare -> reconstruct reshare -> decrypt shares -> reconstruct, and then finally see if the correct secret is reconstructed
