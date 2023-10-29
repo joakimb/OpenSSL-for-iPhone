@@ -921,8 +921,6 @@ int speed_test(double *times, int t, int n) {
     nizk_dl_eq_proof_free(&dec_pi);
     EC_POINT_free(dec_share);
     
-    
-    
     // preparation for reconstruction test: decrypting the encrypted shares and verifiying
     EC_POINT *decrypted_shares[n];
     for (int i=0; i<n; i++) {

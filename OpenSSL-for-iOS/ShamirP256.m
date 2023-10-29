@@ -44,9 +44,9 @@ void speedTest(int t, int n) {
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
     s = [[NSString alloc] initWithFormat:@"verify (one) reshare: %f seconds\n",speeds[6]];
+    speed_test_string = [speed_test_string stringByAppendingString:s];
     
     s = [[NSString alloc] initWithFormat:@"reconstruct (encrypted) reshare (one party): %f seconds\n",speeds[7]];
-    
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
     NSLog(@"%@",speed_test_string);
