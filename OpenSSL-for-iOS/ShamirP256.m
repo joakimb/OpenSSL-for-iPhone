@@ -72,12 +72,12 @@ void speedTest(int t, int n) {
 
     int speed_test_on = 1;
     if (speed_test_on) {
-        speedTest(5, 10);
+//        speedTest(5, 10);
 //        speedTest(50, 100);
 //        speedTest(100, 200);
 //        speedTest(200, 400);
 //        speedTest(250, 500);
-//        speedTest(264, 528);
+        speedTest(264, 528);
     }
     
     return formattedString;

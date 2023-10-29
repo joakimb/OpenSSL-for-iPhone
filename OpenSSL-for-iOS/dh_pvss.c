@@ -978,7 +978,7 @@ int speed_test(double *times, int t, int n) {
     
     // the below will make a full reshare -> and the reconstruct a single of those shares
     
-    // 1. preparation: make a reshare for all parties
+    // 1. preparation: make a reshare for all parties (this essentially simulates t+1 resharings on the device, which will take a while for large t. This time is not included in the measurements)
     
     EC_POINT **all_encrypted_re_shares[pp.t+1];
     
