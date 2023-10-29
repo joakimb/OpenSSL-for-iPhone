@@ -902,20 +902,34 @@ int speed_test(double *times, int t, int n) {
     ret += dh_pvss_distribute_verify(&pp, &distribution_pi, (const EC_POINT**)encrypted_shares, first_dist_kp.pub, (const EC_POINT**)committee_public_keys);
     clock_t time_dist_verify_end = clock();
     double time_dist_verify_elapsed = (double)(time_dist_verify_end - time_dist_verify_start) / CLOCKS_PER_SEC;
-
-    // decrypting the encrypted shares and verifiying
+    
+    //time to decrypt a share
+    clock_t time_dec_start = clock();
+    EC_POINT *dec_share;// = EC_POINT_new(group);
+    nizk_dl_eq_proof dec_pi;
+    dec_share = dh_pvss_decrypt_share_prove(group, first_dist_kp.pub, &committee_key_pairs[0], encrypted_shares[0], &dec_pi, ctx);
+    clock_t time_dec_end = clock();
+    double time_dec_elapsed = (double)(time_dec_end - time_dec_start) / CLOCKS_PER_SEC;
+    
+    //time to verify decrypt of share
+    
+    // cleanup
+    nizk_dl_eq_proof_free(&dec_pi);
+    EC_POINT_free(dec_share);
+    
+    
+    
+    // preparation for reconstruction test: decrypting the encrypted shares and verifiying
     EC_POINT *decrypted_shares[n];
-    double time_dec_elapsed = 0;//(double)(time_dec_end - time_dec_start) / CLOCKS_PER_SEC;
     for (int i=0; i<n; i++) {
-        clock_t time_dec_start = clock();
         nizk_dl_eq_proof committee_member_pi;
         // TODO: this measures both prove and verify, separate
         decrypted_shares[i] = dh_pvss_decrypt_share_prove(group, first_dist_kp.pub, &committee_key_pairs[i], encrypted_shares[i], &committee_member_pi, ctx);
         ret += dh_pvss_decrypt_share_verify(group, first_dist_kp.pub, committee_public_keys[i], encrypted_shares[i], decrypted_shares[i], &committee_member_pi, ctx);
-        clock_t time_dec_end = clock();
+        
         // cleanup
         nizk_dl_eq_proof_free(&committee_member_pi);
-        time_dec_elapsed += (double)(time_dec_end - time_dec_start) / CLOCKS_PER_SEC;
+        
 
     }
     

@@ -42,7 +42,7 @@ void speedTest(int t, int n) {
     
     s = [[NSString alloc] initWithFormat:@"verify (one) reshare: %f seconds\n",speeds[5]];
     
-    s = [[NSString alloc] initWithFormat:@"reconstrust (encrypted) reshare (one party): %f seconds\n",speeds[6]];
+    s = [[NSString alloc] initWithFormat:@"reconstruct (encrypted) reshare (one party): %f seconds\n",speeds[6]];
     
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
@@ -70,11 +70,11 @@ void speedTest(int t, int n) {
     int speed_test_on = 1;
     if (speed_test_on) {
         speedTest(5, 10);
-        speedTest(50, 100);
-        speedTest(100, 200);
-        speedTest(200, 400);
-        speedTest(250, 500);
-        speedTest(264, 528);
+//        speedTest(50, 100);
+//        speedTest(100, 200);
+//        speedTest(200, 400);
+//        speedTest(250, 500);
+//        speedTest(264, 528);
     }
     
     return formattedString;
