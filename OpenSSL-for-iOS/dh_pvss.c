@@ -912,6 +912,10 @@ int speed_test(double *times, int t, int n) {
     double time_dec_elapsed = (double)(time_dec_end - time_dec_start) / CLOCKS_PER_SEC;
     
     //time to verify decrypt of share
+    clock_t time_verdec_start = clock();
+    ret += dh_pvss_decrypt_share_verify(group, first_dist_kp.pub, committee_public_keys[0], encrypted_shares[0], dec_share, &dec_pi, ctx);
+    clock_t time_verdec_end = clock();
+    double time_verdec_elapsed = (double)(time_verdec_end - time_verdec_start) / CLOCKS_PER_SEC;
     
     // cleanup
     nizk_dl_eq_proof_free(&dec_pi);
@@ -1088,10 +1092,11 @@ int speed_test(double *times, int t, int n) {
     times[0] = time_dist_elapsed;
     times[1] = time_dist_verify_elapsed;
     times[2] = time_dec_elapsed;
-    times[3] = time_rec_elapsed;
-    times[4] = time_reshare_elapsed;
-    times[5] = time_reshare_verify_elapsed;
-    times[6] = time_device_reshare_reconstruct_elapsed;
+    times[3] = time_verdec_elapsed;
+    times[4] = time_rec_elapsed;
+    times[5] = time_reshare_elapsed;
+    times[6] = time_reshare_verify_elapsed;
+    times[7] = time_device_reshare_reconstruct_elapsed;
 
 #ifdef DEBUG
     print_allocation_status();

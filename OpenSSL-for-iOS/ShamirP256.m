@@ -14,7 +14,7 @@
 }
 
 void speedTest(int t, int n) {
-    double speeds[7];
+    double speeds[8];
     NSLog(@"Running speed test with t= %d, n=%d",t,n);
     int good_test = speed_test(speeds, t, n);
     NSString *speed_test_string = [NSMutableString stringWithString:@"\nSPEED RESULTS:\n"];
@@ -31,18 +31,21 @@ void speedTest(int t, int n) {
     s = [[NSString alloc] initWithFormat:@"verify distribution: %f seconds\n",speeds[1]];
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
-    s = [[NSString alloc] initWithFormat:@"decrypt: %f seconds\n",speeds[2]];
+    s = [[NSString alloc] initWithFormat:@"decrypt share: %f seconds\n",speeds[2]];
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
-    s = [[NSString alloc] initWithFormat:@"reconstruct: %f seconds\n",speeds[3]];
+    s = [[NSString alloc] initWithFormat:@"verify decryption of share: %f seconds\n",speeds[3]];
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
-    s = [[NSString alloc] initWithFormat:@"reshare (one party): %f seconds\n",speeds[4]];
+    s = [[NSString alloc] initWithFormat:@"reconstruct: %f seconds\n",speeds[4]];
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
-    s = [[NSString alloc] initWithFormat:@"verify (one) reshare: %f seconds\n",speeds[5]];
+    s = [[NSString alloc] initWithFormat:@"reshare (one party): %f seconds\n",speeds[5]];
+    speed_test_string = [speed_test_string stringByAppendingString:s];
     
-    s = [[NSString alloc] initWithFormat:@"reconstruct (encrypted) reshare (one party): %f seconds\n",speeds[6]];
+    s = [[NSString alloc] initWithFormat:@"verify (one) reshare: %f seconds\n",speeds[6]];
+    
+    s = [[NSString alloc] initWithFormat:@"reconstruct (encrypted) reshare (one party): %f seconds\n",speeds[7]];
     
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
