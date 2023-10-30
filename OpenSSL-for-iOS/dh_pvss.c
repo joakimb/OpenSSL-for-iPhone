@@ -9,6 +9,7 @@
 #include "SSS.h"
 #include "openssl_hashing_tools.h"
 
+
 #ifdef DEBUG
 void nizk_print_allocation_status(void) {
     nizk_dl_print_allocation_status();
@@ -899,6 +900,19 @@ int speed_test(double *times, int t, int n) {
     dh_pvss_distribute_prove(&pp, encrypted_shares, &first_dist_kp, (const EC_POINT**)committee_public_keys, secret, &distribution_pi);
     clock_t time_dist_end = clock();
     double time_dist_elapsed = (double)(time_dist_end - time_dist_start) / CLOCKS_PER_SEC;
+    
+//   #include <mach/mach_time.h>
+//    // make encrypted shares with proof
+//    printf("Making encrypted shares\n");
+//    uint64_t start = mach_absolute_time();
+//    EC_POINT *encrypted_shares[n];
+//    nizk_dl_eq_proof distribution_pi;
+//    dh_pvss_distribute_prove(&pp, encrypted_shares, &first_dist_kp, (const EC_POINT**)committee_public_keys, secret, &distribution_pi);
+//    uint64_t end = mach_absolute_time();
+//    mach_timebase_info_data_t info;
+//    mach_timebase_info(&info);
+//    double time_dist_elapsed = (double)(end - start) * (double)info.numer / (double)info.denom / 1e9;
+//    //= (double)(time_dist_end - time_dist_start) / CLOCKS_PER_SEC;
     
     // positive test verify encrypted shares
     printf("Verifying encrypted shares\n");
