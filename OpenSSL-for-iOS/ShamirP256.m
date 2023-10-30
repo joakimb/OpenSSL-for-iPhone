@@ -13,10 +13,10 @@
     bn_print(x);
 }
 
-void speedTest(int t, int n) {
-    double speeds[8];
+void performanceTest(int t, int n) {
+    double speeds[9];
     NSLog(@"Running speed test with t= %d, n=%d",t,n);
-    int good_test = speed_test(speeds, t, n);
+    int good_test = performance_test(speeds, t, n);
     NSString *speed_test_string = [NSMutableString stringWithString:@"\nSPEED RESULTS:\n"];
     
     NSString *s = [[NSString alloc] initWithFormat:@"(good_test = %d):\n",good_test];
@@ -49,6 +49,9 @@ void speedTest(int t, int n) {
     s = [[NSString alloc] initWithFormat:@"reconstruct (encrypted) reshare (one party): %f seconds\n",speeds[7]];
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
+    s = [[NSString alloc] initWithFormat:@"memory footprint: %f bytes\n",speeds[8]];
+    speed_test_string = [speed_test_string stringByAppendingString:s];
+    
     NSLog(@"%@",speed_test_string);
 }
 
@@ -70,14 +73,14 @@ void speedTest(int t, int n) {
     
     NSLog(@"%@",formattedString);
 
-    int speed_test_on = 1;
-    if (speed_test_on) {
-        speedTest(5, 10);
-        speedTest(50, 100);
-        speedTest(100, 200);
-        speedTest(200, 400);
-        speedTest(250, 500);
-        speedTest(264, 528);
+    int performance_test_on = 1;
+    if (performance_test_on) {
+        performanceTest(5, 10);
+        performanceTest(50, 100);
+        performanceTest(100, 200);
+        performanceTest(200, 400);
+        performanceTest(250, 500);
+        performanceTest(264, 528);
 //        speedTest(500, 1000);
     }
     

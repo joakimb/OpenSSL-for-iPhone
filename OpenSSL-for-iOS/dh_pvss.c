@@ -862,13 +862,12 @@ int dh_pvss_test_suite(int print) {
     return ret;
 }
 
-int speed_test(double *times, int t, int n) {
+int performance_test(double *results, int t, int n) {
     
     int ret = 0;
     
     const EC_GROUP *group = get0_group();
     BN_CTX *ctx = BN_CTX_new();
-    
     
     // setup
     printf("Performing setup and generating keys\n");
@@ -1038,6 +1037,12 @@ int speed_test(double *times, int t, int n) {
     reconstructed_encrypted_reshare = dh_pvss_reconstruct_reshare(&pp, next_pp.t+1, valid_indices, slice_of_encrypted_reshares);
     clock_t time_device_reshare_reconstruct_end = clock();
     double time_device_reshare_reconstruct_elapsed = (double)(time_device_reshare_reconstruct_end - time_device_reshare_reconstruct_start) / CLOCKS_PER_SEC;
+    
+    //measure the (max) memory footprint of the current process
+    rusage_info_current rusage_payload;
+    int retU = proc_pid_rusage(getpid(), RUSAGE_INFO_CURRENT, (rusage_info_t *)&rusage_payload);
+    assert(retU == 0 && "Could not get rusage.");
+    uint64_t footprint_peak  = rusage_payload.ri_lifetime_max_phys_footprint;
  
     // cleanup
     BN_CTX_free(ctx);
@@ -1080,14 +1085,15 @@ int speed_test(double *times, int t, int n) {
     dh_pvss_ctx_free(&pp);
     dh_pvss_ctx_free(&next_pp);
 
-    times[0] = time_dist_elapsed;
-    times[1] = time_dist_verify_elapsed;
-    times[2] = time_dec_elapsed;
-    times[3] = time_verdec_elapsed;
-    times[4] = time_rec_elapsed;
-    times[5] = time_reshare_elapsed;
-    times[6] = time_reshare_verify_elapsed;
-    times[7] = time_device_reshare_reconstruct_elapsed;
+    results[0] = time_dist_elapsed;
+    results[1] = time_dist_verify_elapsed;
+    results[2] = time_dec_elapsed;
+    results[3] = time_verdec_elapsed;
+    results[4] = time_rec_elapsed;
+    results[5] = time_reshare_elapsed;
+    results[6] = time_reshare_verify_elapsed;
+    results[7] = time_device_reshare_reconstruct_elapsed;
+    results[8] = (double) footprint_peak;
 
 #ifdef DEBUG
     print_allocation_status();
