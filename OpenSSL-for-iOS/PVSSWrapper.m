@@ -5,9 +5,9 @@
 //  Created by Joakim Brorsson on 2023-09-05.
 //
 
-#import "ShamirP256.h"
+#import "PVSSWrapper.h"
 
-@implementation ShamirP256
+@implementation PVSSWrapper
 
 + (void) print: (BIGNUM *) x {
     bn_print(x);
@@ -15,7 +15,7 @@
 
 void performanceTest(int t, int n) {
     double speeds[9];
-    NSLog(@"Running speed test with t= %d, n=%d",t,n);
+    NSLog(@"Running performance test with t= %d, n=%d",t,n);
     int good_test = performance_test(speeds, t, n);
     NSString *speed_test_string = [NSMutableString stringWithString:@"\nSPEED RESULTS:\n"];
     
@@ -76,11 +76,11 @@ void performanceTest(int t, int n) {
     int performance_test_on = 1;
     if (performance_test_on) {
         performanceTest(5, 10);
-        performanceTest(50, 100);
-        performanceTest(100, 200);
-        performanceTest(200, 400);
-        performanceTest(250, 500);
-        performanceTest(264, 528);
+//        performanceTest(50, 100);
+//        performanceTest(100, 200);
+//        performanceTest(200, 400);
+//        performanceTest(250, 500);
+//        performanceTest(264, 528);
 //        speedTest(500, 1000);
     }
     

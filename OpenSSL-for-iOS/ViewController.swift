@@ -22,7 +22,7 @@ class ViewController: UIViewController {
         
         
         
-        let output = ShamirP256.test("")
+        let output = PVSSWrapper.test("")
         outputLabel.text = output
     }
     

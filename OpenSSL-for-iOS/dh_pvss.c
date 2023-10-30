@@ -864,6 +864,7 @@ int dh_pvss_test_suite(int print) {
 
 int performance_test(double *results, int t, int n) {
     
+    
     int ret = 0;
     
     const EC_GROUP *group = get0_group();
