@@ -9,9 +9,11 @@
 #include "SSS.h"
 #include "openssl_hashing_tools.h"
 #ifdef __MACH__
-//#include <mach/clock.h>
-//#include <mach/mach.h>
 #include <mach/mach_time.h>
+#include <mach/mach.h>
+#include <mach/mach_init.h>
+#include <mach/task_info.h>
+#include <mach/vm_statistics.h>
 #endif
 
 
@@ -1074,11 +1076,15 @@ int performance_test(double *results, int t, int n) {
 #endif
     
     //measure the (max) memory footprint of the current process
-    //TODO: verify that memory is for thread, not process
-    rusage_info_current rusage_payload;
-    int retU = proc_pid_rusage(getpid(), RUSAGE_INFO_CURRENT, (rusage_info_t *)&rusage_payload);
-    assert(retU == 0 && "Could not get rusage.");
-    uint64_t footprint_peak  = rusage_payload.ri_lifetime_max_phys_footprint;
+    uint64_t footprint;
+    task_vm_info_data_t vm_info;
+    mach_msg_type_number_t count = TASK_VM_INFO_COUNT;
+    
+    if (task_info(mach_task_self(), TASK_VM_INFO, (task_info_t)&vm_info, &count) != KERN_SUCCESS) {
+        return -1; // Failed to get task info
+    }
+    
+    footprint = vm_info.ledger_phys_footprint_peak;;
     
     // cleanup
     BN_CTX_free(ctx);
@@ -1114,9 +1120,7 @@ int performance_test(double *results, int t, int n) {
     for (int i=0; i<pp.t+1; i++){
         nizk_reshare_proof_free(&reshare_pis[i]);
     }
-    //    for (int i=0; i<next_pp.n; i++){
     point_free(reconstructed_encrypted_reshare);
-    //    }
     
     dh_pvss_ctx_free(&pp);
     dh_pvss_ctx_free(&next_pp);
@@ -1129,7 +1133,7 @@ int performance_test(double *results, int t, int n) {
     results[5] = time_reshare_elapsed;
     results[6] = time_reshare_verify_elapsed;
     results[7] = time_device_reshare_reconstruct_elapsed;
-    results[8] = (double) footprint_peak;
+    results[8] = (double) footprint;
     
 #ifdef DEBUG
     print_allocation_status();
