@@ -22,7 +22,8 @@ class ViewController: UIViewController {
         
         
         
-        let output = PVSSWrapper.test("")
+        let output = PVSSWrapper.functionalityTest("")
+        PVSSWrapper.performanceTest()
         outputLabel.text = output
     }
     

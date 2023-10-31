@@ -6,17 +6,25 @@
 //
 
 #import "PVSSWrapper.h"
+#import <pthread.h>
+
+struct TestParams {
+    int t;
+    int n;
+};
 
 @implementation PVSSWrapper
 
-+ (void) print: (BIGNUM *) x {
-    bn_print(x);
-}
 
-void performanceTest(int t, int n) {
-    double speeds[9];
+void* threadPerformanceTest(void* arg) {
+    
+    struct TestParams* args = (struct TestParams*)arg;
+    int t = args->t;
+    int n = args->n;
+    
+    double results[9];
     NSLog(@"Running performance test with t= %d, n=%d",t,n);
-    int good_test = performance_test(speeds, t, n);
+    int good_test = performance_test(results, t, n);
     NSString *speed_test_string = [NSMutableString stringWithString:@"\nSPEED RESULTS:\n"];
     
     NSString *s = [[NSString alloc] initWithFormat:@"(good_test = %d):\n",good_test];
@@ -25,37 +33,70 @@ void performanceTest(int t, int n) {
     s = [[NSString alloc] initWithFormat:@"t: %d, n: %d\n",t,n];
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
-    s = [[NSString alloc] initWithFormat:@"distribute: %f seconds\n",speeds[0]];
+    s = [[NSString alloc] initWithFormat:@"distribute: %f seconds\n",results[0]];
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
-    s = [[NSString alloc] initWithFormat:@"verify distribution: %f seconds\n",speeds[1]];
+    s = [[NSString alloc] initWithFormat:@"verify distribution: %f seconds\n",results[1]];
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
-    s = [[NSString alloc] initWithFormat:@"decrypt share: %f seconds\n",speeds[2]];
+    s = [[NSString alloc] initWithFormat:@"decrypt share: %f seconds\n",results[2]];
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
-    s = [[NSString alloc] initWithFormat:@"verify decryption of share: %f seconds\n",speeds[3]];
+    s = [[NSString alloc] initWithFormat:@"verify decryption of share: %f seconds\n",results[3]];
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
-    s = [[NSString alloc] initWithFormat:@"reconstruct: %f seconds\n",speeds[4]];
+    s = [[NSString alloc] initWithFormat:@"reconstruct: %f seconds\n",results[4]];
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
-    s = [[NSString alloc] initWithFormat:@"reshare (one party): %f seconds\n",speeds[5]];
+    s = [[NSString alloc] initWithFormat:@"reshare (one party): %f seconds\n",results[5]];
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
-    s = [[NSString alloc] initWithFormat:@"verify (one) reshare: %f seconds\n",speeds[6]];
+    s = [[NSString alloc] initWithFormat:@"verify (one) reshare: %f seconds\n",results[6]];
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
-    s = [[NSString alloc] initWithFormat:@"reconstruct (encrypted) reshare (one party): %f seconds\n",speeds[7]];
+    s = [[NSString alloc] initWithFormat:@"reconstruct (encrypted) reshare (one party): %f seconds\n",results[7]];
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
-    s = [[NSString alloc] initWithFormat:@"memory footprint: %f bytes\n",speeds[8]];
+    s = [[NSString alloc] initWithFormat:@"memory footprint: %f bytes\n",results[8]];
     speed_test_string = [speed_test_string stringByAppendingString:s];
     
     NSLog(@"%@",speed_test_string);
+    
+    pthread_exit(NULL);
 }
 
-+ (NSString *)test:(NSString *) string {
++ (void) performanceTest{
+    
+    struct TestParams testParams[6];
+    testParams[0].t = 5;
+    testParams[0].n = 10;
+    testParams[1].t = 50;
+    testParams[1].n = 100;
+    testParams[2].t = 100;
+    testParams[2].n = 200;
+    testParams[3].t = 200;
+    testParams[3].n = 400;
+    testParams[4].t = 250;
+    testParams[4].n = 500;
+    testParams[5].t = 264;
+    testParams[5].n = 528;
+
+
+    for (int i = 0; i < 6; i++){
+        
+        //running each test in a new thread to separate memory measurements
+        pthread_t thread;
+        int result = pthread_create(&thread, NULL, threadPerformanceTest, &testParams[i]);
+        if (result != 0) {
+            NSLog(@"Failed to create thread: %s", strerror(result));
+        }
+        // Wait for tests to finish before starting a new one
+        pthread_join(thread, NULL);
+
+    }
+}
+
++ (NSString *)functionalityTest:(NSString *) string {
     
     clock_t start_time_total = clock();
     
@@ -72,17 +113,7 @@ void performanceTest(int t, int n) {
     NSString *formattedString = [[NSString alloc] initWithFormat:@"Test suite %s, Time: %f seconds\n", ret ? "NOT OK" : "OK", elapsed_time_total];
     
     NSLog(@"%@",formattedString);
-
-    int performance_test_on = 1;
-    if (performance_test_on) {
-        performanceTest(5, 10);
-//        performanceTest(50, 100);
-//        performanceTest(100, 200);
-//        performanceTest(200, 400);
-//        performanceTest(250, 500);
-//        performanceTest(264, 528);
-//        speedTest(500, 1000);
-    }
+    
     
     return formattedString;
 }
