@@ -107,9 +107,9 @@ EC_POINT *shamir_shares_reconstruct(const EC_GROUP *group, const EC_POINT *share
 }
 
 int shamir_shares_test_suite(int print) {
-
+#ifdef DEBUG
     print_allocation_status();
-
+#endif
     const EC_GROUP *group = get0_group();
     BN_CTX *ctx = BN_CTX_new();
 

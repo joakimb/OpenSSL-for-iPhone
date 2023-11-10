@@ -98,7 +98,7 @@ static int nizk_dl_test_1(int print) {
     BIGNUM *seven = bn_new();
     BN_dec2bn(&seven, "7");
     EC_POINT *secret = bn2point(group, seven, ctx);
-    
+
     // test 1: produce correct proof and verify
     nizk_dl_proof pi;
     nizk_dl_prove(group, seven, &pi, ctx);
@@ -120,7 +120,7 @@ static int nizk_dl_test_1(int print) {
 static int nizk_dl_test_2(int print) {
     const EC_GROUP *group = get0_group();
     const BIGNUM *order = get0_order(group);
-    
+
     BN_CTX *ctx = BN_CTX_new();
     BIGNUM *seven = bn_new();
     BN_dec2bn(&seven, "7");

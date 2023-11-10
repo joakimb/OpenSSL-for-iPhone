@@ -220,7 +220,9 @@ void point_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_P
 
 void point_sub(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx) {
     EC_POINT *b_copy = EC_POINT_dup(b, group);
+#ifdef DEBUG
     num_point_allocated++;
+#endif
     assert(b_copy && "point_sub: point duplication failed");
     int ret = EC_POINT_invert(group, b_copy, ctx); // invert b_copy instead of b to avoid side effects on input parameter
     assert(ret == 1 && "point_sub: EC_POINT_invert failed");

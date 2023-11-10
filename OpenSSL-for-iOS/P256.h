@@ -9,7 +9,7 @@
 #define P256_H
 #include <openssl/bn.h>
 #include <openssl/ec.h>
-#import <openssl/evp.h>
+#include <openssl/evp.h>
 
 // get curve group
 const EC_GROUP* get0_group(void);
