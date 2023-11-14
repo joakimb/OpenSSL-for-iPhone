@@ -11,6 +11,7 @@
 		1506C7DC2AC98A2D008EA6E3 /* dh_pvss.c in Sources */ = {isa = PBXBuildFile; fileRef = 1506C7DB2AC98A2D008EA6E3 /* dh_pvss.c */; };
 		152D4AF32AB45B49007ACC8E /* SSS.c in Sources */ = {isa = PBXBuildFile; fileRef = 152D4AF22AB45B49007ACC8E /* SSS.c */; };
 		154C552D2AD1BE39004CAABA /* dh_key_pair.c in Sources */ = {isa = PBXBuildFile; fileRef = 154C552C2AD1BE39004CAABA /* dh_key_pair.c */; };
+		155317A12B03B12500991297 /* platform_measurement_utils.c in Sources */ = {isa = PBXBuildFile; fileRef = 155317A02B03B12500991297 /* platform_measurement_utils.c */; };
 		15BFDB692AC43C8E00249EF2 /* openssl_hashing_tools.c in Sources */ = {isa = PBXBuildFile; fileRef = 15BFDB682AC43C8E00249EF2 /* openssl_hashing_tools.c */; };
 		15BFDB6C2AC63B0900249EF2 /* nizk_dl.c in Sources */ = {isa = PBXBuildFile; fileRef = 15BFDB6B2AC63B0900249EF2 /* nizk_dl.c */; };
 		15BFDB6F2AC63C2A00249EF2 /* nizk_dl_eq.c in Sources */ = {isa = PBXBuildFile; fileRef = 15BFDB6E2AC63C2A00249EF2 /* nizk_dl_eq.c */; };
@@ -57,6 +58,9 @@
 		152D4AF22AB45B49007ACC8E /* SSS.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = SSS.c; sourceTree = "<group>"; };
 		154C552B2AD1BE39004CAABA /* dh_key_pair.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dh_key_pair.h; sourceTree = "<group>"; };
 		154C552C2AD1BE39004CAABA /* dh_key_pair.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = dh_key_pair.c; sourceTree = "<group>"; };
+		1553179E2B03B0F000991297 /* config_platform.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = config_platform.h; sourceTree = "<group>"; };
+		1553179F2B03B12500991297 /* platform_measurement_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = platform_measurement_utils.h; sourceTree = "<group>"; };
+		155317A02B03B12500991297 /* platform_measurement_utils.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = platform_measurement_utils.c; sourceTree = "<group>"; };
 		15BFDB672AC43C8E00249EF2 /* openssl_hashing_tools.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = openssl_hashing_tools.h; sourceTree = "<group>"; };
 		15BFDB682AC43C8E00249EF2 /* openssl_hashing_tools.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = openssl_hashing_tools.c; sourceTree = "<group>"; };
 		15BFDB6A2AC63B0900249EF2 /* nizk_dl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = nizk_dl.h; sourceTree = "<group>"; };
@@ -182,8 +186,11 @@
 				533ED3061528C4840005C6FA /* Supporting Files */,
 				534FB2AD180975D700B5F868 /* Icons.xcassets */,
 				53A29DF8238EB10E0083CBF5 /* LaunchScreen.storyboard */,
+				1553179E2B03B0F000991297 /* config_platform.h */,
 				150275D82AA713CD00462E61 /* PVSSWrapper.h */,
 				150275D92AA7141100462E61 /* PVSSWrapper.m */,
+				1553179F2B03B12500991297 /* platform_measurement_utils.h */,
+				155317A02B03B12500991297 /* platform_measurement_utils.c */,
 				15FF080D2AA9B38000B2B623 /* P256.h */,
 				15FF080E2AA9B38000B2B623 /* P256.c */,
 				152D4AF12AB45B49007ACC8E /* SSS.h */,
@@ -413,6 +420,7 @@
 				152D4AF32AB45B49007ACC8E /* SSS.c in Sources */,
 				2A3821021BFB607A00328618 /* ViewController.swift in Sources */,
 				15BFDB692AC43C8E00249EF2 /* openssl_hashing_tools.c in Sources */,
+				155317A12B03B12500991297 /* platform_measurement_utils.c in Sources */,
 				150275DA2AA7141100462E61 /* PVSSWrapper.m in Sources */,
 				15BFDB722AC7194000249EF2 /* nizk_reshare.c in Sources */,
 				15BFDB6F2AC63C2A00249EF2 /* nizk_dl_eq.c in Sources */,

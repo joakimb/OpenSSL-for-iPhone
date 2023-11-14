@@ -6,6 +6,7 @@
 #include <mach/mach_init.h>
 //#include <mach/task_info.h>
 //#include <mach/vm_statistics.h>
+#include <unistd.h>
 #if __has_include(<libproc.h>)
 #include <libproc.h> // MacOS
 #else

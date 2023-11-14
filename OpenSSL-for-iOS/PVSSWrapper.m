@@ -21,10 +21,10 @@ void* threadPerformanceTest(void* arg) {
     struct TestParams* args = (struct TestParams*)arg;
     int t = args->t;
     int n = args->n;
-    
+
     double results[9];
     NSLog(@"Running performance test with t= %d, n=%d",t,n);
-    int good_test = performance_test(results, t, n);
+    int good_test = performance_test(results, t, n, 0 /* not verbose */);
     NSString *speed_test_string = [NSMutableString stringWithString:@"\nSPEED RESULTS:\n"];
     
     NSString *s = [[NSString alloc] initWithFormat:@"(good_test = %d):\n",good_test];
