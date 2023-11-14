@@ -17,11 +17,9 @@
 #import "nizk_reshare.h"
 #import "dh_pvss.h"
 
-@interface ShamirP256: NSObject
+@interface PVSSWrapper: NSObject
 
-// debug helper to print bignums to terminal
-+ (void) print: (BIGNUM *) x;
-
-+ (NSString *)test:(NSString *) string;
++ (NSString *)functionalityTest:(NSString *) string;
++ (void) performanceTest;
 
 @end

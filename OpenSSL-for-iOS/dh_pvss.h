@@ -9,6 +9,31 @@
 #include "dh_key_pair.h"
 #include "nizk_dl_eq.h"
 #include "nizk_reshare.h"
+#include <unistd.h>
+
+#if 0
+#if __has_include(<libproc.h>)
+#include <libproc.h> // On macOS.
+#else
+#include <sys/resource.h> // On iOS, iPadOS and tvOS.
+int proc_pid_rusage(int pid, int flavor, rusage_info_t *buffer) __OSX_AVAILABLE_STARTING(__MAC_10_9, __IPHONE_7_0);
+#endif
+#endif
+
+typedef struct {
+    int user_id;
+    EC_POINT *dist_key_public;
+    EC_POINT *com_key;
+} dh_pvss_user_info_public;
+
+typedef struct {
+    EC_POINT *secret;
+} dh_pvss_user_info_private;
+
+typedef struct {
+    dh_pvss_user_info_public pub;
+    dh_pvss_user_info_private priv;
+} dh_pvss_user_info;
 
 typedef struct {
     const EC_GROUP *group;
@@ -35,6 +60,6 @@ int dh_pvss_reshare_verify(const dh_pvss_ctx *pp, const dh_pvss_ctx *next_pp, in
 EC_POINT *dh_pvss_reconstruct_reshare(const dh_pvss_ctx *pp, int num_valid_indices, int *valid_indices, EC_POINT *enc_re_shares[]);
 
 int dh_pvss_test_suite(int print);
-int speed_test(double *times, int t, int n);
+int performance_test(double *times, int t, int n, int verbose);
 
 #endif /* DH_PVSS_H */

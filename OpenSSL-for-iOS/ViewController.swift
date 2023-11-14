@@ -22,7 +22,8 @@ class ViewController: UIViewController {
         
         
         
-        var output = ShamirP256.test("")
+        let output = PVSSWrapper.functionalityTest("")
+        PVSSWrapper.performanceTest()
         outputLabel.text = output
     }
     

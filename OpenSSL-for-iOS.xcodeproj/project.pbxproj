@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		150275DA2AA7141100462E61 /* ShamirP256.m in Sources */ = {isa = PBXBuildFile; fileRef = 150275D92AA7141100462E61 /* ShamirP256.m */; };
+		150275DA2AA7141100462E61 /* PVSSWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 150275D92AA7141100462E61 /* PVSSWrapper.m */; };
 		1506C7DC2AC98A2D008EA6E3 /* dh_pvss.c in Sources */ = {isa = PBXBuildFile; fileRef = 1506C7DB2AC98A2D008EA6E3 /* dh_pvss.c */; };
 		152D4AF32AB45B49007ACC8E /* SSS.c in Sources */ = {isa = PBXBuildFile; fileRef = 152D4AF22AB45B49007ACC8E /* SSS.c */; };
 		154C552D2AD1BE39004CAABA /* dh_key_pair.c in Sources */ = {isa = PBXBuildFile; fileRef = 154C552C2AD1BE39004CAABA /* dh_key_pair.c */; };
@@ -49,8 +49,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		150275D82AA713CD00462E61 /* ShamirP256.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShamirP256.h; sourceTree = "<group>"; };
-		150275D92AA7141100462E61 /* ShamirP256.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ShamirP256.m; sourceTree = "<group>"; };
+		150275D82AA713CD00462E61 /* PVSSWrapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PVSSWrapper.h; sourceTree = "<group>"; };
+		150275D92AA7141100462E61 /* PVSSWrapper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PVSSWrapper.m; sourceTree = "<group>"; };
 		1506C7DA2AC98A2D008EA6E3 /* dh_pvss.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dh_pvss.h; sourceTree = "<group>"; };
 		1506C7DB2AC98A2D008EA6E3 /* dh_pvss.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = dh_pvss.c; sourceTree = "<group>"; wrapsLines = 1; };
 		152D4AF12AB45B49007ACC8E /* SSS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SSS.h; sourceTree = "<group>"; };
@@ -182,8 +182,8 @@
 				533ED3061528C4840005C6FA /* Supporting Files */,
 				534FB2AD180975D700B5F868 /* Icons.xcassets */,
 				53A29DF8238EB10E0083CBF5 /* LaunchScreen.storyboard */,
-				150275D82AA713CD00462E61 /* ShamirP256.h */,
-				150275D92AA7141100462E61 /* ShamirP256.m */,
+				150275D82AA713CD00462E61 /* PVSSWrapper.h */,
+				150275D92AA7141100462E61 /* PVSSWrapper.m */,
 				15FF080D2AA9B38000B2B623 /* P256.h */,
 				15FF080E2AA9B38000B2B623 /* P256.c */,
 				152D4AF12AB45B49007ACC8E /* SSS.h */,
@@ -413,7 +413,7 @@
 				152D4AF32AB45B49007ACC8E /* SSS.c in Sources */,
 				2A3821021BFB607A00328618 /* ViewController.swift in Sources */,
 				15BFDB692AC43C8E00249EF2 /* openssl_hashing_tools.c in Sources */,
-				150275DA2AA7141100462E61 /* ShamirP256.m in Sources */,
+				150275DA2AA7141100462E61 /* PVSSWrapper.m in Sources */,
 				15BFDB722AC7194000249EF2 /* nizk_reshare.c in Sources */,
 				15BFDB6F2AC63C2A00249EF2 /* nizk_dl_eq.c in Sources */,
 			);

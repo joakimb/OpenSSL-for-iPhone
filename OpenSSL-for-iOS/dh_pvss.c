@@ -8,6 +8,7 @@
 #include <assert.h>
 #include "SSS.h"
 #include "openssl_hashing_tools.h"
+#include "platform_measurement_utils.h"
 
 #ifdef DEBUG
 void nizk_print_allocation_status(void) {
@@ -869,7 +870,7 @@ int dh_pvss_test_suite(int print) {
     return ret;
 }
 
-int speed_test(double *times, int t, int n) {
+int performance_test(double *results, int t, int n, int verbose) {
 
     int ret = 0;
 
@@ -877,6 +878,10 @@ int speed_test(double *times, int t, int n) {
     BN_CTX *ctx = BN_CTX_new();
 
     // setup
+    if (verbose) {
+        printf("Running performance test with (n, t) = (%d, %d)\n", n, t);
+        printf("Performing setup and generating keys\n");
+    }
     dh_pvss_ctx pp;
     dh_pvss_setup(&pp, group, t, n, ctx);
     EC_POINT *secret = point_random(group, ctx);
@@ -898,51 +903,94 @@ int speed_test(double *times, int t, int n) {
     }
 
     // make encrypted shares with proof
-    clock_t time_dist_start = clock();
+    if (verbose) {
+        printf("Making encrypted shares\n");
+    }
+    double time_dist_elapsed = 0;
+
+    platform_time_type start = platform_utils_get_wall_time();
+
     EC_POINT *encrypted_shares[n];
     nizk_dl_eq_proof distribution_pi;
     dh_pvss_distribute_prove(&pp, encrypted_shares, &first_dist_kp, (const EC_POINT**)committee_public_keys, secret, &distribution_pi);
-    clock_t time_dist_end = clock();
-    double time_dist_elapsed = (double)(time_dist_end - time_dist_start) / CLOCKS_PER_SEC;
+
+    platform_time_type end = platform_utils_get_wall_time();
+    time_dist_elapsed = platform_utils_get_wall_time_diff(start, end);
 
     // positive test verify encrypted shares
-    clock_t time_dist_verify_start = clock();
+    if (verbose) {
+        printf("Verifying encrypted shares\n");
+    }
+    double time_dist_verify_elapsed = 0;
+    start = platform_utils_get_wall_time();
     ret += dh_pvss_distribute_verify(&pp, &distribution_pi, (const EC_POINT**)encrypted_shares, first_dist_kp.pub, (const EC_POINT**)committee_public_keys);
-    clock_t time_dist_verify_end = clock();
-    double time_dist_verify_elapsed = (double)(time_dist_verify_end - time_dist_verify_start) / CLOCKS_PER_SEC;
+    end = platform_utils_get_wall_time();
+    time_dist_verify_elapsed = platform_utils_get_wall_time_diff(start, end);
 
-    // decrypting the encrypted shares and verifiying
-    EC_POINT *decrypted_shares[n];
-    double time_dec_elapsed = 0;//(double)(time_dec_end - time_dec_start) / CLOCKS_PER_SEC;
-    for (int i=0; i<n; i++) {
-        clock_t time_dec_start = clock();
+    //time to decrypt a share
+    if (verbose) {
+        printf("Decrypting a single encrypted share\n");
+    }
+    double time_dec_elapsed = 0;
+    start = platform_utils_get_wall_time();
+    EC_POINT *dec_share;// = EC_POINT_new(group);
+    nizk_dl_eq_proof dec_pi;
+    dec_share = dh_pvss_decrypt_share_prove(group, first_dist_kp.pub, &committee_key_pairs[0], encrypted_shares[0], &dec_pi, ctx);
+    end = platform_utils_get_wall_time();
+    time_dec_elapsed = platform_utils_get_wall_time_diff(start, end);
+
+    //time to verify decrypt of share
+    if (verbose) {
+        printf("Verifying decryption of single encrypted share\n");
+    }
+    double time_verdec_elapsed = 0;
+    start = platform_utils_get_wall_time();
+    ret += dh_pvss_decrypt_share_verify(group, first_dist_kp.pub, committee_public_keys[0], encrypted_shares[0], dec_share, &dec_pi, ctx);
+    end = platform_utils_get_wall_time();
+    time_verdec_elapsed = platform_utils_get_wall_time_diff(start, end);
+
+    // cleanup
+    nizk_dl_eq_proof_free(&dec_pi);
+    point_free(dec_share);
+
+    // preparation for reconstruction test: decrypting the encrypted shares and verifiying
+    if (verbose) {
+        printf("Simulating decryption for %d devices in preparation for reconstructing secret\n",t+1);
+    }
+    EC_POINT *decrypted_shares[t+1];
+    for (int i=0; i<t+1; i++) {
+
         nizk_dl_eq_proof committee_member_pi;
-        // TODO: this measures both prove and verify, separate
         decrypted_shares[i] = dh_pvss_decrypt_share_prove(group, first_dist_kp.pub, &committee_key_pairs[i], encrypted_shares[i], &committee_member_pi, ctx);
-        ret += dh_pvss_decrypt_share_verify(group, first_dist_kp.pub, committee_public_keys[i], encrypted_shares[i], decrypted_shares[i], &committee_member_pi, ctx);
-        clock_t time_dec_end = clock();
+
         // cleanup
         nizk_dl_eq_proof_free(&committee_member_pi);
-        time_dec_elapsed += (double)(time_dec_end - time_dec_start) / CLOCKS_PER_SEC;
 
     }
 
     // reconstruct secret
-    clock_t time_rec_start = clock();
+    if (verbose) {
+        printf("Reconstructing secret\n");
+    }
+    double time_rec_elapsed = 0;
+    start = platform_utils_get_wall_time();
     EC_POINT *reconstruction_shares[t+1];
     int reconstruction_indices[t+1];
-    int first = 2;
+    int first = 0;
     for (int i=first; i<first+t+1; i++) {
         reconstruction_shares[i-first] = decrypted_shares[i];
         int pp_alpha_as_int = (int)BN_get_word(pp.alphas[i+1]); // this works since alphas were chosen small enough to fit in an int
         reconstruction_indices[i-first] = pp_alpha_as_int;
     }
     EC_POINT *reconstructed_secret = dh_pvss_reconstruct(group, (const EC_POINT**)reconstruction_shares, reconstruction_indices, pp.t, t+1, ctx);
-    clock_t time_rec_end = clock();
-    double time_rec_elapsed = (double)(time_rec_end - time_rec_start) / CLOCKS_PER_SEC;
+    end = platform_utils_get_wall_time();
+    time_rec_elapsed = platform_utils_get_wall_time_diff(start, end);
     ret += point_cmp(group, secret, reconstructed_secret, ctx);
 
     // setup for next epoch committe
+    if (verbose) {
+        printf("Performing setup and generating keys for next epoch committee\n");
+    }
     dh_pvss_ctx next_pp;
     dh_pvss_setup(&next_pp, group, t, n, ctx);
     // keygen for next epoch committe
@@ -955,91 +1003,77 @@ int speed_test(double *times, int t, int n) {
     }
 
     // make a single reshare
-    clock_t time_reshare_start = clock();
+    if (verbose) {
+        printf("Making a single reshare\n");
+    }
+    double time_reshare_elapsed = 0;
+    start = platform_utils_get_wall_time();
     int party_index = 3;
     EC_POINT *encrypted_re_shares[next_pp.n];
     nizk_reshare_proof reshare_pi;
     dh_pvss_reshare_prove(group, party_index, &committee_key_pairs[party_index], &dist_key_pairs[party_index], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, pp.n, &next_pp, (const EC_POINT**)next_committee_public_keys, encrypted_re_shares, &reshare_pi, ctx);
-    clock_t time_reshare_end = clock();
-    double time_reshare_elapsed = (double)(time_reshare_end - time_reshare_start) / CLOCKS_PER_SEC;
+
+    end = platform_utils_get_wall_time();
+    time_reshare_elapsed = platform_utils_get_wall_time_diff(start, end);
 
     // positive test for reshare
-    clock_t time_reshare_verify_start = clock();
-    clock_t time_reshare_verify_end = clock();
+    if (verbose) {
+        printf("Verifying a single reshare\n");
+    }
+    double time_reshare_verify_elapsed = 0;
+    start = platform_utils_get_wall_time();
     ret += dh_pvss_reshare_verify(&pp, &next_pp, party_index, committee_public_keys[party_index], dist_public_keys[party_index], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, (const EC_POINT**)next_committee_public_keys, encrypted_re_shares, &reshare_pi);
-    double time_reshare_verify_elapsed = (double)(time_reshare_verify_end - time_reshare_verify_start) / CLOCKS_PER_SEC;
 
-    // the below will make a full reshare -> reconstruct reshare -> decrypt shares -> reconstruct, and then finally see if the correct secret is reconstructed
+    end = platform_utils_get_wall_time();
+    time_reshare_verify_elapsed = platform_utils_get_wall_time_diff(start, end);
 
-    // 1. make a reshare for all parties
-    //EC_POINT *all_encrypted_re_shares[pp.n][next_pp.n];
+    // the below will make a full reshare -> and the reconstruct a single of those shares
 
-    EC_POINT **all_encrypted_re_shares[pp.n];
+    // 1. preparation: make a reshare for all parties (this essentially simulates t+1 resharings on the device, which will take a while for large t. This time is not included in the measurements)
 
-    for (int i = 0; i<pp.n; i++) {
+
+    EC_POINT **all_encrypted_re_shares[pp.t+1];
+
+    for (int i=0; i<pp.t+1; i++) {
         all_encrypted_re_shares[i] = malloc(sizeof(EC_POINT *[next_pp.n]));
         assert(all_encrypted_re_shares[i] && "bad allocation for all_encrypted_re_shares");
     }
 
-    nizk_reshare_proof reshare_pis[pp.n];
-    for (int i = 0; i<pp.n; i++) {
-        dh_pvss_reshare_prove(group, i, &committee_key_pairs[i], &dist_key_pairs[i], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, pp.n, &next_pp, (const EC_POINT**)next_committee_public_keys, all_encrypted_re_shares[i], &reshare_pis[i], ctx);
+    if (verbose) {
+        printf("Simulating resharing for %d devices in preparation for reconstructing reshare, this might take a while\n",t+1);
+    }
 
-        //verify the reshare
-        ret += dh_pvss_reshare_verify(&pp, &next_pp, i, (const EC_POINT*) committee_public_keys[i], (const EC_POINT*) dist_public_keys[i], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, (const EC_POINT**)next_committee_public_keys, all_encrypted_re_shares[i], &reshare_pis[i]);
+    nizk_reshare_proof reshare_pis[pp.n];
+    for (int i=0; i<pp.t+1; i++) {
+        if (verbose && (i % 10 == 0)) {
+            printf("progress: %d of %d\n",i,t+1);
+        }
+        dh_pvss_reshare_prove(group, i, &committee_key_pairs[i], &dist_key_pairs[i], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, pp.n, &next_pp, (const EC_POINT**)next_committee_public_keys, all_encrypted_re_shares[i], &reshare_pis[i], ctx);
     }
 
     // 2. reconstruct reshare
-    clock_t time_full_reshare_reconstruct_start = clock();
 
+    if (verbose) {
+        printf("Reconstructing reshare for one party\n");
+    }
+    double time_device_reshare_reconstruct_elapsed = 0;
+    start = platform_utils_get_wall_time();
     int valid_indices[pp.t+1];
-    for (int i = 0; i<pp.t+1; i++) {
-        valid_indices[i] = i+1; // assume all indices valid for this test
-    }
-    EC_POINT *reconstructed_encrypted_reshares[next_pp.n];
-    for (int j = 0; j<next_pp.n; j++) { // loop over slices
-
-        EC_POINT *slice_of_encrypted_reshares[next_pp.t+1];
-        for (int i=0; i<next_pp.t+1; i++) { // get the the j:th share from all n rehares
-            slice_of_encrypted_reshares[i] = all_encrypted_re_shares[ valid_indices[i] - 1 ][j];
-        }
-
-
-        reconstructed_encrypted_reshares[j] = dh_pvss_reconstruct_reshare(&pp, next_pp.t+1, valid_indices, slice_of_encrypted_reshares);
-
-    }
-    clock_t time_full_reshare_reconstruct_end = clock();
-    double time_full_reshare_reconstruct_elapsed = (double)(time_full_reshare_reconstruct_end - time_full_reshare_reconstruct_start) / CLOCKS_PER_SEC;
-
-    // 3. decrypt reconstructed reshares
-
-    int reshare_reconstruction_indices[next_pp.t+1];
-    EC_POINT *reshare_reconstruction_keys[next_pp.t+1];
-    EC_POINT *reshare_dist_keys[next_pp.t+1];
-    dh_key_pair *reshare_reconstruction_keys_pairs[next_pp.t+1];
-    EC_POINT *reshare_reconstruction_shares[next_pp.t+1];
-    first = 0;
-    for (int i=first; i<first+next_pp.t+1; i++) { // fill indexes and keys
-        int pp_alpha_as_int = (int)BN_get_word(pp.alphas[i+1]); // this works since alphas were chosen small enough to fit in an int
-        reshare_reconstruction_indices[i-first] = pp_alpha_as_int;
-        reshare_reconstruction_keys[i-first] = next_committee_public_keys[i];
-        reshare_dist_keys[i-first] = dist_public_keys[i];
-        reshare_reconstruction_keys_pairs[i-first] = &next_committee_key_pairs[i];
-        reshare_reconstruction_shares[i-first] = reconstructed_encrypted_reshares[i];
+    for (int i=0; i<pp.t+1; i++) {
+        valid_indices[i] = i+1; // all indices are valid for this test
     }
 
-    EC_POINT *prev_dist_pub_key = dh_pvss_committee_dist_key_calc(group, (const EC_POINT**) reshare_dist_keys, reshare_reconstruction_indices, next_pp.t, next_pp.t+1, ctx);
-    EC_POINT *decrypted_reshares[next_pp.t+1];
+    EC_POINT *reconstructed_encrypted_reshare;
+    EC_POINT *slice_of_encrypted_reshares[next_pp.t+1];
     for (int i=0; i<next_pp.t+1; i++) {
-        nizk_dl_eq_proof decrypt_pi;
-        decrypted_reshares[i] = dh_pvss_decrypt_share_prove(group, prev_dist_pub_key, reshare_reconstruction_keys_pairs[i], reshare_reconstruction_shares[i], &decrypt_pi, ctx);//decrypted_shares[i-1];
-        ret += dh_pvss_decrypt_share_verify(group, prev_dist_pub_key, reshare_reconstruction_keys[i], reshare_reconstruction_shares[i], decrypted_reshares[i], &decrypt_pi, ctx);
-        nizk_dl_eq_proof_free(&decrypt_pi);
+        slice_of_encrypted_reshares[i] = all_encrypted_re_shares[ valid_indices[i] - 1 ][0];// get the the 0:th share from k+1 rehares
     }
+    reconstructed_encrypted_reshare = dh_pvss_reconstruct_reshare(&pp, next_pp.t+1, valid_indices, slice_of_encrypted_reshares);
+    end = platform_utils_get_wall_time();
+    time_device_reshare_reconstruct_elapsed = platform_utils_get_wall_time_diff(start, end);
 
-    // 4. reconstruct and compare
-    EC_POINT *reconstructed_reshared = dh_pvss_reconstruct(group, (const EC_POINT **)decrypted_reshares, reshare_reconstruction_indices, next_pp.t, next_pp.t+1, ctx);
-    ret += point_cmp(group, secret, reconstructed_reshared, ctx); // zero if equal
+    //measure the max RAM memory footprint of the current process
+    uint64_t max_ram_footprint = platform_utils_get_max_memory_usage();
 
     // cleanup
     BN_CTX_free(ctx);
@@ -1049,7 +1083,11 @@ int speed_test(double *times, int t, int n) {
         dh_key_pair_free(&committee_key_pairs[i]);
         dh_key_pair_free(&dist_key_pairs[i]);
         point_free(encrypted_shares[i]);
+    }
+    for (int i = 0; i<pp.t+1; i++) {
         point_free(decrypted_shares[i]);
+    }
+    for (int i=0; i<n; i++){
         dh_key_pair_free(&next_committee_key_pairs[i]);
     }
     nizk_dl_eq_proof_free(&distribution_pi);
@@ -1059,40 +1097,48 @@ int speed_test(double *times, int t, int n) {
     }
     nizk_reshare_proof_free(&reshare_pi);
     for (int j = 0; j<next_pp.n; j++) {
-        for (int i = 0; i<pp.n; i++) { // get the the j:th share from all n rehares
+        for (int i = 0; i<pp.t+1; i++) { // get the the j:th share from all n rehares
             point_free(all_encrypted_re_shares[i][j]);
         }
     }
-
-    for (int i = 0; i<pp.n; i++) {
+    for (int i = 0; i<pp.t+1; i++) {
         free(all_encrypted_re_shares[i]);
     }
-
-    for (int i=0; i<pp.n; i++){
+    for (int i=0; i<pp.t+1; i++){
         nizk_reshare_proof_free(&reshare_pis[i]);
     }
-    for (int i=0; i<next_pp.n; i++){
-        point_free(reconstructed_encrypted_reshares[i]);
-    }
-    point_free(prev_dist_pub_key);
-    for (int i = 0; i<next_pp.t+1; i++){
-        point_free(decrypted_reshares[i]);
-    }
-    point_free(reconstructed_reshared);
+    point_free(reconstructed_encrypted_reshare);
+
     dh_pvss_ctx_free(&pp);
     dh_pvss_ctx_free(&next_pp);
 
-    times[0] = time_dist_elapsed;
-    times[1] = time_dist_verify_elapsed;
-    times[2] = time_dec_elapsed;
-    times[3] = time_rec_elapsed;
-    times[4] = time_reshare_elapsed;
-    times[5] = time_reshare_verify_elapsed;
-    times[6] = time_full_reshare_reconstruct_elapsed;
+    if (results) {
+      results[0] = time_dist_elapsed;
+      results[1] = time_dist_verify_elapsed;
+      results[2] = time_dec_elapsed;
+      results[3] = time_verdec_elapsed;
+      results[4] = time_rec_elapsed;
+      results[5] = time_reshare_elapsed;
+      results[6] = time_reshare_verify_elapsed;
+      results[7] = time_device_reshare_reconstruct_elapsed;
+      results[8] = (double)max_ram_footprint;
+    }
 
+    if (verbose) {
+      printf("distribute: %f seconds\n", time_dist_elapsed);
+      printf("verify distribution: %f seconds\n", time_dist_verify_elapsed);
+      printf("decrypt share: %f seconds\n", time_dec_elapsed);
+      printf("verify decryption of share: %f seconds\n", time_verdec_elapsed);
+      printf("reconstruct: %f seconds\n", time_rec_elapsed);
+      printf("reshare (one party): %f seconds\n", time_reshare_elapsed);
+      printf("verify (one) reshare: %f seconds\n", time_reshare_verify_elapsed);
+      printf("reconstruct (encrypted) reshare (one party): %f seconds\n", time_device_reshare_reconstruct_elapsed);
+      printf("memory footprint: %" PRIu64 " bytes\n\n", max_ram_footprint);
+      fflush(stdout);
+    }
 
 #ifdef DEBUG
     print_allocation_status();
 #endif
-    return ret == 0;
+    return ret;
 }
