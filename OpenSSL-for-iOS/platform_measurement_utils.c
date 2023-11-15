@@ -73,7 +73,7 @@ uint64_t platform_utils_get_max_memory_usage(void) {
   return (uint64_t)vm_info.ledger_phys_footprint_peak;
 #endif
 #elif PLATFORM_TYPE == PLATFORM_TYPE_UNIX
-#error "unsupported platform type (not implemented for this platform)"
+  return 0; // not implemented, but pass zero as temporary test of code
 #elif PLATFORM_TYPE == PLATFORM_TYPE_WINDOWS
   return 0; // not implemented, but pass zero as temporary test of code
 #else
