@@ -43,7 +43,7 @@ double platform_utils_get_wall_time_diff(platform_time_type start_time, platform
     mach_timebase_info(&info);
     return (double)(end_time - start_time) * (double)info.numer / (double)info.denom / 1e9;
 #elif PLATFORM_TYPE == PLATFORM_TYPE_UNIX
-    return end - start;
+    return end_time - start_time;
 #elif PLATFORM_TYPE == PLATFORM_TYPE_WINDOWS
   return (double)(end_time - start_time) / CLOCKS_PER_SEC;
 #else
@@ -73,7 +73,7 @@ uint64_t platform_utils_get_max_memory_usage(void) {
   return (uint64_t)vm_info.ledger_phys_footprint_peak;
 #endif
 #elif PLATFORM_TYPE == PLATFORM_TYPE_UNIX
-#error "unsupported platform type (not implemented for this platform)"
+  return 0; // not implemented, but pass zero as temporary test of code
 #elif PLATFORM_TYPE == PLATFORM_TYPE_WINDOWS
   return 0; // not implemented, but pass zero as temporary test of code
 #else
