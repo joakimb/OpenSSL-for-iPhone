@@ -1045,8 +1045,9 @@ int performance_test(double *results, int t, int n, int verbose) {
 
     nizk_reshare_proof reshare_pis[pp.n];
     for (int i=0; i<pp.t+1; i++) {
-        if (verbose && (i % 10 == 0)) {
+        if (verbose && (i % 100 == 0)) {
             printf("progress: %d of %d\n",i,t+1);
+            fflush(stdout);
         }
         dh_pvss_reshare_prove(group, i, &committee_key_pairs[i], &dist_key_pairs[i], first_dist_kp.pub, (const EC_POINT**)encrypted_shares, pp.n, &next_pp, (const EC_POINT**)next_committee_public_keys, all_encrypted_re_shares[i], &reshare_pis[i], ctx);
     }

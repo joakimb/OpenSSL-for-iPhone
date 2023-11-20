@@ -16,9 +16,15 @@ static void test_suite_correctness(void) {
 static void test_suite_performance(void) {
 //    int n[] = {10,50,100};
 //    int t[] = { 5,25, 50};
-    int n[] = {10,50,100,200,300,400,500,528};
-    int t[] = { 5,25, 50,100,150,200,250,264};
+    int n[] = {10,50,100,200,300,400,500,528,1000,2000,5000,10000};
+    int t[] = { 5,25, 50,100,150,200,250,264, 500,1000,2500, 5000};
     const int num_tests = sizeof(n)/sizeof(int);
+    printf("Testing performances for (n, t)\n");
+    for (int i=0; i<num_tests; i++) {
+      printf("  (%d, %d)\n", n[i], t[i]);
+    }
+    printf("\n");
+    fflush(stdout);
     for (int i=0; i<num_tests; i++) {
         int ret = performance_test(NULL, t[i], n[i], 1 /* verbose */);
         printf("ret = %d\n\n", ret);
