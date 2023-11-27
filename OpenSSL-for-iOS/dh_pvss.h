@@ -60,6 +60,7 @@ int dh_pvss_reshare_verify(const dh_pvss_ctx *pp, const dh_pvss_ctx *next_pp, in
 EC_POINT *dh_pvss_reconstruct_reshare(const dh_pvss_ctx *pp, int num_valid_indices, int *valid_indices, EC_POINT *enc_re_shares[]);
 
 int dh_pvss_test_suite(int print);
+int performance_test_with_correctness(double *times, int t, int n, int verbose);
 int performance_test(double *times, int t, int n, int verbose);
 
 #endif /* DH_PVSS_H */
