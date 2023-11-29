@@ -125,6 +125,15 @@ BIGNUM **bn_new_array(int len) {
     return bn_array;
 }
 
+// deep copy
+BIGNUM **bn_copy_array(BIGNUM **src, int len) {
+    BIGNUM **dst = bn_new_array(len);
+    for (int i=0; i<len; i++) {
+        BN_copy(dst[i], src[i]);
+    }
+    return dst;
+}
+
 // free bn array
 void bn_free_array(int len, BIGNUM **bn_array) {
     for (int i=0; i<len; i++) {

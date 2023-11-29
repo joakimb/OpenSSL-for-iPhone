@@ -47,6 +47,7 @@ typedef struct {
 } dh_pvss_ctx;
 
 void dh_pvss_ctx_free(dh_pvss_ctx *pp);
+void dh_pvss_ctx_copy(dh_pvss_ctx *pp_dst, dh_pvss_ctx *pp_src, int t);
 void dh_pvss_setup(dh_pvss_ctx *pp, const EC_GROUP *group, const int t, const int n, BN_CTX *ctx);
 void dh_pvss_distribute_prove(dh_pvss_ctx *pp, EC_POINT **enc_shares, dh_key_pair *dist_key, const EC_POINT *com_keys[], EC_POINT *secret, nizk_dl_eq_proof *pi);
 int dh_pvss_distribute_verify(dh_pvss_ctx *pp, nizk_dl_eq_proof *pi, const EC_POINT **enc_shares, const EC_POINT *pub_dist, const EC_POINT **com_keys);

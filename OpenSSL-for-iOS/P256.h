@@ -31,6 +31,9 @@ void bn_free(BIGNUM *bn);
 // get vector of new bignums
 BIGNUM **bn_new_array(int len);
 
+// deep copy vector of bignums
+BIGNUM **bn_copy_array(BIGNUM **src, int len);
+
 // free bn array
 void bn_free_array(int len, BIGNUM **bn_array);
 
