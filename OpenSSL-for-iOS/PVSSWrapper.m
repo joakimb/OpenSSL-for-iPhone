@@ -70,7 +70,7 @@ void* threadPerformanceTest(void* arg) {
 
 + (void) performanceTest{
     
-    struct TestParams testParams[6];
+    struct TestParams testParams[9];
     testParams[0].t = 5;
     testParams[0].n = 10;
     testParams[1].t = 50;
@@ -83,9 +83,12 @@ void* threadPerformanceTest(void* arg) {
     testParams[4].n = 500;
     testParams[5].t = 264;
     testParams[5].n = 528;
+    testParams[6].t = 500;
+    testParams[6].n = 1000;
+    testParams[7].t = 1000;
+    testParams[7].n = 2000;
 
-
-    for (int i = 0; i < 6; i++){
+    for (int i = 0; i < 8; i++){
         
         //running each test in a new thread to separate memory measurements
         pthread_t thread;
