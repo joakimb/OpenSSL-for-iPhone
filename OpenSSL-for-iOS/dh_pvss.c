@@ -1411,7 +1411,7 @@ int performance_test(double *results, int t, int n, int verbose) {
     end = platform_utils_get_wall_time();
     double time_device_reshare_reconstruct_elapsed = platform_utils_get_wall_time_diff(start, end);
     if (verbose) {
-      printf("reconstruct (encrypted) reshare (one party): %f seconds\n", time_device_reshare_reconstruct_elapsed);
+      printf("reconstruct (encrypted) share (one party): %f seconds\n", time_device_reshare_reconstruct_elapsed);
       fflush(stdout);
     }
 
