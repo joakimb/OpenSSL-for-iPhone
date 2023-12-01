@@ -22,7 +22,7 @@
 #define PLATFORM_TYPE_WINDOWS 2
 
 // set PLATFORM_TYPE to precisely one of the above
-#define PLATFORM_TYPE PLATFORM_TYPE_UNIX
+#define PLATFORM_TYPE PLATFORM_TYPE_MAC
 
 #ifndef PLATFORM_TYPE
 #error "PLATFORM_TYPE undefined, see config_platform.h"

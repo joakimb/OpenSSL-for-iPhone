@@ -69,6 +69,7 @@ void* threadPerformanceTest(void* arg) {
 }
 
 + (void) performanceTest{
+<<<<<<< HEAD
     struct TestParams testParams[15];
     testParams[0].n = 10; // committee sizes
     testParams[1].n = 20;
@@ -91,6 +92,30 @@ void* threadPerformanceTest(void* arg) {
 
     for (int i=0; i<15; i++) {
         // running each test in a new thread to separate memory measurements
+=======
+    
+    struct TestParams testParams[9];
+    testParams[0].t = 5;
+    testParams[0].n = 10;
+    testParams[1].t = 50;
+    testParams[1].n = 100;
+    testParams[2].t = 100;
+    testParams[2].n = 200;
+    testParams[3].t = 200;
+    testParams[3].n = 400;
+    testParams[4].t = 250;
+    testParams[4].n = 500;
+    testParams[5].t = 264;
+    testParams[5].n = 528;
+    testParams[6].t = 500;
+    testParams[6].n = 1000;
+    testParams[7].t = 1000;
+    testParams[7].n = 2000;
+
+    for (int i = 0; i < 8; i++){
+        
+        //running each test in a new thread to separate memory measurements
+>>>>>>> 8ded6605c1409590a113ccdd517eed9885e26813
         pthread_t thread;
         int result = pthread_create(&thread, NULL, threadPerformanceTest, &testParams[i]);
         if (result != 0) {
